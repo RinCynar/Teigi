@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:logger/logger.dart';
+import 'package:path/path.dart' as p;
 
 /// ffmpeg 可用性检测结果。
 class FfmpegInfo {
@@ -20,8 +21,9 @@ class FfmpegInfo {
 /// 负责在启动时检测 ffmpeg 是否可用。
 ///
 /// 检测顺序：
-/// 1. 用户保存的自定义路径（优先级最高）
-/// 2. 系统 PATH（`where ffmpeg` / `which ffmpeg`）
+/// 1. 安装目录内置的 `data/ffmpeg`（内嵌引擎优先）
+/// 2. 用户保存的自定义路径
+/// 3. 系统 PATH（`where ffmpeg` / `which ffmpeg`）
 class FfmpegDetector {
   FfmpegDetector({Logger? logger}) : _logger = logger ?? Logger();
 
@@ -30,7 +32,17 @@ class FfmpegDetector {
   /// 检测 ffmpeg。返回信息包含路径与版本号；找不到时返回
   /// [FfmpegInfo.unavailable]。
   Future<FfmpegInfo> detect({String? customPath}) async {
-    // 1. 自定义路径优先。
+    // 1. 内嵌引擎：安装目录 data/ffmpeg。
+    final bundled = await _findBundled();
+    if (bundled != null) {
+      final info = await _probe(bundled);
+      if (info.isAvailable) {
+        _logger.i('使用内置 ffmpeg: ${info.path} (${info.version})');
+        return info;
+      }
+    }
+
+    // 2. 自定义路径（用户显式配置）。
     if (customPath != null && customPath.isNotEmpty) {
       final info = await _probe(customPath);
       if (info.isAvailable) {
@@ -40,7 +52,7 @@ class FfmpegDetector {
       _logger.w('自定义 ffmpeg 路径无效: $customPath');
     }
 
-    // 2. PATH 中查找。
+    // 3. PATH 中查找。
     final inPath = await _findInPath();
     if (inPath != null) {
       final info = await _probe(inPath);
@@ -52,6 +64,24 @@ class FfmpegDetector {
 
     _logger.w('未找到 ffmpeg');
     return FfmpegInfo.unavailable;
+  }
+
+  /// 在软件安装目录中查找内置的 `data/ffmpeg/ffmpeg`。
+  Future<String?> _findBundled() async {
+    final exeDir = File(Platform.resolvedExecutable).parent.path;
+    final candidates = <String>[
+      p.join(exeDir, 'data', 'ffmpeg', Platform.isWindows ? 'ffmpeg.exe' : 'ffmpeg'),
+      p.join(
+        Directory.current.path,
+        'data',
+        'ffmpeg',
+        Platform.isWindows ? 'ffmpeg.exe' : 'ffmpeg',
+      ),
+    ];
+    for (final c in candidates) {
+      if (File(c).existsSync()) return c;
+    }
+    return null;
   }
 
   /// 在 PATH 中查找 ffmpeg 可执行文件路径。

@@ -1,0 +1,8 @@
+# MSIX 打包配置（供 `dart run msix:create` 使用）。
+executable: teigi.exe
+display_name: Teigi
+publisher_display_name: RinCynar
+identity_name: RinCynar.Teigi
+publisher: CN=8A6C77E0-4B2D-4E9A-B1C3-5F7D9E2A4B6C
+msix_version: 1.0.0.0
+capabilities: internetClient
