@@ -34,3 +34,6 @@ final recentPresetsProvider =
   final prefs = ref.watch(sharedPreferencesProvider);
   return RecentPresetsNotifier(RecentPresetsNotifier.load(prefs), prefs);
 });
+
+/// Preset chosen on the empty workspace before any files exist.
+final pendingPresetProvider = StateProvider<FormatPreset?>((ref) => null);

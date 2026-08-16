@@ -5,6 +5,7 @@ import 'package:teigi/features/format_config/format_selector.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/conversion_engine.dart';
 import 'package:teigi/providers/queue_provider.dart';
+import 'package:teigi/shared/layout/content_constraint.dart';
 import 'package:teigi/widgets/queue_list.dart';
 
 /// 队列面板：展示所有转换任务，支持选择目标格式与操作。
@@ -40,7 +41,9 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
     final running = tasks.where((t) => t.isRunning).length;
     final queued = tasks.where((t) => t.status == TaskStatus.queued).length;
 
-    return Column(
+    return ContentConstraint(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
@@ -87,6 +90,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
         ),
         Expanded(child: QueueList(tasks: tasks)),
       ],
+    ),
     );
   }
 
@@ -174,7 +178,7 @@ class _EmptyQueue extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            l10n.queueEmptyHint,
+            l10n.queueIdleHint,
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium

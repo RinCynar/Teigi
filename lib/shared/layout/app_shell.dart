@@ -7,6 +7,8 @@ import 'package:teigi/features/convert/media_import.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/conversion_engine.dart';
 import 'package:teigi/providers/queue_provider.dart';
+import 'package:teigi/providers/recent_presets_provider.dart';
+import 'package:teigi/shared/widgets/teigi_mark.dart';
 import 'package:teigi/theme/tokens.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -36,9 +38,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     final selected = _indexFor(path);
     final width = MediaQuery.sizeOf(context).width;
     final size = TeigiBreakpoints.sizeOf(width);
+    final scheme = Theme.of(context).colorScheme;
 
     final destinations = [
-      _Dest(Icons.transform, Icons.transform, l10n.navConvert),
+      _Dest(Icons.sync_alt, Icons.sync_alt, l10n.navConvert),
       _Dest(Icons.queue_outlined, Icons.queue, l10n.navQueue),
       _Dest(Icons.bookmark_outline, Icons.bookmark, l10n.navPresets),
       _Dest(Icons.settings_outlined, Icons.settings, l10n.navSettings),
@@ -46,9 +49,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     return CallbackShortcuts(
       bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyO, control: true): () {
-          _pickFiles();
-        },
+        const SingleActivator(LogicalKeyboardKey.keyO, control: true): _pickFiles,
         const SingleActivator(LogicalKeyboardKey.enter, control: true): () {
           ref.read(conversionEngineProvider).start();
         },
@@ -66,7 +67,11 @@ class _AppShellState extends ConsumerState<AppShell> {
             final router = GoRouter.of(context);
             final files = await _import.fromDropped(details.files);
             if (files.isEmpty) return;
-            ref.read(queueProvider.notifier).addFiles(files);
+            final pending = ref.read(pendingPresetProvider);
+            ref.read(queueProvider.notifier).addFiles(files, preset: pending);
+            if (pending != null) {
+              ref.read(pendingPresetProvider.notifier).state = null;
+            }
             router.go('/convert');
           },
           child: Stack(
@@ -77,22 +82,16 @@ class _AppShellState extends ConsumerState<AppShell> {
                     if (size != TeigiWindowSize.compact)
                       NavigationRail(
                         selectedIndex: selected,
-                        extended: size == TeigiWindowSize.expanded,
+                        extended: false,
                         labelType: size == TeigiWindowSize.expanded
-                            ? NavigationRailLabelType.none
-                            : NavigationRailLabelType.all,
+                            ? NavigationRailLabelType.all
+                            : NavigationRailLabelType.selected,
                         onDestinationSelected: (i) => context.go(_locations[i]),
-                        leading: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: TeigiSpacing.sm,
+                        leading: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: TeigiSpacing.md,
                           ),
-                          child: Tooltip(
-                            message: l10n.appTitle,
-                            child: Icon(
-                              Icons.movie_filter_outlined,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
+                          child: TeigiMark(size: 32),
                         ),
                         destinations: [
                           for (final d in destinations)
@@ -102,19 +101,16 @@ class _AppShellState extends ConsumerState<AppShell> {
                               label: Text(d.label),
                             ),
                         ],
-                        trailing: IconButton(
-                          tooltip: l10n.about,
-                          icon: const Icon(Icons.info_outline),
-                          onPressed: () => context.go('/about'),
-                        ),
                       ),
-                    const VerticalDivider(width: 1),
+                    if (size != TeigiWindowSize.compact)
+                      const VerticalDivider(width: 1),
                     Expanded(child: widget.child),
                   ],
                 ),
                 bottomNavigationBar: size == TeigiWindowSize.compact
                     ? NavigationBar(
-                        selectedIndex: selected.clamp(0, destinations.length - 1),
+                        selectedIndex:
+                            selected.clamp(0, destinations.length - 1),
                         destinations: [
                           for (final d in destinations)
                             NavigationDestination(
@@ -130,30 +126,36 @@ class _AppShellState extends ConsumerState<AppShell> {
               if (_dragOver)
                 Positioned.fill(
                   child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primaryContainer
-                            .withValues(alpha: 0.92),
-                      ),
+                    child: ColoredBox(
+                      color: scheme.scrim.withValues(alpha: 0.18),
                       child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.file_download_outlined,
-                              size: 64,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerHighest,
+                            borderRadius: TeigiRadii.extraLarge,
+                            border: Border.all(color: scheme.primary, width: 2),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: TeigiSpacing.xxl,
+                              vertical: TeigiSpacing.xl,
                             ),
-                            const SizedBox(height: TeigiSpacing.md),
-                            Text(
-                              l10n.dropFiles,
-                              style: Theme.of(context).textTheme.headlineSmall,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.south,
+                                  size: 36,
+                                  color: scheme.primary,
+                                ),
+                                const SizedBox(height: TeigiSpacing.sm),
+                                Text(
+                                  l10n.releaseToAdd,
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -170,7 +172,11 @@ class _AppShellState extends ConsumerState<AppShell> {
     final router = GoRouter.of(context);
     final files = await _import.pickFiles();
     if (files.isEmpty) return;
-    ref.read(queueProvider.notifier).addFiles(files);
+    final pending = ref.read(pendingPresetProvider);
+    ref.read(queueProvider.notifier).addFiles(files, preset: pending);
+    if (pending != null) {
+      ref.read(pendingPresetProvider.notifier).state = null;
+    }
     router.go('/convert');
   }
 }

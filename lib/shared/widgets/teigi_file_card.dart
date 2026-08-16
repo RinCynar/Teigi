@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:teigi/core/domain/media_type.dart';
 import 'package:teigi/core/models/conversion_task.dart';
+import 'package:teigi/core/utils/file_identity.dart';
 import 'package:teigi/theme/tokens.dart';
 
 IconData iconForMediaType(MediaType type) {
@@ -14,15 +17,15 @@ IconData iconForMediaType(MediaType type) {
   };
 }
 
-/// One conversion item as a Material surface.
-class TeigiFileCard extends StatelessWidget {
+/// Media item surface with idle / hover / selected / running / error states.
+class TeigiFileCard extends StatefulWidget {
   final ConversionTask task;
   final String conversionLabel;
-  final String? recommendedLabel;
+  final String? metaLabel;
+  final bool selected;
   final String configureLabel;
   final String removeLabel;
   final String retryLabel;
-  final String Function(TaskStatus status) statusLabel;
   final VoidCallback onConfigure;
   final VoidCallback onRemove;
   final VoidCallback? onRetry;
@@ -31,41 +34,69 @@ class TeigiFileCard extends StatelessWidget {
     super.key,
     required this.task,
     required this.conversionLabel,
-    this.recommendedLabel,
+    this.metaLabel,
+    this.selected = false,
     required this.configureLabel,
     required this.removeLabel,
     required this.retryLabel,
-    required this.statusLabel,
     required this.onConfigure,
     required this.onRemove,
     this.onRetry,
   });
 
   @override
+  State<TeigiFileCard> createState() => _TeigiFileCardState();
+}
+
+class _TeigiFileCardState extends State<TeigiFileCard> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final task = widget.task;
     final type = task.source.mediaType;
+    final failed = task.status == TaskStatus.failed;
+    final completed = task.status == TaskStatus.completed;
 
-    return Material(
-      color: scheme.surfaceContainerLow,
-      borderRadius: TeigiRadii.fileItem,
-      child: Padding(
-        padding: const EdgeInsets.all(TeigiSpacing.card),
+    final Color fill;
+    if (failed) {
+      fill = scheme.errorContainer;
+    } else if (widget.selected) {
+      fill = scheme.primaryContainer;
+    } else if (_hovered) {
+      fill = scheme.surfaceContainerHigh;
+    } else if (completed) {
+      fill = scheme.surfaceContainerLowest;
+    } else {
+      fill = scheme.surfaceContainerLow;
+    }
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: TeigiMotion.fast,
+        decoration: BoxDecoration(
+          color: fill,
+          borderRadius: TeigiRadii.fileItem,
+          border: Border.all(
+            color: widget.selected
+                ? scheme.primary
+                : task.isRunning
+                    ? scheme.outlineVariant
+                    : scheme.outlineVariant.withValues(alpha: 0.4),
+          ),
+        ),
+        padding: const EdgeInsets.all(TeigiSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: scheme.surfaceContainerHigh,
-                    borderRadius: TeigiRadii.medium,
-                  ),
-                  child: Icon(iconForMediaType(type), color: scheme.primary),
-                ),
-                const SizedBox(width: TeigiSpacing.sm),
+                _MediaWell(task: task, type: type),
+                const SizedBox(width: TeigiSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,128 +105,126 @@ class TeigiFileCard extends StatelessWidget {
                         task.source.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      const SizedBox(height: TeigiSpacing.xxs),
-                      Text(
-                        '${task.source.extension.toUpperCase()} · ${_typeName(type)}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                      ),
+                      if (widget.metaLabel != null) ...[
+                        const SizedBox(height: TeigiSpacing.xxs),
+                        Text(
+                          widget.metaLabel!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
                 PopupMenuButton<String>(
-                  tooltip: removeLabel,
+                  tooltip: widget.configureLabel,
                   icon: const Icon(Icons.more_vert),
                   onSelected: (value) {
-                    if (value == 'remove') onRemove();
-                    if (value == 'retry') onRetry?.call();
+                    if (value == 'configure') widget.onConfigure();
+                    if (value == 'remove') widget.onRemove();
+                    if (value == 'retry') widget.onRetry?.call();
                   },
                   itemBuilder: (context) => [
-                    if (task.status == TaskStatus.failed && onRetry != null)
-                      PopupMenuItem(value: 'retry', child: Text(retryLabel)),
-                    PopupMenuItem(value: 'remove', child: Text(removeLabel)),
+                    PopupMenuItem(
+                      value: 'configure',
+                      child: Text(widget.configureLabel),
+                    ),
+                    if (failed && widget.onRetry != null)
+                      PopupMenuItem(
+                        value: 'retry',
+                        child: Text(widget.retryLabel),
+                      ),
+                    PopupMenuItem(
+                      value: 'remove',
+                      child: Text(widget.removeLabel),
+                    ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: TeigiSpacing.sm),
+            const SizedBox(height: TeigiSpacing.md),
             Row(
               children: [
                 Text(
-                  conversionLabel,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: scheme.onSurface,
-                      ),
+                  widget.conversionLabel,
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
-                if (task.recommended && recommendedLabel != null) ...[
-                  const SizedBox(width: TeigiSpacing.xs),
-                  Text(
-                    recommendedLabel!,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: scheme.primary,
-                        ),
-                  ),
-                ],
+                const Spacer(),
+                if (completed)
+                  Icon(Icons.check_circle, size: 18, color: scheme.primary),
+                if (failed)
+                  Icon(Icons.error_outline, size: 18, color: scheme.error),
               ],
             ),
-            if (task.isRunning || task.progress > 0) ...[
+            if (task.isRunning ||
+                (task.progress > 0 && !completed && !failed)) ...[
               const SizedBox(height: TeigiSpacing.sm),
               ClipRRect(
                 borderRadius: TeigiRadii.extraSmall,
                 child: LinearProgressIndicator(
                   value: task.status == TaskStatus.queued ? null : task.progress,
-                  minHeight: 6,
+                  minHeight: 4,
                 ),
-              ),
-              const SizedBox(height: TeigiSpacing.xxs),
-              Text(
-                _progressLine(task),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
               ),
             ],
-            if (task.status == TaskStatus.failed && task.error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: TeigiSpacing.xs),
-                child: Text(
-                  task.error!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: scheme.error),
-                ),
+            if (failed && task.error != null) ...[
+              const SizedBox(height: TeigiSpacing.xs),
+              Text(
+                task.error!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: scheme.onErrorContainer),
               ),
-            const SizedBox(height: TeigiSpacing.sm),
-            Row(
-              children: [
-                TextButton(
-                  onPressed: onConfigure,
-                  child: Text(configureLabel),
-                ),
-                const Spacer(),
-                Text(
-                  statusLabel(task.status),
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: _statusColor(task.status, scheme),
-                      ),
-                ),
-              ],
-            ),
+            ],
           ],
         ),
       ),
     );
   }
+}
 
-  String _typeName(MediaType type) => type.name;
+class _MediaWell extends StatelessWidget {
+  final ConversionTask task;
+  final MediaType type;
 
-  String _progressLine(ConversionTask task) {
-    final pct = '${(task.progress * 100).toStringAsFixed(0)}%';
-    final bits = <String>[pct];
-    if (task.speedX > 0) {
-      bits.add('${task.speedX.toStringAsFixed(1)}x');
+  const _MediaWell({required this.task, required this.type});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final ext = task.source.extension;
+
+    Widget child;
+    if (type == MediaType.image && FileIdentity.isReadableImage(ext)) {
+      child = Image.file(
+        File(task.source.path),
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => Icon(
+          Icons.image_outlined,
+          color: scheme.onSurfaceVariant,
+        ),
+      );
+    } else {
+      child = Icon(
+        iconForMediaType(type),
+        color: scheme.onSurfaceVariant,
+      );
     }
-    if (task.remaining != null) {
-      final d = task.remaining!;
-      final m = d.inMinutes;
-      final s = d.inSeconds.remainder(60);
-      bits.add('ETA $m:${s.toString().padLeft(2, '0')}');
-    }
-    return bits.join(' · ');
-  }
 
-  Color _statusColor(TaskStatus status, ColorScheme scheme) {
-    return switch (status) {
-      TaskStatus.completed => scheme.primary,
-      TaskStatus.failed => scheme.error,
-      TaskStatus.running || TaskStatus.preparing => scheme.primary,
-      _ => scheme.onSurfaceVariant,
-    };
+    return ClipRRect(
+      borderRadius: TeigiRadii.medium,
+      child: ColoredBox(
+        color: scheme.surfaceContainerHighest,
+        child: SizedBox(width: 72, height: 56, child: child),
+      ),
+    );
   }
 }

@@ -33,11 +33,51 @@ class L10n {
   String get menu => _t({'zh': '菜单', 'ja': 'メニュー', 'en': 'Menu'});
   String get convertTitle => _t({'zh': '转换', 'ja': '変換', 'en': 'Convert'});
   String get convertSubtitle =>
-      _t({'zh': '转换你的媒体', 'ja': 'メディアを変換', 'en': 'Transform your media'});
+      _t({'zh': '转换你的媒体', 'ja': 'メディアを変換', 'en': 'Convert your media'});
+  String get dropToStart => _t({
+        'zh': '把文件拖到这里开始',
+        'ja': 'ファイルをドロップして開始',
+        'en': 'Drop files here to get started',
+      });
   String get dropFiles =>
       _t({'zh': '将文件拖到这里', 'ja': 'ファイルをドロップ', 'en': 'Drop files here'});
+  String get dropHint => _t({
+        'zh': '也可以把文件拖到这里',
+        'ja': 'ここにドラッグしても追加できます',
+        'en': 'You can also drag files here',
+      });
   String get dropFilesAnywhere =>
       _t({'zh': '也可拖放到窗口任意位置', 'ja': 'ウィンドウのどこへでもドロップできます', 'en': 'Drop files anywhere'});
+  String get releaseToAdd =>
+      _t({'zh': '松开以添加', 'ja': '離して追加', 'en': 'Release to add media'});
+  String fileCount(int n) =>
+      _t({'zh': '$n 个文件', 'ja': '$n 件', 'en': n == 1 ? '1 file' : '$n files'});
+  String get output => _t({'zh': '输出', 'ja': '出力', 'en': 'Output'});
+  String get qualityHigh => _t({'zh': '高', 'ja': '高', 'en': 'High'});
+  String get qualityBalanced =>
+      _t({'zh': '均衡', 'ja': 'バランス', 'en': 'Balanced'});
+  String get qualitySmall => _t({'zh': '体积', 'ja': '軽量', 'en': 'Small'});
+  String get recommendedConversion =>
+      _t({'zh': '推荐转换', 'ja': 'おすすめの変換', 'en': 'Recommended conversion'});
+  String get useThis => _t({'zh': '使用此方案', 'ja': 'これを使う', 'en': 'Use this'});
+  String get checkingFfmpeg =>
+      _t({'zh': '正在检测 FFmpeg…', 'ja': 'FFmpeg を確認中…', 'en': 'Checking FFmpeg…'});
+  String get ffmpegNotConfigured => _t({
+        'zh': '尚未配置 FFmpeg',
+        'ja': 'FFmpeg が未設定です',
+        'en': "FFmpeg isn't configured",
+      });
+  String get advanced => _t({'zh': '高级', 'ja': '詳細', 'en': 'Advanced'});
+  String get queueIdleHint => _t({
+        'zh': '任务会在开始转换后出现在这里',
+        'ja': '変換を始めるとここに表示されます',
+        'en': 'Tasks show up here after you start converting',
+      });
+  String presetWillApply(String name) => _t({
+        'zh': '接下来添加的文件将使用 $name',
+        'ja': '次に追加するファイルは $name になります',
+        'en': 'Next files will use $name',
+      });
   String get supportedFormats => _t({
         'zh': 'MP4 · MKV · MOV · MP3 · WAV · PNG · WebP',
         'ja': 'MP4 · MKV · MOV · MP3 · WAV · PNG · WebP',

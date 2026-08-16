@@ -7,6 +7,7 @@ import 'package:teigi/providers/queue_provider.dart';
 import 'package:teigi/providers/quick_formats_provider.dart';
 import 'package:teigi/providers/recent_presets_provider.dart';
 import 'package:teigi/shared/layout/content_constraint.dart';
+import 'package:teigi/shared/widgets/teigi_mark.dart';
 import 'package:teigi/theme/tokens.dart';
 
 class PresetsPage extends ConsumerWidget {
@@ -110,10 +111,10 @@ class _PresetGroup extends ConsumerWidget {
           runSpacing: TeigiSpacing.xs,
           children: [
             for (final preset in presets)
-              ActionChip(
-                avatar: const Icon(Icons.bookmark_outline, size: 18),
-                label: Text(preset.name),
-                onPressed: () {
+              TeigiPresetCard(
+                title: preset.name,
+                subtitle: preset.videoCodec ?? preset.audioCodec ?? preset.container,
+                onTap: () {
                   ref.read(queueProvider.notifier).applyPreset(preset);
                   ref.read(recentPresetsProvider.notifier).record(preset.id);
                 },

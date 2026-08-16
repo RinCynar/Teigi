@@ -46,7 +46,8 @@ abstract final class TeigiRadii {
 abstract final class TeigiBreakpoints {
   static const double compact = 600;
   static const double expanded = 1024;
-  static const double maxContent = 1280;
+  static const double maxContent = 1120;
+  static const double configSheet = 360;
 
   static TeigiWindowSize sizeOf(double width) {
     if (width < compact) return TeigiWindowSize.compact;

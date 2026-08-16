@@ -106,6 +106,22 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
     ];
   }
 
+  void applyQuality(QualityProfile quality) {
+    state = [
+      for (final t in state)
+        if (t.isFinished)
+          t
+        else
+          t.copyWith(
+            options: t.options.copyWith(
+              crf: quality.crf,
+              bitrateKbps: quality.audioBitrateKbps,
+              imageQuality: quality.imageQuality,
+            ),
+          ),
+    ];
+  }
+
   void retryTask(String id) {
     state = [
       for (final t in state)
