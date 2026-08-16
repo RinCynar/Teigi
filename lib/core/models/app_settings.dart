@@ -44,7 +44,7 @@ class AppSettings {
     this.concurrency = 2,
     this.hardwareAccel = false,
     this.useDynamicColor = true,
-    this.seedColor = const Color(0xFF6750A4),
+    this.seedColor = const Color(0xFF3D5BA9),
     this.themeMode = 'system',
     this.openOutputAfterDone = false,
     this.overwritePolicy = OverwritePolicy.keepBoth,
@@ -88,7 +88,7 @@ class AppSettings {
       concurrency: prefs.getInt('concurrency') ?? 2,
       hardwareAccel: prefs.getBool('hardware_accel') ?? false,
       useDynamicColor: prefs.getBool('use_dynamic_color') ?? true,
-      seedColor: _parseColor(prefs.getString('seed_color'), 0xFF6750A4),
+      seedColor: _parseColor(prefs.getString('seed_color'), 0xFF3D5BA9),
       themeMode: prefs.getString('theme_mode') ?? 'system',
       openOutputAfterDone: prefs.getBool('open_output_after_done') ?? false,
       overwritePolicy: OverwritePolicy.values[

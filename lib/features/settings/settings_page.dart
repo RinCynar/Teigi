@@ -23,11 +23,14 @@ class SettingsPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.navSettings),
-        // 使用 go_router 返回，避免与路由栈不一致导致黑屏。
-        leading: BackButton(onPressed: () => context.pop()),
+        automaticallyImplyLeading: false,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1280),
+          child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         children: [
           _SectionCard(
             title: 'ffmpeg',
@@ -104,6 +107,7 @@ class SettingsPage extends ConsumerWidget {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(l10n.hardwareAccel),
+                subtitle: Text(l10n.hardwareAccelHint),
                 value: settings.hardwareAccel,
                 onChanged: (v) =>
                     ref.read(settingsProvider.notifier).setHardwareAccel(v),
@@ -243,6 +247,8 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
         ],
+          ),
+        ),
       ),
     );
   }

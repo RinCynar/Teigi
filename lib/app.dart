@@ -1,36 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:teigi/features/home/home_page.dart';
+import 'package:teigi/features/convert/convert_page.dart';
+import 'package:teigi/features/presets/presets_page.dart';
+import 'package:teigi/features/queue/queue_panel.dart';
 import 'package:teigi/features/settings/about_page.dart';
 import 'package:teigi/features/settings/settings_page.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/settings_provider.dart';
+import 'package:teigi/shared/layout/app_shell.dart';
 import 'package:teigi/theme/teigi_theme.dart';
 
-/// 路由表。
 final router = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/convert',
   routes: [
-    GoRoute(
-      path: '/',
-      name: 'home',
-      builder: (context, state) => const HomePage(),
-    ),
-    GoRoute(
-      path: '/settings',
-      name: 'settings',
-      builder: (context, state) => const SettingsPage(),
-    ),
-    GoRoute(
-      path: '/about',
-      name: 'about',
-      builder: (context, state) => const AboutPage(),
+    GoRoute(path: '/', redirect: (_, _) => '/convert'),
+    ShellRoute(
+      builder: (context, state, child) => AppShell(child: child),
+      routes: [
+        GoRoute(
+          path: '/convert',
+          name: 'convert',
+          builder: (context, state) => const ConvertPage(),
+        ),
+        GoRoute(
+          path: '/queue',
+          name: 'queue',
+          builder: (context, state) => const QueuePanel(),
+        ),
+        GoRoute(
+          path: '/presets',
+          name: 'presets',
+          builder: (context, state) => const PresetsPage(),
+        ),
+        GoRoute(
+          path: '/settings',
+          name: 'settings',
+          builder: (context, state) => const SettingsPage(),
+        ),
+        GoRoute(
+          path: '/about',
+          name: 'about',
+          builder: (context, state) => const AboutPage(),
+        ),
+      ],
     ),
   ],
 );
 
-/// Teigi 应用根组件。
 class TeigiApp extends ConsumerWidget {
   const TeigiApp({super.key});
 

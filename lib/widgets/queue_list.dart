@@ -105,7 +105,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
       onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        color: _hovered ? scheme.surfaceContainerHigh : Colors.transparent,
+        color: _hovered ? scheme.surfaceContainerHigh : scheme.surface,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
@@ -247,9 +247,10 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
   Icon _statusIcon(TaskStatus status, ColorScheme scheme) {
     final (icon, color) = switch (status) {
       TaskStatus.queued => (Icons.schedule, scheme.onSurfaceVariant),
+      TaskStatus.preparing => (Icons.hourglass_top, scheme.primary),
       TaskStatus.running => (Icons.downloading, scheme.primary),
       TaskStatus.paused => (Icons.pause_circle_outline, scheme.onSurfaceVariant),
-      TaskStatus.completed => (Icons.check_circle, Colors.green),
+      TaskStatus.completed => (Icons.check_circle, scheme.primary),
       TaskStatus.failed => (Icons.error, scheme.error),
       TaskStatus.canceled => (Icons.cancel, scheme.outline),
     };
@@ -258,6 +259,7 @@ class _TaskRowState extends ConsumerState<_TaskRow> {
 
   String _statusLabel(TaskStatus status, L10n l10n) => switch (status) {
         TaskStatus.queued => l10n.queued,
+        TaskStatus.preparing => l10n.converting,
         TaskStatus.running => l10n.converting,
         TaskStatus.paused => l10n.stop,
         TaskStatus.completed => l10n.completed,

@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:teigi/core/domain/preset_recommendation.dart';
 import 'package:teigi/core/models/conversion_options.dart';
 import 'package:teigi/core/models/conversion_task.dart';
+import 'package:teigi/core/models/format_preset.dart';
 import 'package:teigi/core/models/media_file.dart';
 
 /// 队列管理器：维护转换任务列表并控制其状态流转。
@@ -11,18 +13,37 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
 
   int _seq = 0;
 
+  static const _recommend = PresetRecommendationService();
+
   /// 追加文件到队列（去重：对队列中已有路径及输入列表内重复均生效）。
-  void addFiles(List<MediaFile> files, {String? targetFormat}) {
+  ///
+  /// When [targetFormat] is omitted, a recommended destination is applied
+  /// and marked so the UI can show it as a suggestion.
+  void addFiles(
+    List<MediaFile> files, {
+    String? targetFormat,
+    ConversionOptions? options,
+    FormatPreset? preset,
+  }) {
     final existingPaths = state.map((t) => t.source.path).toSet();
     final newTasks = <ConversionTask>[];
     for (final f in files) {
       if (existingPaths.contains(f.path)) continue;
       existingPaths.add(f.path);
+      final recommended = targetFormat == null && preset == null
+          ? _recommend.recommendForFile(f)
+          : null;
+      final format =
+          targetFormat ?? preset?.extension ?? recommended?.preset.extension;
+      final resolvedOptions =
+          options ?? preset?.resolvedOptions() ?? recommended?.preset.resolvedOptions();
       newTasks.add(
         ConversionTask(
           id: 'task_${_seq++}_${DateTime.now().millisecondsSinceEpoch}',
           source: f,
-          targetFormat: targetFormat,
+          targetFormat: format,
+          options: resolvedOptions ?? const ConversionOptions(),
+          recommended: recommended != null,
         ),
       );
     }
@@ -54,7 +75,7 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
   void setTargetFormatForAll(String? format) {
     state = [
       for (final t in state)
-        t.copyWith(targetFormat: format),
+        t.copyWith(targetFormat: format, recommended: false),
     ];
   }
 
@@ -62,7 +83,42 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
   void setTargetFormat(String id, String? format) {
     state = [
       for (final t in state)
-        if (t.id == id) t.copyWith(targetFormat: format) else t,
+        if (t.id == id)
+          t.copyWith(targetFormat: format, recommended: false)
+        else
+          t,
+    ];
+  }
+
+  /// Apply a built-in or custom preset to every unfinished task.
+  void applyPreset(FormatPreset preset) {
+    final options = preset.resolvedOptions();
+    state = [
+      for (final t in state)
+        if (t.isFinished)
+          t
+        else
+          t.copyWith(
+            targetFormat: preset.extension,
+            options: options,
+            recommended: false,
+          ),
+    ];
+  }
+
+  void retryTask(String id) {
+    state = [
+      for (final t in state)
+        if (t.id == id)
+          t.copyWith(
+            status: TaskStatus.queued,
+            progress: 0,
+            remaining: null,
+            speedX: 0,
+            error: null,
+          )
+        else
+          t,
     ];
   }
 

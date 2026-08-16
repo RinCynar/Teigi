@@ -3,12 +3,13 @@ import 'package:teigi/core/models/media_file.dart';
 
 /// 队列中单个任务的当前状态。
 enum TaskStatus {
-  queued, // 等待中
-  running, // 正在转换
-  paused, // 已暂停（等待中，不参与调度）
-  completed, // 已完成
-  failed, // 失败
-  canceled; // 已取消
+  queued,
+  preparing,
+  running,
+  paused,
+  completed,
+  failed,
+  canceled;
 }
 
 /// 队列中的一个转换任务。
@@ -37,6 +38,12 @@ class ConversionTask {
   /// 失败原因。
   String? error;
 
+  final DateTime? startedAt;
+  final DateTime? completedAt;
+
+  /// True when [targetFormat] came from [PresetRecommendationService].
+  final bool recommended;
+
   ConversionTask({
     required this.id,
     required this.source,
@@ -48,6 +55,9 @@ class ConversionTask {
     this.speedX = 0,
     this.outputPath,
     this.error,
+    this.startedAt,
+    this.completedAt,
+    this.recommended = false,
   });
 
   /// 此任务是否正在运行。
@@ -59,15 +69,20 @@ class ConversionTask {
       status == TaskStatus.failed ||
       status == TaskStatus.canceled;
 
+  static const _unset = Object();
+
   ConversionTask copyWith({
     String? targetFormat,
     ConversionOptions? options,
     TaskStatus? status,
     double? progress,
-    Duration? remaining,
+    Object? remaining = _unset,
     double? speedX,
     String? outputPath,
-    String? error,
+    Object? error = _unset,
+    DateTime? startedAt,
+    DateTime? completedAt,
+    bool? recommended,
   }) {
     return ConversionTask(
       id: id,
@@ -76,10 +91,13 @@ class ConversionTask {
       options: options ?? this.options,
       status: status ?? this.status,
       progress: progress ?? this.progress,
-      remaining: remaining ?? this.remaining,
+      remaining: remaining == _unset ? this.remaining : remaining as Duration?,
       speedX: speedX ?? this.speedX,
       outputPath: outputPath ?? this.outputPath,
-      error: error ?? this.error,
+      error: error == _unset ? this.error : error as String?,
+      startedAt: startedAt ?? this.startedAt,
+      completedAt: completedAt ?? this.completedAt,
+      recommended: recommended ?? this.recommended,
     );
   }
 }

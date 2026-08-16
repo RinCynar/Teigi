@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:teigi/core/ffmpeg/ffmpeg_runner.dart';
 import 'package:teigi/core/models/conversion_task.dart';
+import 'package:teigi/core/services/task_scheduler.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
 import 'package:teigi/providers/queue_provider.dart';
 import 'package:teigi/providers/settings_provider.dart';
@@ -25,10 +26,17 @@ class ConversionEngine {
 
   /// 运行中的任务 id -> 对应进程。
   final Map<String, Process> _running = {};
+  final TaskScheduler _scheduler = const TaskScheduler();
   bool _disposed = false;
   bool _started = false;
 
   bool get isStarted => _started;
+
+  void _setRunning(bool value) {
+    _started = value;
+    if (_disposed) return;
+    ref.read(conversionRunningProvider.notifier).state = value;
+  }
 
   /// 初始化：订阅队列变化（仅启动后才会调度新任务）。
   void init() {
@@ -39,13 +47,13 @@ class ConversionEngine {
 
   /// 开始处理队列。
   void start() {
-    _started = true;
+    _setRunning(true);
     _schedule();
   }
 
   /// 停止处理：终止所有运行中的进程。
   void stop() {
-    _started = false;
+    _setRunning(false);
     for (final process in _running.values) {
       try {
         process.kill(ProcessSignal.sigterm);
@@ -55,8 +63,14 @@ class ConversionEngine {
   }
 
   void dispose() {
-    stop();
     _disposed = true;
+    _started = false;
+    for (final process in _running.values) {
+      try {
+        process.kill(ProcessSignal.sigterm);
+      } catch (_) {}
+    }
+    _running.clear();
   }
 
   /// 从队列中取出可调度任务并启动。
@@ -71,10 +85,12 @@ class ConversionEngine {
     if (capacity <= 0) return;
 
     final notifier = ref.read(queueProvider.notifier);
-    for (var i = 0; i < capacity; i++) {
-      final task = notifier.nextSchedulable();
-      if (task == null) break;
-      // 未指定目标格式的任务直接标记失败。
+    final picked = _scheduler.selectNext(
+      tasks: ref.read(queueProvider),
+      runningCount: _running.length,
+      concurrency: settings.concurrency,
+    );
+    for (final task in picked) {
       if (task.targetFormat == null || task.targetFormat!.isEmpty) {
         notifier.updateTask(
           task.copyWith(status: TaskStatus.failed, error: '未指定目标格式'),
@@ -85,14 +101,8 @@ class ConversionEngine {
     }
 
     // 队列耗尽且无运行中任务时自动复位，避免按钮停留在「转换中…」。
-    if (_running.isEmpty) {
-      final unfinished = ref
-          .read(queueProvider)
-          .where((t) => !t.isFinished)
-          .toList();
-      if (unfinished.isEmpty) {
-        _started = false;
-      }
+    if (_running.isEmpty && _scheduler.isExhausted(ref.read(queueProvider))) {
+      _setRunning(false);
     }
   }
 
@@ -108,7 +118,12 @@ class ConversionEngine {
       options: task.options.copyWith(hardwareAccel: settings.hardwareAccel),
     );
 
-    notifier.updateTask(effectiveTask.copyWith(status: TaskStatus.running));
+    notifier.updateTask(
+      effectiveTask.copyWith(
+        status: TaskStatus.running,
+        startedAt: DateTime.now(),
+      ),
+    );
 
     try {
       final result = await runner.convert(
@@ -143,6 +158,7 @@ class ConversionEngine {
             status: TaskStatus.completed,
             progress: 1.0,
             outputPath: result.outputPath,
+            completedAt: DateTime.now(),
           ),
         );
         _logger.i('转换完成: ${task.source.path} → ${result.outputPath}');
@@ -203,6 +219,9 @@ class _SpeedEstimator {
     return Duration(milliseconds: (remainingSec * 1000).round());
   }
 }
+
+/// True while the engine is processing the queue.
+final conversionRunningProvider = StateProvider<bool>((ref) => false);
 
 /// 转换引擎 Provider（保持单例运行）。
 final conversionEngineProvider = Provider<ConversionEngine>((ref) {

@@ -1,5 +1,6 @@
-/// 媒体文件大类。
-enum MediaType { video, audio, image }
+import 'package:teigi/core/domain/media_type.dart';
+
+export 'package:teigi/core/domain/media_type.dart';
 
 /// 内置格式定义：扩展名、所属类别、以及智能默认的编码参数。
 class FormatDefinition {

@@ -26,9 +26,57 @@ class L10n {
 
   // ---- 应用/导航 ----
   String get appTitle => _t({'zh': 'Teigi', 'ja': 'Teigi', 'en': 'Teigi'});
+  String get navConvert => _t({'zh': '转换', 'ja': '変換', 'en': 'Convert'});
   String get navQueue => _t({'zh': '队列', 'ja': 'キュー', 'en': 'Queue'});
+  String get navPresets => _t({'zh': '预设', 'ja': 'プリセット', 'en': 'Presets'});
   String get navSettings => _t({'zh': '设置', 'ja': '設定', 'en': 'Settings'});
   String get menu => _t({'zh': '菜单', 'ja': 'メニュー', 'en': 'Menu'});
+  String get convertTitle => _t({'zh': '转换', 'ja': '変換', 'en': 'Convert'});
+  String get convertSubtitle =>
+      _t({'zh': '转换你的媒体', 'ja': 'メディアを変換', 'en': 'Transform your media'});
+  String get dropFiles =>
+      _t({'zh': '将文件拖到这里', 'ja': 'ファイルをドロップ', 'en': 'Drop files here'});
+  String get dropFilesAnywhere =>
+      _t({'zh': '也可拖放到窗口任意位置', 'ja': 'ウィンドウのどこへでもドロップできます', 'en': 'Drop files anywhere'});
+  String get supportedFormats => _t({
+        'zh': 'MP4 · MKV · MOV · MP3 · WAV · PNG · WebP',
+        'ja': 'MP4 · MKV · MOV · MP3 · WAV · PNG · WebP',
+        'en': 'MP4 · MKV · MOV · MP3 · WAV · PNG · WebP',
+      });
+  String get startConversion =>
+      _t({'zh': '开始转换', 'ja': '変換を開始', 'en': 'Start conversion'});
+  String get recentPresets =>
+      _t({'zh': '最近使用', 'ja': '最近', 'en': 'Recent'});
+  String get recommended =>
+      _t({'zh': '推荐', 'ja': 'おすすめ', 'en': 'Recommended'});
+  String get configure => _t({'zh': '配置', 'ja': '設定', 'en': 'Configure'});
+  String get retry => _t({'zh': '重试', 'ja': '再試行', 'en': 'Retry'});
+  String get filesHeading => _t({'zh': '文件', 'ja': 'ファイル', 'en': 'Files'});
+  String filesAdded(int n) =>
+      _t({'zh': '已添加 $n 个文件', 'ja': '$n 件追加しました', 'en': '$n file(s) added'});
+  String get builtinPresets =>
+      _t({'zh': '内置预设', 'ja': '内蔵プリセット', 'en': 'Built-in presets'});
+  String get myPresets =>
+      _t({'zh': '我的预设', 'ja': 'マイプリセット', 'en': 'My presets'});
+  String get presetsEmpty => _t({
+        'zh': '还没有自定义预设。在配置里保存即可出现在这里。',
+        'ja': 'カスタムプリセットはまだありません。',
+        'en': 'No custom presets yet. Save one from Configure.',
+      });
+  String get hardwareAccelHint => _t({
+        'zh': '有益时使用硬件编码',
+        'ja': '有効な場合にハードウェアエンコードを使います',
+        'en': 'Uses hardware encoding when beneficial.',
+      });
+  String get ffmpegMissingBody => _t({
+        'zh': '未找到 FFmpeg。请指定路径，或安装后再试。',
+        'ja': 'FFmpeg が見つかりません。パスを指定するか、インストールしてください。',
+        'en': "FFmpeg isn't installed. Locate it, or install it first.",
+      });
+  String get locateFfmpeg =>
+      _t({'zh': '定位 FFmpeg', 'ja': 'FFmpeg を指定', 'en': 'Locate FFmpeg'});
+  String conversionPair(String from, String to) =>
+      '${from.toUpperCase()} → ${to.toUpperCase()}';
 
   // ---- 队列操作 ----
   String get editQueue => _t({'zh': '编辑队列', 'ja': 'キュー編集', 'en': 'Edit queue'});

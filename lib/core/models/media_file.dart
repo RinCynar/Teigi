@@ -1,10 +1,15 @@
 import 'package:path/path.dart' as p;
+import 'package:teigi/core/domain/media_type.dart';
+import 'package:teigi/core/domain/media_type_infer.dart';
 
 /// 表示一个待转换的媒体文件。
 class MediaFile {
   final String path;
 
   const MediaFile({required this.path});
+
+  /// Inferred from the extension; ffprobe may refine this later.
+  MediaType get mediaType => inferMediaType(extension);
 
   /// 文件名（含扩展名）。
   String get name => p.basename(path);

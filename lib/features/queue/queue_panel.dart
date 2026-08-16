@@ -25,6 +25,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
     final l10n = ref.watch(l10nProvider);
     final tasks = ref.watch(queueProvider);
     final engine = ref.watch(conversionEngineProvider);
+    final engineRunning = ref.watch(conversionRunningProvider);
 
     if (tasks.isEmpty) {
       // 队列空时退出编辑模式。
@@ -64,16 +65,16 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                 tooltip: l10n.setFormatForAll,
                 onPressed: () => _setFormatForAll(context, ref),
               ),
-              if (engine.isStarted)
+              if (engineRunning)
                 IconButton(
                   icon: const Icon(Icons.stop_circle_outlined),
                   tooltip: l10n.stop,
                   onPressed: () => engine.stop(),
                 ),
               FilledButton.icon(
-                onPressed: engine.isStarted ? null : () => _startAll(context, ref),
+                onPressed: engineRunning ? null : () => _startAll(context, ref),
                 icon: const Icon(Icons.play_arrow),
-                label: Text(engine.isStarted ? l10n.converting : l10n.start),
+                label: Text(engineRunning ? l10n.converting : l10n.start),
               ),
               const SizedBox(width: 8),
               FilledButton.tonalIcon(

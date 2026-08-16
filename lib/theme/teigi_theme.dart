@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:teigi/theme/tokens.dart';
 
-/// 应用主题：Material 3 + 动态色彩（ColorScheme.fromSeed）。
-///
-/// 支持：
-/// - 浅色 / 深色模式跟随系统或手动指定
-/// - 用户自定义种子色（Material You 动态色）
-/// - 按语言内嵌字体（zh→NotoSansSC / ja→NotoSansJP / 其他→NotoSans）
+/// Material 3 theme built from a seed. All colors come from [ColorScheme].
 class TeigiTheme {
-  static const seedLight = Color(0xFF6750A4);
-  static const seedDark = Color(0xFFD0BCFF);
+  static const seedLight = TeigiColors.seed;
+  static const seedDark = TeigiColors.seed;
 
-  /// 根据语言代码返回对应字体族（仅嵌入 Regular 字重）。
   static String fontFamilyFor(String? language) {
     return switch (language) {
       'zh' => 'NotoSansSC',
@@ -19,7 +14,6 @@ class TeigiTheme {
     };
   }
 
-  /// 生成完整的 [ThemeData]。
   static ThemeData light({Color seed = seedLight, String? language}) {
     final scheme = ColorScheme.fromSeed(
       seedColor: seed,
@@ -37,64 +31,73 @@ class TeigiTheme {
   }
 
   static ThemeData _base(ColorScheme scheme, {required String fontFamily}) {
-    final color = scheme;
     return ThemeData(
       useMaterial3: true,
-      colorScheme: color,
-      scaffoldBackgroundColor: color.surface,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: scheme.surface,
       fontFamily: fontFamily,
       visualDensity: VisualDensity.adaptivePlatformDensity,
       appBarTheme: AppBarTheme(
         centerTitle: false,
-        backgroundColor: color.surfaceContainer,
-        foregroundColor: color.onSurface,
+        backgroundColor: scheme.surface,
+        foregroundColor: scheme.onSurface,
         elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       navigationRailTheme: NavigationRailThemeData(
-        backgroundColor: color.surfaceContainerLow,
-        indicatorColor: color.secondaryContainer,
+        backgroundColor: scheme.surfaceContainerLow,
+        indicatorColor: scheme.secondaryContainer,
+        selectedIconTheme: IconThemeData(color: scheme.onSecondaryContainer),
+        unselectedIconTheme: IconThemeData(color: scheme.onSurfaceVariant),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: scheme.surfaceContainer,
+        indicatorColor: scheme.secondaryContainer,
+        height: 72,
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: color.surfaceContainerLow,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        color: scheme.surfaceContainerLow,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: TeigiRadii.card),
       ),
       dialogTheme: DialogThemeData(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: scheme.surfaceContainerHigh,
+        shape: RoundedRectangleBorder(borderRadius: TeigiRadii.dialog),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: TeigiRadii.medium),
       ),
       dividerTheme: DividerThemeData(
-        color: color.outlineVariant.withValues(alpha: 0.5),
+        color: scheme.outlineVariant,
         space: 1,
       ),
-      listTileTheme: const ListTileThemeData(),
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(borderRadius: TeigiRadii.field),
         filled: true,
+        fillColor: scheme.surfaceContainerHighest,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          minimumSize: const Size(48, 44),
+          shape: RoundedRectangleBorder(borderRadius: TeigiRadii.button),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          minimumSize: const Size(48, 44),
+          shape: RoundedRectangleBorder(borderRadius: TeigiRadii.button),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          minimumSize: const Size(48, 40),
+          shape: RoundedRectangleBorder(borderRadius: TeigiRadii.button),
         ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        shape: RoundedRectangleBorder(borderRadius: TeigiRadii.large),
       ),
     );
   }
