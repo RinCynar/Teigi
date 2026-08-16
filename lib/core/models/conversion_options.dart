@@ -55,48 +55,63 @@ class ConversionOptions {
     this.overwritePolicy = OverwritePolicy.keepBoth,
   });
 
+  static const _unset = Object();
+
+  /// Pass `null` to reset a field to Auto / Original. Omit a field to keep it.
   ConversionOptions copyWith({
-    String? videoEncoder,
-    int? crf,
-    String? resolution,
-    double? frameRate,
-    String? pixelFormat,
+    Object? videoEncoder = _unset,
+    Object? crf = _unset,
+    Object? resolution = _unset,
+    Object? frameRate = _unset,
+    Object? pixelFormat = _unset,
     bool? copyVideo,
-    String? audioEncoder,
-    int? bitrateKbps,
-    int? sampleRate,
-    int? channels,
-    int? volume,
+    Object? audioEncoder = _unset,
+    Object? bitrateKbps = _unset,
+    Object? sampleRate = _unset,
+    Object? channels = _unset,
+    Object? volume = _unset,
     bool? copyAudio,
-    int? imageQuality,
-    String? imageScale,
-    String? maxResolution,
+    Object? imageQuality = _unset,
+    Object? imageScale = _unset,
+    Object? maxResolution = _unset,
     bool? hardwareAccel,
     int? threads,
-    String? outputDirectory,
-    String? fileNameTemplate,
+    Object? outputDirectory = _unset,
+    Object? fileNameTemplate = _unset,
     OverwritePolicy? overwritePolicy,
   }) {
     return ConversionOptions(
-      videoEncoder: videoEncoder ?? this.videoEncoder,
-      crf: crf ?? this.crf,
-      resolution: resolution ?? this.resolution,
-      frameRate: frameRate ?? this.frameRate,
-      pixelFormat: pixelFormat ?? this.pixelFormat,
+      videoEncoder: videoEncoder == _unset
+          ? this.videoEncoder
+          : videoEncoder as String?,
+      crf: crf == _unset ? this.crf : crf as int?,
+      resolution: resolution == _unset ? this.resolution : resolution as String?,
+      frameRate: frameRate == _unset ? this.frameRate : frameRate as double?,
+      pixelFormat:
+          pixelFormat == _unset ? this.pixelFormat : pixelFormat as String?,
       copyVideo: copyVideo ?? this.copyVideo,
-      audioEncoder: audioEncoder ?? this.audioEncoder,
-      bitrateKbps: bitrateKbps ?? this.bitrateKbps,
-      sampleRate: sampleRate ?? this.sampleRate,
-      channels: channels ?? this.channels,
-      volume: volume ?? this.volume,
+      audioEncoder:
+          audioEncoder == _unset ? this.audioEncoder : audioEncoder as String?,
+      bitrateKbps:
+          bitrateKbps == _unset ? this.bitrateKbps : bitrateKbps as int?,
+      sampleRate: sampleRate == _unset ? this.sampleRate : sampleRate as int?,
+      channels: channels == _unset ? this.channels : channels as int?,
+      volume: volume == _unset ? this.volume : volume as int?,
       copyAudio: copyAudio ?? this.copyAudio,
-      imageQuality: imageQuality ?? this.imageQuality,
-      imageScale: imageScale ?? this.imageScale,
-      maxResolution: maxResolution ?? this.maxResolution,
+      imageQuality:
+          imageQuality == _unset ? this.imageQuality : imageQuality as int?,
+      imageScale: imageScale == _unset ? this.imageScale : imageScale as String?,
+      maxResolution: maxResolution == _unset
+          ? this.maxResolution
+          : maxResolution as String?,
       hardwareAccel: hardwareAccel ?? this.hardwareAccel,
       threads: threads ?? this.threads,
-      outputDirectory: outputDirectory ?? this.outputDirectory,
-      fileNameTemplate: fileNameTemplate ?? this.fileNameTemplate,
+      outputDirectory: outputDirectory == _unset
+          ? this.outputDirectory
+          : outputDirectory as String?,
+      fileNameTemplate: fileNameTemplate == _unset
+          ? this.fileNameTemplate
+          : fileNameTemplate as String?,
       overwritePolicy: overwritePolicy ?? this.overwritePolicy,
     );
   }

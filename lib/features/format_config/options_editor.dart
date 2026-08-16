@@ -151,7 +151,7 @@ class _OptionsFormState extends ConsumerState<OptionsForm> {
                 }
               },
               icon: const Icon(Icons.bookmark_add_outlined, size: 18),
-              label: Text(l10n.saveAsQuick),
+              label: Text(l10n.saveAsPreset),
             ),
           ),
         if (type == MediaType.video) _videoSection(context),
@@ -167,42 +167,34 @@ class _OptionsFormState extends ConsumerState<OptionsForm> {
     return _Section(
       title: l10n.video,
       children: [
-        _OptionDropdown(
-          label: l10n.encoder,
-          value: _options.videoEncoder,
-          hint: l10n.autoByFormat,
-          items: const [
+        _EncodingModeTile(
+          label: l10n.encoding,
+          copy: _options.copyVideo,
+          encoder: _options.videoEncoder,
+          encoders: const [
             'libx264', 'libx265', 'libvpx-vp9', 'mpeg4', 'h264_nvenc', 'hevc_nvenc',
           ],
-          onChanged: (v) => _update(_options.copyWith(videoEncoder: v)),
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.copyVideoStream),
-          subtitle: Text(l10n.copyVideoHint),
-          value: _options.copyVideo,
-          onChanged: (v) => _update(_options.copyWith(copyVideo: v)),
+          onChanged: (copy, encoder) => _update(
+            _options.copyWith(copyVideo: copy, videoEncoder: encoder),
+          ),
         ),
         if (!_options.copyVideo) ...[
-          _OptionSlider(
+          _AutoNumberField(
             label: l10n.qualityCrf,
-            value: (_options.crf ?? 23).toDouble(),
-            min: 0,
-            max: 51,
-            divisions: 51,
-            display: (_options.crf ?? 23).toString(),
-            onChanged: (v) => _update(_options.copyWith(crf: v.round())),
+            value: _options.crf,
+            presets: const [18, 20, 23, 28],
+            onChanged: (v) => _update(_options.copyWith(crf: v)),
           ),
           _OptionTextField(
             label: l10n.resolution,
             value: _options.resolution,
-            hint: '1920x1080',
+            hint: l10n.original,
             onChanged: (v) => _update(_options.copyWith(resolution: v)),
           ),
           _OptionDropdown(
             label: l10n.frameRate,
             value: _options.frameRate?.toString(),
-            hint: l10n.keepOriginal,
+            hint: l10n.original,
             items: const ['24', '25', '30', '48', '60'],
             onChanged: (v) => _update(
               _options.copyWith(frameRate: v == null ? null : double.tryParse(v)),
@@ -226,26 +218,23 @@ class _OptionsFormState extends ConsumerState<OptionsForm> {
     return _Section(
       title: l10n.audio,
       children: [
-        _OptionDropdown(
-          label: l10n.encoder,
-          value: _options.audioEncoder,
-          hint: l10n.autoByFormat,
-          items: const [
+        _EncodingModeTile(
+          label: l10n.encoding,
+          copy: _options.copyAudio,
+          encoder: _options.audioEncoder,
+          encoders: const [
             'aac', 'libmp3lame', 'libopus', 'libvorbis', 'flac', 'pcm_s16le',
           ],
-          onChanged: (v) => _update(_options.copyWith(audioEncoder: v)),
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.copyAudioStream),
-          value: _options.copyAudio,
-          onChanged: (v) => _update(_options.copyWith(copyAudio: v)),
+          onChanged: (copy, encoder) => _update(
+            _options.copyWith(copyAudio: copy, audioEncoder: encoder),
+          ),
         ),
         if (!_options.copyAudio) ...[
-          _OptionNumberField(
+          _AutoNumberField(
             label: l10n.bitrate,
             value: _options.bitrateKbps,
-            hint: '192',
+            presets: const [128, 160, 192, 256, 320],
+            suffix: 'kbps',
             onChanged: (v) => _update(_options.copyWith(bitrateKbps: v)),
           ),
           _OptionDropdown(
@@ -436,89 +425,165 @@ class _OptionSlider extends StatelessWidget {
 }
 
 
-/// 数值输入行（支持直接输入指定数值，留空表示自动）。
-class _OptionNumberField extends ConsumerStatefulWidget {
+class _EncodingModeTile extends ConsumerWidget {
   final String label;
-  final int? value;
-  final String? hint;
-  final ValueChanged<int?> onChanged;
+  final bool copy;
+  final String? encoder;
+  final List<String> encoders;
+  final void Function(bool copy, String? encoder) onChanged;
 
-  const _OptionNumberField({
+  const _EncodingModeTile({
     required this.label,
-    required this.value,
+    required this.copy,
+    required this.encoder,
+    required this.encoders,
     required this.onChanged,
-    this.hint,
   });
 
   @override
-  ConsumerState<_OptionNumberField> createState() => _OptionNumberFieldState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
+    final mode = copy ? 'copy' : (encoder == null ? 'auto' : 'reencode');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          title: Text(label),
+          trailing: DropdownButton<String>(
+            value: mode,
+            items: [
+              DropdownMenuItem(value: 'auto', child: Text(l10n.auto)),
+              DropdownMenuItem(value: 'copy', child: Text(l10n.copyVideoStream)),
+              DropdownMenuItem(value: 'reencode', child: Text(l10n.reencode)),
+            ],
+            onChanged: (v) {
+              if (v == 'copy') onChanged(true, encoder);
+              if (v == 'auto') onChanged(false, null);
+              if (v == 'reencode') {
+                onChanged(false, encoder ?? encoders.first);
+              }
+            },
+          ),
+        ),
+        if (copy)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              l10n.copyStreamHint,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        if (!copy && mode == 'reencode')
+          _OptionDropdown(
+            label: l10n.encoder,
+            value: encoder,
+            hint: l10n.auto,
+            items: encoders,
+            onChanged: (v) => onChanged(false, v),
+          ),
+      ],
+    );
+  }
 }
 
-class _OptionNumberFieldState extends ConsumerState<_OptionNumberField> {
-  late final TextEditingController _controller;
-  late bool _auto;
+/// Auto / preset / custom number. Never pretends a hint is the current value.
+class _AutoNumberField extends ConsumerStatefulWidget {
+  final String label;
+  final int? value;
+  final List<int> presets;
+  final String? suffix;
+  final ValueChanged<int?> onChanged;
+
+  const _AutoNumberField({
+    required this.label,
+    required this.value,
+    required this.presets,
+    required this.onChanged,
+    this.suffix,
+  });
+
+  @override
+  ConsumerState<_AutoNumberField> createState() => _AutoNumberFieldState();
+}
+
+class _AutoNumberFieldState extends ConsumerState<_AutoNumberField> {
+  late final TextEditingController _custom;
+  bool _customMode = false;
 
   @override
   void initState() {
     super.initState();
-    _auto = widget.value == null;
-    _controller = TextEditingController(
-      text: widget.value?.toString() ?? widget.hint ?? '',
-    );
+    _customMode =
+        widget.value != null && !widget.presets.contains(widget.value);
+    _custom = TextEditingController(text: widget.value?.toString() ?? '');
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _custom.dispose();
     super.dispose();
-  }
-
-  void _commit() {
-    final v = int.tryParse(_controller.text.trim());
-    widget.onChanged(_auto ? null : v);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      dense: true,
-      title: Text(widget.label),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 按钮语义：点击后启用自定义输入。
-          Text(l10n.customize, style: Theme.of(context).textTheme.bodySmall),
-          Switch(
-            value: !_auto,
+    final dropdownValue = widget.value == null
+        ? 'auto'
+        : (widget.presets.contains(widget.value)
+            ? '${widget.value}'
+            : 'custom');
+
+    return Column(
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          title: Text(widget.label),
+          trailing: DropdownButton<String>(
+            value: _customMode ? 'custom' : dropdownValue,
+            items: [
+              DropdownMenuItem(value: 'auto', child: Text(l10n.auto)),
+              for (final p in widget.presets)
+                DropdownMenuItem(
+                  value: '$p',
+                  child: Text(widget.suffix == null ? '$p' : '$p ${widget.suffix}'),
+                ),
+              DropdownMenuItem(value: 'custom', child: Text(l10n.customValue)),
+            ],
             onChanged: (v) {
-              setState(() => _auto = !v);
-              if (_auto) {
+              if (v == null) return;
+              if (v == 'auto') {
+                setState(() => _customMode = false);
                 widget.onChanged(null);
-              } else {
-                _commit();
+                return;
               }
+              if (v == 'custom') {
+                setState(() => _customMode = true);
+                return;
+              }
+              setState(() => _customMode = false);
+              widget.onChanged(int.tryParse(v));
             },
           ),
-          SizedBox(
-            width: 88,
+        ),
+        if (_customMode)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
             child: TextField(
-              controller: _controller,
-              enabled: !_auto,
+              controller: _custom,
               keyboardType: TextInputType.number,
-              textAlign: TextAlign.end,
               decoration: InputDecoration(
                 isDense: true,
-                hintText: widget.hint,
-                border: const OutlineInputBorder(),
+                suffixText: widget.suffix,
+                labelText: l10n.customValue,
               ),
-              onSubmitted: (_) => _commit(),
-              onChanged: (_) => _commit(),
+              onSubmitted: (t) => widget.onChanged(int.tryParse(t.trim())),
+              onChanged: (t) => widget.onChanged(int.tryParse(t.trim())),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }

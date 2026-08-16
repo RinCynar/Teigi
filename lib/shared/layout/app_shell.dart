@@ -16,6 +16,17 @@ class AppShell extends ConsumerStatefulWidget {
 
   const AppShell({super.key, required this.child});
 
+  static const locations = ['/convert', '/queue', '/presets', '/settings'];
+
+  /// Public so tests can assert About stays on Settings.
+  static int indexFor(String path) {
+    if (path.startsWith('/settings')) return 3;
+    if (path.startsWith('/queue')) return 1;
+    if (path.startsWith('/presets')) return 2;
+    if (path.startsWith('/convert')) return 0;
+    return 0;
+  }
+
   @override
   ConsumerState<AppShell> createState() => _AppShellState();
 }
@@ -24,18 +35,11 @@ class _AppShellState extends ConsumerState<AppShell> {
   bool _dragOver = false;
   static const _import = MediaImport();
 
-  static const _locations = ['/convert', '/queue', '/presets', '/settings'];
-
-  int _indexFor(String path) {
-    final i = _locations.indexWhere((l) => path.startsWith(l));
-    return i < 0 ? 0 : i;
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
     final path = GoRouterState.of(context).uri.path;
-    final selected = _indexFor(path);
+    final selected = AppShell.indexFor(path);
     final width = MediaQuery.sizeOf(context).width;
     final size = TeigiBreakpoints.sizeOf(width);
     final scheme = Theme.of(context).colorScheme;
@@ -86,7 +90,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                         labelType: size == TeigiWindowSize.expanded
                             ? NavigationRailLabelType.all
                             : NavigationRailLabelType.selected,
-                        onDestinationSelected: (i) => context.go(_locations[i]),
+                        onDestinationSelected: (i) => context.go(AppShell.locations[i]),
                         leading: const Padding(
                           padding: EdgeInsets.symmetric(
                             vertical: TeigiSpacing.md,
@@ -119,7 +123,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                               label: d.label,
                             ),
                         ],
-                        onDestinationSelected: (i) => context.go(_locations[i]),
+                        onDestinationSelected: (i) => context.go(AppShell.locations[i]),
                       )
                     : null,
               ),

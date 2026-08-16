@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teigi/core/domain/preset_recommendation.dart';
+import 'package:teigi/core/models/batch_options_patch.dart';
 import 'package:teigi/core/models/conversion_options.dart';
 import 'package:teigi/core/models/conversion_task.dart';
 import 'package:teigi/core/models/format_preset.dart';
@@ -60,23 +61,74 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
     state = state.where((t) => t.id != id).toList();
   }
 
-  /// 清空队列（移除已完成/失败/取消的任务；运行中的任务由引擎负责取消）。
-  void clearAll() {
-    state = state
-        .where((t) => !t.isFinished)
-        .map((t) => t.copyWith(status: TaskStatus.canceled))
-        .toList();
+  /// Remove finished tasks only. Never touches running work.
+  void clearCompleted() {
+    state = [
+      for (final t in state)
+        if (t.status != TaskStatus.completed &&
+            t.status != TaskStatus.failed &&
+            t.status != TaskStatus.canceled)
+          t,
+    ];
   }
 
-  /// 移除所有任务（无论状态）。
-  void removeAll() => state = const [];
+  /// 清空队列（移除已完成/失败/取消的任务；运行中的任务由引擎负责取消）。
+  void clearAll() => clearCompleted();
+
+  /// 移除所有非运行中任务。
+  void removeAll() {
+    state = [for (final t in state) if (t.isRunning) t];
+  }
+
+  void removeTasks(Iterable<String> ids) {
+    final skip = ids.toSet();
+    state = [
+      for (final t in state)
+        if (!skip.contains(t.id) || t.isRunning) t,
+    ];
+  }
+
+  void setTargetFormatFor(Iterable<String> ids, String? format) {
+    final set = ids.toSet();
+    state = [
+      for (final t in state)
+        if (set.contains(t.id) && !t.isRunning)
+          t.copyWith(targetFormat: format, recommended: false)
+        else
+          t,
+    ];
+  }
+
+  void applyPatch(Iterable<String> ids, BatchOptionsPatch patch) {
+    final set = ids.toSet();
+    state = [
+      for (final t in state)
+        if (set.contains(t.id) && !t.isRunning)
+          t.copyWith(options: patch.apply(t.options), recommended: false)
+        else
+          t,
+    ];
+  }
+
+  void applyPresetTo(Iterable<String> ids, FormatPreset preset) {
+    final set = ids.toSet();
+    final options = preset.resolvedOptions();
+    state = [
+      for (final t in state)
+        if (set.contains(t.id) && !t.isRunning)
+          t.copyWith(
+            targetFormat: preset.extension,
+            options: options,
+            recommended: false,
+          )
+        else
+          t,
+    ];
+  }
 
   /// 为目标格式批量设置。
   void setTargetFormatForAll(String? format) {
-    state = [
-      for (final t in state)
-        t.copyWith(targetFormat: format, recommended: false),
-    ];
+    setTargetFormatFor(state.map((t) => t.id), format);
   }
 
   /// 为单个任务设置目标格式。

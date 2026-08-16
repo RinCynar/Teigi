@@ -8,6 +8,7 @@ import 'package:teigi/core/ffmpeg/ffmpeg_detector.dart';
 import 'package:teigi/core/models/app_settings.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
 import 'package:teigi/providers/settings_provider.dart';
+import 'package:teigi/shared/layout/app_shell.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -78,7 +79,7 @@ void main() {
     // 验证 quickFormatsProvider 依赖的 SharedPreferences 已正确注入。
     await tester.dragUntilVisible(
       find.text('快捷格式'),
-      find.byType(ListView),
+      find.byKey(const Key('settings-body')),
       const Offset(0, -200),
     );
     expect(find.text('快捷格式'), findsOneWidget);
@@ -86,6 +87,40 @@ void main() {
     // 释放横幅定时器。
     await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('About 路由保持 Settings 高亮并可返回', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final settings = await AppSettings.load(prefs);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          settingsProvider.overrideWith(
+            (ref) => SettingsNotifier(settings, prefs),
+          ),
+          ffmpegStatusProvider.overrideWith(() => _FakeFfmpegNotifier()),
+        ],
+        child: const TeigiApp(),
+      ),
+    );
+    await tester.pump();
+
+    router.go('/settings/about');
+    await tester.pumpAndSettle();
+
+    expect(find.text('关于 Teigi'), findsOneWidget);
+    expect(AppShell.indexFor('/settings/about'), 3);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(AppBar, '设置'), findsOneWidget);
   });
 }
 

@@ -19,6 +19,7 @@ class TaskScheduler {
     for (final task in tasks) {
       if (selected.length >= capacity) break;
       if (task.status != TaskStatus.queued) continue;
+      if (task.targetFormat == null || task.targetFormat!.isEmpty) continue;
       selected.add(task);
     }
     return selected;

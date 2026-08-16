@@ -68,6 +68,61 @@ class L10n {
         'en': "FFmpeg isn't configured",
       });
   String get advanced => _t({'zh': '高级', 'ja': '詳細', 'en': 'Advanced'});
+  String get chooseFormat =>
+      _t({'zh': '选择输出格式', 'ja': '出力形式を選択', 'en': 'Choose output format'});
+  String get searchFormats =>
+      _t({'zh': '搜索格式…', 'ja': '形式を検索…', 'en': 'Search formats...'});
+  String get other => _t({'zh': '其他', 'ja': 'その他', 'en': 'Other'});
+  String get customExtension =>
+      _t({'zh': '自定义扩展名', 'ja': 'カスタム拡張子', 'en': 'Custom extension'});
+  String get selectAll => _t({'zh': '全选', 'ja': 'すべて選択', 'en': 'Select all'});
+  String selectedCount(int n) =>
+      _t({'zh': '已选 $n 项', 'ja': '$n 件選択', 'en': '$n selected'});
+  String applyToFiles(int n) =>
+      _t({'zh': '应用到 $n 个文件', 'ja': '$n 件に適用', 'en': 'Apply to $n files'});
+  String configureNFiles(int n) =>
+      _t({'zh': '配置 $n 个文件', 'ja': '$n 件を設定', 'en': 'Configure $n files'});
+  String get targetFormat =>
+      _t({'zh': '目标格式', 'ja': '出力形式', 'en': 'Target format'});
+  String get unchanged => _t({'zh': '保持原值', 'ja': '変更しない', 'en': 'Unchanged'});
+  String get setValue => _t({'zh': '设为', 'ja': '設定', 'en': 'Set'});
+  String get encoding => _t({'zh': '编码', 'ja': 'エンコード', 'en': 'Encoding'});
+  String get reencode => _t({'zh': '重新编码', 'ja': '再エンコード', 'en': 'Re-encode'});
+  String get copyStreamHint => _t({
+        'zh': '不重新编码，只改封装',
+        'ja': '再エンコードせずカプセルのみ変更',
+        'en': 'No re-encoding will be performed.',
+      });
+  String get original => _t({'zh': '原始', 'ja': '元のまま', 'en': 'Original'});
+  String get startReady =>
+      _t({'zh': '只转换已就绪的', 'ja': '準備できたものだけ開始', 'en': 'Start ready files'});
+  String get reviewMissing =>
+      _t({'zh': '查看未配置', 'ja': '未設定を確認', 'en': 'Review'});
+  String missingOutput(int n) => _t({
+        'zh': '有 $n 个文件还没有输出格式。',
+        'ja': '$n 件に出力形式がありません。',
+        'en': '$n files are missing an output format.',
+      });
+  String readySummary(int total, int ready, int missing) => _t({
+        'zh': '$total 个文件 · $ready 已就绪 · $missing 需配置',
+        'ja': '$total 件 · 準備 $ready · 要設定 $missing',
+        'en': '$total files · $ready ready · $missing need configuration',
+      });
+  String get clearCompleted =>
+      _t({'zh': '清除已完成', 'ja': '完了を削除', 'en': 'Clear completed'});
+  String get filterAll => _t({'zh': '全部', 'ja': 'すべて', 'en': 'All'});
+  String get filterActive => _t({'zh': '进行中', 'ja': '実行中', 'en': 'Active'});
+  String get openFile => _t({'zh': '打开文件', 'ja': 'ファイルを開く', 'en': 'Open file'});
+  String get openFolder =>
+      _t({'zh': '打开文件夹', 'ja': 'フォルダを開く', 'en': 'Open folder'});
+  String get viewLog => _t({'zh': '查看日志', 'ja': 'ログ', 'en': 'View log'});
+  String get saveAsPreset =>
+      _t({'zh': '保存为预设', 'ja': 'プリセットに保存', 'en': 'Save as preset'});
+  String get createPreset =>
+      _t({'zh': '创建预设', 'ja': 'プリセットを作成', 'en': 'Create preset'});
+  String get general => _t({'zh': '常规', 'ja': '一般', 'en': 'General'});
+  String get kbps => _t({'zh': 'kbps', 'ja': 'kbps', 'en': 'kbps'});
+  String get customValue => _t({'zh': '自定义数值', 'ja': '数値を指定', 'en': 'Custom'});
   String get queueIdleHint => _t({
         'zh': '任务会在开始转换后出现在这里',
         'ja': '変換を始めるとここに表示されます',

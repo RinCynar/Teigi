@@ -84,7 +84,6 @@ class ConversionEngine {
     final capacity = settings.concurrency - _running.length;
     if (capacity <= 0) return;
 
-    final notifier = ref.read(queueProvider.notifier);
     final picked = _scheduler.selectNext(
       tasks: ref.read(queueProvider),
       runningCount: _running.length,
@@ -92,9 +91,6 @@ class ConversionEngine {
     );
     for (final task in picked) {
       if (task.targetFormat == null || task.targetFormat!.isEmpty) {
-        notifier.updateTask(
-          task.copyWith(status: TaskStatus.failed, error: '未指定目标格式'),
-        );
         continue;
       }
       unawaited(_runTask(task));

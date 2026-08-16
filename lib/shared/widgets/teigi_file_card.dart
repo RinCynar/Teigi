@@ -29,6 +29,9 @@ class TeigiFileCard extends StatefulWidget {
   final VoidCallback onConfigure;
   final VoidCallback onRemove;
   final VoidCallback? onRetry;
+  final VoidCallback? onTap;
+  final VoidCallback? onDoubleTap;
+  final GestureTapDownCallback? onSecondaryTapDown;
 
   const TeigiFileCard({
     super.key,
@@ -42,6 +45,9 @@ class TeigiFileCard extends StatefulWidget {
     required this.onConfigure,
     required this.onRemove,
     this.onRetry,
+    this.onTap,
+    this.onDoubleTap,
+    this.onSecondaryTapDown,
   });
 
   @override
@@ -75,7 +81,11 @@ class _TeigiFileCardState extends State<TeigiFileCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onDoubleTap: widget.onDoubleTap,
+        onSecondaryTapDown: widget.onSecondaryTapDown,
+        child: AnimatedContainer(
         duration: TeigiMotion.fast,
         decoration: BoxDecoration(
           color: fill,
@@ -186,6 +196,7 @@ class _TeigiFileCardState extends State<TeigiFileCard> {
             ],
           ],
         ),
+      ),
       ),
     );
   }

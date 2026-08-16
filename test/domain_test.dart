@@ -54,11 +54,20 @@ void main() {
     test('respects concurrency and skips non-queued', () {
       const scheduler = TaskScheduler();
       final tasks = [
-        ConversionTask(id: '1', source: const MediaFile(path: 'a.mp4')),
-        ConversionTask(id: '2', source: const MediaFile(path: 'b.mp4')),
+        ConversionTask(
+          id: '1',
+          source: const MediaFile(path: 'a.mp4'),
+          targetFormat: 'mp4',
+        ),
+        ConversionTask(
+          id: '2',
+          source: const MediaFile(path: 'b.mp4'),
+          targetFormat: 'mp4',
+        ),
         ConversionTask(
           id: '3',
           source: const MediaFile(path: 'c.mp4'),
+          targetFormat: 'mp4',
           status: TaskStatus.running,
         ),
       ];

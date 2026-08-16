@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teigi/core/models/conversion_task.dart';
-import 'package:teigi/features/format_config/format_selector.dart';
+import 'package:teigi/core/utils/open_path.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/conversion_engine.dart';
 import 'package:teigi/providers/queue_provider.dart';
 import 'package:teigi/shared/layout/content_constraint.dart';
-import 'package:teigi/widgets/queue_list.dart';
+import 'package:teigi/theme/tokens.dart';
 
-/// 队列面板：展示所有转换任务，支持选择目标格式与操作。
+enum _QueueFilter { all, active, completed, failed }
+
+/// Job manager: status and history. Not a second Convert workspace.
 class QueuePanel extends ConsumerStatefulWidget {
   const QueuePanel({super.key});
 
@@ -17,175 +19,249 @@ class QueuePanel extends ConsumerStatefulWidget {
 }
 
 class _QueuePanelState extends ConsumerState<QueuePanel> {
-  /// 编辑模式：首次点击「编辑队列」取消运行中任务并标记为可操作，
-  /// 再次点击「清空队列」才会真正移除全部任务。
-  bool _editMode = false;
+  _QueueFilter _filter = _QueueFilter.all;
 
   @override
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
     final tasks = ref.watch(queueProvider);
     final engine = ref.watch(conversionEngineProvider);
-    final engineRunning = ref.watch(conversionRunningProvider);
-
-    if (tasks.isEmpty) {
-      // 队列空时退出编辑模式。
-      if (_editMode) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) setState(() => _editMode = false);
-        });
-      }
-      return _EmptyQueue(l10n: l10n);
-    }
-
-    final running = tasks.where((t) => t.isRunning).length;
-    final queued = tasks.where((t) => t.status == TaskStatus.queued).length;
+    final running = ref.watch(conversionRunningProvider);
+    final visible = tasks.where(_matches).toList();
 
     return ContentConstraint(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(TeigiSpacing.page),
       child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              Text(
-                l10n.queueCount(tasks.length),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              if (running > 0)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Text(
-                    l10n.runningCount(running, queued),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+              Expanded(
+                child: Text(
+                  l10n.navQueue,
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.auto_fix_high_outlined),
-                tooltip: l10n.setFormatForAll,
-                onPressed: () => _setFormatForAll(context, ref),
               ),
-              if (engineRunning)
+              if (running)
                 IconButton(
-                  icon: const Icon(Icons.stop_circle_outlined),
                   tooltip: l10n.stop,
-                  onPressed: () => engine.stop(),
+                  onPressed: engine.stop,
+                  icon: const Icon(Icons.stop_circle_outlined),
                 ),
-              FilledButton.icon(
-                onPressed: engineRunning ? null : () => _startAll(context, ref),
-                icon: const Icon(Icons.play_arrow),
-                label: Text(engineRunning ? l10n.converting : l10n.start),
-              ),
-              const SizedBox(width: 8),
-              FilledButton.tonalIcon(
-                onPressed: _editMode ? _clearAll : _enterEditMode,
-                icon: Icon(_editMode ? Icons.delete_sweep_outlined : Icons.edit_outlined),
-                label: Text(_editMode ? l10n.clearQueue : l10n.editQueue),
+              TextButton(
+                onPressed: () =>
+                    ref.read(queueProvider.notifier).clearCompleted(),
+                child: Text(l10n.clearCompleted),
               ),
             ],
           ),
-        ),
-        Expanded(child: QueueList(tasks: tasks)),
-      ],
-    ),
-    );
-  }
-
-  /// 进入编辑模式：停止转换并将未完成任务标记为取消。
-  void _enterEditMode() {
-    ref.read(conversionEngineProvider).stop();
-    ref.read(queueProvider.notifier).clearAll();
-    setState(() => _editMode = true);
-  }
-
-  /// 清空全部任务并退出编辑模式。
-  void _clearAll() {
-    ref.read(queueProvider.notifier).removeAll();
-    setState(() => _editMode = false);
-  }
-
-  /// 一键为全部任务设置目标格式。
-  Future<void> _setFormatForAll(BuildContext context, WidgetRef ref) async {
-    final l10n = ref.read(l10nProvider);
-    String? selected;
-    final format = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text(l10n.setFormatForAll),
-          content: FormatSelector(
-            value: selected,
-            onChanged: (v) => setState(() => selected = v),
+          const SizedBox(height: TeigiSpacing.sm),
+          Wrap(
+            spacing: TeigiSpacing.xs,
+            children: [
+              ChoiceChip(
+                label: Text(l10n.filterAll),
+                selected: _filter == _QueueFilter.all,
+                onSelected: (_) => setState(() => _filter = _QueueFilter.all),
+              ),
+              ChoiceChip(
+                label: Text(l10n.filterActive),
+                selected: _filter == _QueueFilter.active,
+                onSelected: (_) =>
+                    setState(() => _filter = _QueueFilter.active),
+              ),
+              ChoiceChip(
+                label: Text(l10n.completed),
+                selected: _filter == _QueueFilter.completed,
+                onSelected: (_) =>
+                    setState(() => _filter = _QueueFilter.completed),
+              ),
+              ChoiceChip(
+                label: Text(l10n.failed),
+                selected: _filter == _QueueFilter.failed,
+                onSelected: (_) => setState(() => _filter = _QueueFilter.failed),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(selected),
-              child: Text(l10n.ok),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (format != null) {
-      ref.read(queueProvider.notifier).setTargetFormatForAll(format);
-    }
-  }
-
-  void _startAll(BuildContext context, WidgetRef ref) {
-    final l10n = ref.read(l10nProvider);
-    final tasks = ref.read(queueProvider);
-    final missingFormat = tasks.where(
-      (t) =>
-          t.status == TaskStatus.queued &&
-          (t.targetFormat == null || t.targetFormat!.isEmpty),
-    ).length;
-
-    ref.read(conversionEngineProvider).start();
-
-    if (missingFormat > 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.missingFormatSkipped(missingFormat))),
-      );
-    }
-  }
-}
-
-/// 空队列占位视图。
-class _EmptyQueue extends StatelessWidget {
-  final L10n l10n;
-
-  const _EmptyQueue({required this.l10n});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.video_library_outlined, size: 72, color: scheme.outline),
-          const SizedBox(height: 16),
-          Text(
-            l10n.queueEmpty,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.queueIdleHint,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: scheme.onSurfaceVariant),
+          const SizedBox(height: TeigiSpacing.md),
+          Expanded(
+            child: visible.isEmpty
+                ? Center(
+                    child: Text(
+                      l10n.queueIdleHint,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                  )
+                : ListView(
+                    children: [
+                      if (_filter == _QueueFilter.all) ...[
+                        ..._group(l10n.converting, visible, TaskStatus.running),
+                        ..._group(l10n.queued, visible, TaskStatus.queued),
+                        ..._group(l10n.completed, visible, TaskStatus.completed),
+                        ..._group(l10n.failed, visible, TaskStatus.failed),
+                      ] else
+                        for (final t in visible) _JobTile(task: t),
+                    ],
+                  ),
           ),
         ],
       ),
     );
+  }
+
+  bool _matches(ConversionTask t) {
+    return switch (_filter) {
+      _QueueFilter.all => true,
+      _QueueFilter.active =>
+        t.status == TaskStatus.running || t.status == TaskStatus.queued,
+      _QueueFilter.completed => t.status == TaskStatus.completed,
+      _QueueFilter.failed => t.status == TaskStatus.failed,
+    };
+  }
+
+  List<Widget> _group(String title, List<ConversionTask> all, TaskStatus status) {
+    final items = all.where((t) => t.status == status).toList();
+    if (items.isEmpty) return const [];
+    return [
+      Padding(
+        padding: const EdgeInsets.only(top: TeigiSpacing.sm, bottom: TeigiSpacing.xs),
+        child: Text(title, style: Theme.of(context).textTheme.labelLarge),
+      ),
+      for (final t in items) _JobTile(task: t),
+    ];
+  }
+}
+
+class _JobTile extends ConsumerWidget {
+  final ConversionTask task;
+
+  const _JobTile({required this.task});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
+    final scheme = Theme.of(context).colorScheme;
+    final pair = task.targetFormat == null
+        ? task.source.name
+        : '${task.source.name} → ${task.targetFormat!.toUpperCase()}';
+
+    return Material(
+      color: scheme.surface,
+      child: InkWell(
+        onSecondaryTapDown: (d) => _menu(context, ref, d.globalPosition),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: TeigiSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(pair, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
+                  if (task.status == TaskStatus.failed)
+                    TextButton(
+                      onPressed: () =>
+                          ref.read(queueProvider.notifier).retryTask(task.id),
+                      child: Text(l10n.retry),
+                    ),
+                  IconButton(
+                    tooltip: l10n.menu,
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () => _menu(
+                      context,
+                      ref,
+                      Offset(
+                        MediaQuery.sizeOf(context).width - 40,
+                        80,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (task.isRunning) ...[
+                const SizedBox(height: TeigiSpacing.xs),
+                LinearProgressIndicator(value: task.progress, minHeight: 4),
+                const SizedBox(height: 4),
+                Text(
+                  '${(task.progress * 100).toStringAsFixed(0)}%'
+                  '${task.speedX > 0 ? ' · ${task.speedX.toStringAsFixed(1)}x' : ''}'
+                  '${task.remaining != null ? ' · ETA ${l10n.formatDuration(task.remaining!)}' : ''}',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+              ],
+              if (task.status == TaskStatus.failed && task.error != null)
+                Text(
+                  task.error!,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: scheme.error),
+                ),
+              if (task.status == TaskStatus.completed)
+                Text(
+                  l10n.completed,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: scheme.primary),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _menu(BuildContext context, WidgetRef ref, Offset global) async {
+    final l10n = ref.read(l10nProvider);
+    final action = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(global.dx, global.dy, global.dx, global.dy),
+      items: [
+        if (task.status == TaskStatus.failed)
+          PopupMenuItem(value: 'retry', child: Text(l10n.retry)),
+        PopupMenuItem(value: 'open', child: Text(l10n.openFile)),
+        PopupMenuItem(value: 'folder', child: Text(l10n.openFolder)),
+        if (task.error != null)
+          PopupMenuItem(value: 'log', child: Text(l10n.viewLog)),
+        PopupMenuItem(value: 'remove', child: Text(l10n.remove)),
+      ],
+    );
+    if (!context.mounted || action == null) return;
+    switch (action) {
+      case 'retry':
+        ref.read(queueProvider.notifier).retryTask(task.id);
+      case 'open':
+        await openLocalPath(task.outputPath ?? task.source.path);
+      case 'folder':
+        await openParentFolder(task.outputPath ?? task.source.path);
+      case 'log':
+        if (task.error != null) {
+          await showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(l10n.viewLog),
+              content: SelectableText(task.error!),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(l10n.ok),
+                ),
+              ],
+            ),
+          );
+        }
+      case 'remove':
+        if (!task.isRunning) {
+          ref.read(queueProvider.notifier).removeTask(task.id);
+        }
+    }
   }
 }

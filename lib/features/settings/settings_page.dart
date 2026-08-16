@@ -10,26 +10,35 @@ import 'package:teigi/providers/quick_formats_provider.dart';
 import 'package:teigi/providers/settings_provider.dart';
 
 /// 设置页：ffmpeg 路径、输出目录、并发、主题、快捷格式等。
-class SettingsPage extends ConsumerWidget {
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends ConsumerState<SettingsPage> {
+  int _section = 0;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
     final settings = ref.watch(settingsProvider);
     final ffmpegStatus = ref.watch(ffmpegStatusProvider);
     final quickFormats = ref.watch(quickFormatsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.navSettings),
-        automaticallyImplyLeading: false,
-      ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1280),
-          child: ListView(
+    final wide = MediaQuery.sizeOf(context).width >= 1024;
+    final sections = [
+      l10n.general,
+      l10n.conversionSettings,
+      l10n.appearance,
+      'FFmpeg',
+      l10n.navPresets,
+      l10n.about,
+    ];
+
+    final body = ListView(
+        key: const Key('settings-body'),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         children: [
           _SectionCard(
@@ -235,7 +244,7 @@ class SettingsPage extends ConsumerWidget {
             leading: const Icon(Icons.info_outline),
             title: Text(l10n.about),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/about'),
+            onTap: () => context.go('/settings/about'),
           ),
           const SizedBox(height: 24),
           Center(
@@ -247,7 +256,46 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
         ],
-          ),
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.navSettings),
+        automaticallyImplyLeading: false,
+      ),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1120),
+          child: wide
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      width: 200,
+                      child: ListView(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        children: [
+                          for (var i = 0; i < sections.length; i++)
+                            ListTile(
+                              title: Text(sections[i]),
+                              selected: _section == i,
+                              onTap: () {
+                                if (i == 5) {
+                                  context.go('/settings/about');
+                                  return;
+                                }
+                                setState(() => _section = i);
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                    const VerticalDivider(width: 1),
+                    Expanded(child: body),
+                  ],
+                )
+              : body,
         ),
       ),
     );
@@ -278,11 +326,30 @@ class SettingsPage extends ConsumerWidget {
 }
 
 /// 种子颜色设置行：预设色板 + 十六进制输入。
-class _SeedColorTile extends ConsumerWidget {
+class _SeedColorTile extends ConsumerStatefulWidget {
   final L10n l10n;
   final AppSettings settings;
 
   const _SeedColorTile({required this.l10n, required this.settings});
+
+  @override
+  ConsumerState<_SeedColorTile> createState() => _SeedColorTileState();
+}
+
+class _SeedColorTileState extends ConsumerState<_SeedColorTile> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _toHex(widget.settings.seedColor));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   static const List<Color> _presetColors = [
     Color(0xFF6750A4), // 紫
@@ -299,8 +366,9 @@ class _SeedColorTile extends ConsumerWidget {
       '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final controller = TextEditingController(text: _toHex(settings.seedColor));
+  Widget build(BuildContext context) {
+    final l10n = widget.l10n;
+    final settings = widget.settings;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
@@ -319,7 +387,7 @@ class _SeedColorTile extends ConsumerWidget {
                     backgroundColor: c,
                     radius: 16,
                     child: c == settings.seedColor
-                        ? const Icon(Icons.check, size: 18, color: Colors.white)
+                        ? Icon(Icons.check, size: 18, color: Theme.of(context).colorScheme.onPrimary)
                         : null,
                   ),
                 ),
@@ -331,7 +399,7 @@ class _SeedColorTile extends ConsumerWidget {
               SizedBox(
                 width: 130,
                 child: TextField(
-                  controller: controller,
+                  controller: _controller,
                   decoration: InputDecoration(
                     isDense: true,
                     hintText: '#6750A4',
@@ -453,24 +521,21 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 20),
-                const SizedBox(width: 8),
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ...children,
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18),
+              const SizedBox(width: 8),
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
+            ],
+          ),
+          const Divider(),
+          ...children,
+        ],
       ),
     );
   }

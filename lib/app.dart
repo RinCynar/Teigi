@@ -37,11 +37,13 @@ final router = GoRouter(
           path: '/settings',
           name: 'settings',
           builder: (context, state) => const SettingsPage(),
-        ),
-        GoRoute(
-          path: '/about',
-          name: 'about',
-          builder: (context, state) => const AboutPage(),
+          routes: [
+            GoRoute(
+              path: 'about',
+              name: 'about',
+              builder: (context, state) => const AboutPage(),
+            ),
+          ],
         ),
       ],
     ),

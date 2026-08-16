@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:teigi/core/domain/media_type.dart';
 import 'package:teigi/core/models/format_preset.dart';
 import 'package:teigi/i18n/strings.dart';
@@ -50,11 +51,21 @@ class PresetsPage extends ConsumerWidget {
           Text(l10n.myPresets, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: TeigiSpacing.sm),
           if (quick.isEmpty)
-            Text(
-              l10n.presetsEmpty,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.presetsEmpty,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: TeigiSpacing.sm),
+                FilledButton.tonal(
+                  onPressed: () => context.go('/convert'),
+                  child: Text(l10n.createPreset),
+                ),
+              ],
             )
           else
             Wrap(

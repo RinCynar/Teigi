@@ -64,13 +64,17 @@ void main() {
       expect(notifier.state.where((t) => t.isRunning).length, 1);
     });
 
-    test('清空保留未完成任务的取消标记', () {
+    test('清除已完成不影响运行中任务', () {
       final notifier = QueueNotifier();
-      notifier.addFiles([MediaFile(path: '/media/a.mp4')]);
+      notifier.addFiles([
+        MediaFile(path: '/media/a.mp4'),
+        MediaFile(path: '/media/b.mp4'),
+      ]);
       notifier.updateTask(notifier.state[0].copyWith(status: TaskStatus.running));
-      notifier.clearAll();
-      expect(notifier.state.every((t) => t.isFinished), isTrue);
-      expect(notifier.state.every((t) => t.status == TaskStatus.canceled), isTrue);
+      notifier.updateTask(notifier.state[1].copyWith(status: TaskStatus.completed));
+      notifier.clearCompleted();
+      expect(notifier.state, hasLength(1));
+      expect(notifier.state.single.status, TaskStatus.running);
     });
   });
 

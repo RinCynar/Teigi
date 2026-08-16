@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -21,7 +22,7 @@ class AboutPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.aboutTitle),
-        automaticallyImplyLeading: false,
+        leading: BackButton(onPressed: () => context.go('/settings')),
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
