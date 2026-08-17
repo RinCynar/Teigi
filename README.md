@@ -1,69 +1,49 @@
 # Teigi
 
-精致、高效的桌面端媒体格式转换工具（Flutter）。
+桌面端媒体格式转换工具（Flutter + FFmpeg）。
 
 ## 功能
 
-- 不限预设格式，支持自定义目标格式（可保存配置为快捷格式）
-- 完整队列管理：批量导入、拖拽导入、单文件/批量目标格式指定
-- 实时进度、剩余时间估算、多并发、GPU 加速（硬件编码器自动检测）
-- 根据目标格式动态展示配置项
-- Material You 设计 + 自适应窗口（紧凑 / 中等 / 宽屏三档布局）
-- 多语言：简体中文 / 日本語 / English
+- 拖入文件，推荐目标格式，批量选择与配置
+- 队列：进度、速度、ETA、重试、清除已完成
+- 自定义任意目标扩展名，可保存为预设
+- Material 3 自适应布局（紧凑 / 中等 / 宽屏）
+- 简体中文 / 日本語 / English
 
-## 技术栈
-
-| 类别 | 技术 |
-|------|------|
-| 框架 | Flutter 3.22+（桌面优先） |
-| 状态管理 | Riverpod 2.x |
-| 路由 | go_router |
-| 文件选择 | file_picker / desktop_drop |
-| 持久化 | shared_preferences |
-| 转换核心 | ffmpeg（系统 PATH 或自定义路径） |
-
-## 环境要求
+## 环境
 
 - Flutter SDK（stable）
-- Windows：Visual Studio 2022（含 C++ 桌面工作负载）
-- ffmpeg（`where ffmpeg` 可找到，或在设置中指定路径）
-- Windows 开发者模式（插件构建需要 symlink 支持）
+- Windows：Visual Studio 2022（C++ 桌面工作负载）
+- ffmpeg（PATH，或安装目录 `data/ffmpeg`，或在设置中指定）
 
 ## 开发
 
 ```bash
 flutter pub get
-flutter test       # 运行全部单元/组件测试
-flutter build windows --debug
-```
-
-## 项目结构
-
-```
-lib/
-├── main.dart               # 入口（窗口初始化 + 设置加载）
-├── app.dart                # 根组件 + 路由
-├── core/
-│   ├── ffmpeg/             # 检测、命令行构造、进度解析、硬件加速
-│   ├── models/             # 任务/选项/格式/设置模型
-│   └── utils/              # 输出文件命名
-├── features/
-│   ├── home/               # 主界面（自适应布局）
-│   ├── queue/              # 队列面板
-│   ├── settings/           # 设置页 + 关于页
-│   └── format_config/      # 格式选择与转码配置
-├── i18n/                   # 本地化（zh / ja / en）
-├── providers/              # Riverpod 状态（设置/队列/引擎/ffmpeg/快捷格式）
-├── theme/                  # Material 3 主题
-└── widgets/                # 通用组件
-```
-
-## 测试
-
-```bash
 flutter test
+flutter build windows --release
 ```
 
-覆盖：进度解析、队列状态流转、文件命名、应用冒烟测试、设置页导航。
+## 分发
 
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/build_dist.ps1
+```
 
+产物在 `build/outputdir/`：
+
+| 文件 | 说明 |
+|------|------|
+| `windows-{x64,arm64}-release.zip` | 仅应用 |
+| `windows-{x64,arm64}-ffmpeg-release.zip` | 应用 + 构建机 PATH 中的 ffmpeg |
+| `windows-{x64,arm64}-installer.exe` | Inno Setup 安装包（可不嵌入 / 嵌入 / 安装时下载 ffmpeg） |
+
+只打某一架构：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/build_dist.ps1 -Arch x64
+```
+
+安装包需要本机安装 [Inno Setup](https://jrsoftware.org/isinfo.php)。
+
+当前 Flutter 的 `flutter build windows` **没有** `--target-platform`，只编译本机 CPU：在 x64 电脑上得到 x64 产物，在 ARM64 电脑上得到 arm64 产物。要出另一套架构，请在对应架构的 Windows（或 CI runner）上再跑一遍脚本。

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teigi/core/models/conversion_options.dart';
 import 'package:teigi/core/models/conversion_task.dart';
 import 'package:teigi/core/models/format_preset.dart';
-import 'package:teigi/features/format_config/format_selector.dart';
+import 'package:teigi/features/format_config/format_picker.dart';
 import 'package:teigi/features/format_config/options_editor.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/queue_provider.dart';
@@ -131,10 +131,9 @@ class _ConvertConfigSheetState extends ConsumerState<ConvertConfigSheet> {
             children: [
               Text(l10n.output, style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: TeigiSpacing.xs),
-              FormatSelector(
+              FormatPickerButton(
                 value: _format,
                 onChanged: (v) => setState(() => _format = v),
-                onQuickOptionsApplied: (o) => setState(() => _options = o),
               ),
               const SizedBox(height: TeigiSpacing.lg),
               Text(l10n.quality, style: Theme.of(context).textTheme.labelLarge),

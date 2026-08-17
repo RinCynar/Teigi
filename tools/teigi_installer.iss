@@ -1,13 +1,23 @@
-﻿; Teigi Inno Setup installer script (English only).
+﻿﻿﻿﻿; Teigi Inno Setup installer script (English only).
 ; Invoked by tools\build_dist.ps1; normalized to UTF-8 BOM before compile.
 #define MyAppName "Teigi"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "RinCynar"
 #define MyAppURL "https://teigi.rincynar.top"
 #define MyAppExeName "teigi.exe"
-; Paths relative to this file (tools/).
-#define ReleaseDir "..\build\outputdir\release"
-#define FfmpegSrc "..\build\outputdir\ffmpeg-src"
+; Paths and output name injected by build_dist.ps1 via /D.
+#ifndef TargetArch
+  #define TargetArch "x64"
+#endif
+#ifndef OutputName
+  #define OutputName "windows-x64-installer"
+#endif
+#ifndef ReleaseDir
+  #define ReleaseDir "..\build\outputdir\staging\x64\release"
+#endif
+#ifndef FfmpegSrc
+  #define FfmpegSrc "..\build\outputdir\staging\x64\ffmpeg-src"
+#endif
 ; Version numbers injected by build_dist.ps1 via /D; fallbacks below.
 #ifndef MyPathVersion
   #define MyPathVersion "PATH"
@@ -34,11 +44,17 @@ DisableProgramGroupPage=yes
 ; English only: skip language selection dialog.
 ShowLanguageDialog=no
 OutputDir=..\build\outputdir
-OutputBaseFilename=TeigiSetup
+OutputBaseFilename={#OutputName}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+#if TargetArch == "arm64"
+ArchitecturesAllowed=arm64
+ArchitecturesInstallIn64BitMode=arm64
+#else
+ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
+#endif
 CloseApplications=yes
 ; The installer downloads and extracts a .zip (gyan.dev ffmpeg) at install time,
 ; so the extraction engine must support .zip. "auto" would select "basic" (7z only).
@@ -52,7 +68,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "{#ReleaseDir}\Teigi\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-#ifexist "..\build\outputdir\ffmpeg-src\ffmpeg.exe"
+#ifexist "{#FfmpegSrc}\ffmpeg.exe"
 Source: "{#FfmpegSrc}\*"; DestDir: "{app}\data\ffmpeg"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: ShouldEmbedBundled
 #endif
 

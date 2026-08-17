@@ -20,7 +20,7 @@ import 'package:teigi/shared/layout/content_constraint.dart';
 import 'package:teigi/shared/widgets/teigi_file_card.dart';
 import 'package:teigi/shared/widgets/teigi_mark.dart';
 import 'package:teigi/theme/tokens.dart';
-import 'package:teigi/widgets/ffmpeg_status_banner.dart';
+import 'package:teigi/shared/widgets/ffmpeg_status_banner.dart';
 
 /// Single-column conversion workspace. Queue is not this page.
 class ConvertPage extends ConsumerStatefulWidget {
