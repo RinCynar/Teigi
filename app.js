@@ -1,5 +1,5 @@
 const REPOSITORY = "RinCynar/Teigi";
-const RELEASES_API = `https://api.github.com/repos/${REPOSITORY}/releases?per_page=20`;
+const RELEASE_MANIFEST = "./release.json";
 
 const elements = {
   syncStatus: document.querySelector("#sync-status"),
@@ -213,11 +213,18 @@ function renderRelease(release) {
 }
 
 function renderLoadError(error) {
-  const isNotFound = error && error.status === 404;
-  const title = isNotFound ? "还没有可用的 Release" : "暂时无法读取 Release";
-  const copy = isNotFound
-    ? "发布第一个 GitHub Release 后，下载文件会自动出现在这里。"
-    : "GitHub API 可能暂时受限，请稍后重试或直接打开仓库。";
+  const isManifestMissing = error && error.code === "manifest-missing";
+  const isNoRelease = error && error.code === "no-release";
+  const title = isManifestMissing
+    ? "Release 清单尚未生成"
+    : isNoRelease
+      ? "还没有可用的 Release"
+      : "暂时无法读取 Release 清单";
+  const copy = isManifestMissing
+    ? "仓库工作流正在生成版本清单，请稍后刷新页面。"
+    : isNoRelease
+      ? "发布第一个 GitHub Release 后，下载文件会自动出现在这里。"
+      : "清单文件暂时无法读取，请稍后重试或直接打开仓库。";
 
   elements.releaseHeading.textContent = title;
   elements.releaseTag.textContent = "暂无版本";
@@ -255,7 +262,7 @@ async function loadLatestRelease() {
   elements.refreshButton.disabled = true;
   elements.refreshButton.classList.add("is-loading");
   setSyncStatus("loading", "正在读取最新 Release", "loader-circle");
-  elements.assetsSummary.textContent = "文件将从 GitHub 自动同步。";
+  elements.assetsSummary.textContent = "文件将从版本清单自动同步。";
   elements.downloadList.innerHTML = `
     <div class="loading-list" aria-label="正在加载下载文件">
       <div class="loading-row"></div>
@@ -263,24 +270,36 @@ async function loadLatestRelease() {
     </div>`;
 
   try {
-    const response = await fetch(RELEASES_API, {
-      headers: { Accept: "application/vnd.github+json" },
+    const response = await fetch(`${RELEASE_MANIFEST}?t=${Date.now()}`, {
       cache: "no-store",
     });
     if (!response.ok) {
-      const error = new Error(`GitHub API returned ${response.status}`);
+      const error = new Error(`Release manifest returned ${response.status}`);
       error.status = response.status;
+      error.code = response.status === 404 ? "manifest-missing" : "manifest-error";
       throw error;
     }
-    const releases = await response.json();
-    const release = Array.isArray(releases)
-      ? releases.find((candidate) => !candidate.draft)
-      : null;
-    if (!release) {
-      const error = new Error("No published GitHub release found");
-      error.status = 404;
+    const manifest = await response.json();
+    if (!manifest.release) {
+      const error = new Error("No published release found");
+      error.code = "no-release";
       throw error;
     }
+    const release = {
+      tag_name: manifest.release.tagName,
+      name: manifest.release.name,
+      body: manifest.release.body,
+      published_at: manifest.release.publishedAt,
+      created_at: manifest.release.createdAt,
+      html_url: manifest.release.htmlUrl,
+      assets: Array.isArray(manifest.release.assets)
+        ? manifest.release.assets.map((asset) => ({
+            name: asset.name,
+            size: asset.size,
+            browser_download_url: asset.browserDownloadUrl,
+          }))
+        : [],
+    };
     renderRelease(release);
     setSyncStatus("success", "已同步最新 Release", "check-circle-2");
   } catch (error) {

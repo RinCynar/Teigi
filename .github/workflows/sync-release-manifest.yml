@@ -1,0 +1,75 @@
+name: Sync Release Manifest
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types:
+      - published
+      - edited
+      - deleted
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-manifest
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate release manifest
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const releases = await github.paginate(
+              github.rest.repos.listReleases,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+              },
+            );
+            const latest = releases.find((release) => !release.draft);
+            const manifest = {
+              repository: `${context.repo.owner}/${context.repo.repo}`,
+              release: latest
+                ? {
+                    tagName: latest.tag_name,
+                    name: latest.name || latest.tag_name,
+                    body: latest.body || '',
+                    createdAt: latest.created_at,
+                    publishedAt: latest.published_at,
+                    htmlUrl: latest.html_url,
+                    prerelease: latest.prerelease,
+                    assets: latest.assets.map((asset) => ({
+                      name: asset.name,
+                      size: asset.size,
+                      contentType: asset.content_type,
+                      browserDownloadUrl: asset.browser_download_url,
+                    })),
+                  }
+                : null,
+            };
+            fs.writeFileSync('release.json', `${JSON.stringify(manifest, null, 2)}\n`);
+
+      - name: Commit updated manifest
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add release.json
+          if git diff --cached --quiet; then
+            echo "Release manifest is already current."
+            exit 0
+          fi
+          git commit -m "chore: sync latest release manifest"
+          git push
