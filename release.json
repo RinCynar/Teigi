@@ -1,4 +1,32 @@
 {
   "repository": "RinCynar/Teigi",
-  "release": null
+  "release": {
+    "tagName": "0.0.1α",
+    "name": "Alpha 0.0.1",
+    "body": "**Full Changelog**: https://github.com/RinCynar/Teigi/commits/0.0.1%CE%B1\r\n\r\nWindows x64 only.",
+    "createdAt": "2026-08-14T15:19:05Z",
+    "publishedAt": "2026-08-14T15:22:33Z",
+    "htmlUrl": "https://github.com/RinCynar/Teigi/releases/tag/0.0.1%CE%B1",
+    "prerelease": true,
+    "assets": [
+      {
+        "name": "installer.exe",
+        "size": 92617907,
+        "contentType": "application/octet-stream",
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/0.0.1%CE%B1/installer.exe"
+      },
+      {
+        "name": "release-ffmpeg.zip",
+        "size": 127069821,
+        "contentType": "application/x-zip-compressed",
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/0.0.1%CE%B1/release-ffmpeg.zip"
+      },
+      {
+        "name": "release.zip",
+        "size": 40525108,
+        "contentType": "application/x-zip-compressed",
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/0.0.1%CE%B1/release.zip"
+      }
+    ]
+  }
 }
