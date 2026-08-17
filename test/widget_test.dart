@@ -74,9 +74,18 @@ void main() {
 
     // 设置页正常渲染（AppBar 标题），无 UnimplementedError。
     expect(find.widgetWithText(AppBar, '设置'), findsOneWidget);
+    expect(find.byKey(const Key('settings-about-entry')), findsNothing);
+    await tester.tap(find.byKey(const Key('settings-category-4')));
+    await tester.pumpAndSettle();
+    final bodyRect = tester.getRect(find.byKey(const Key('settings-body')));
+    final presetsRect = tester.getRect(
+      find.byKey(const Key('settings-content-quick-formats')),
+    );
+    expect(presetsRect.top, greaterThanOrEqualTo(bodyRect.top));
+    expect(presetsRect.top, lessThan(bodyRect.bottom));
 
-    // 滚动到「快捷格式」分区（懒加载列表需滚动触发构建），
-    // 验证 quickFormatsProvider 依赖的 SharedPreferences 已正确注入。
+    // 滚动到「快捷格式」分区，验证设置页内容可以正常滚动。
+    // 同时验证 quickFormatsProvider 依赖的 SharedPreferences 已正确注入。
     await tester.dragUntilVisible(
       find.text('快捷格式'),
       find.byKey(const Key('settings-body')),

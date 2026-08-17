@@ -126,8 +126,17 @@ function Build-HostArch {
     return
   }
 
+  # PowerShell's UTF-8 reader preserves a BOM as U+FEFF in the returned string.
+  # Remove every leading BOM before writing exactly one UTF-8 BOM; otherwise
+  # Inno Setup interprets the extra BOM characters as text before the first
+  # preprocessor directive and fails with "Text is not inside a section".
   $issContent = Get-Content -Raw -Encoding UTF8 $issPath
-  [System.IO.File]::WriteAllText($issPath, $issContent, (New-Object System.Text.UTF8Encoding $true))
+  $issContent = $issContent.TrimStart([char]0xFEFF)
+  [System.IO.File]::WriteAllText(
+    $issPath,
+    $issContent,
+    (New-Object System.Text.UTF8Encoding $true)
+  )
 
   $pathVersion = if ($Ffmpeg) { $Ffmpeg.Version } else { 'PATH' }
   $defines = @(
@@ -180,7 +189,18 @@ foreach ($name in $wanted) {
     $built += $name
   } catch {
     Write-Warning "windows-$name failed: $_"
-    $failed += $name
+    # The application ZIPs are created before Inno Setup runs. Keep the
+    # architecture counted as built when only the optional installer failed;
+    # otherwise the script ends with the misleading "No architecture was
+    # built" error even though usable ZIP artifacts exist.
+    $plainZip = Join-Path $out "windows-$name-release.zip"
+    $ffZip = Join-Path $out "windows-$name-ffmpeg-release.zip"
+    if ((Test-Path $plainZip) -or (Test-Path $ffZip)) {
+      $built += $name
+      Write-Warning "windows-$name ZIP artifacts were created, but the installer failed."
+    } else {
+      $failed += $name
+    }
   }
 }
 

@@ -19,6 +19,38 @@ class SettingsPage extends ConsumerStatefulWidget {
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
   int _section = 0;
+  final ScrollController _bodyController = ScrollController();
+  final List<GlobalKey> _sectionKeys = List.generate(5, (_) => GlobalKey());
+
+  // General contains the behavior controls; the other indices follow the sidebar.
+  static const _contentIndexForSection = [3, 1, 2, 0, 4];
+  static const _aboutSectionIndex = 5;
+
+  @override
+  void dispose() {
+    _bodyController.dispose();
+    super.dispose();
+  }
+
+  void _selectSection(int index) {
+    if (index == _aboutSectionIndex) {
+      context.go('/settings/about');
+      return;
+    }
+
+    setState(() => _section = index);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final target = _sectionKeys[_contentIndexForSection[index]].currentContext;
+      if (target == null) return;
+      Scrollable.ensureVisible(
+        target,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        alignment: 0.02,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +69,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       l10n.about,
     ];
 
-    final body = ListView(
+    final body = SingleChildScrollView(
         key: const Key('settings-body'),
+        controller: _bodyController,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           _SectionCard(
+            key: _sectionKeys[0],
+            sectionKey: 'ffmpeg',
             title: 'ffmpeg',
             icon: Icons.movie_filter_outlined,
             children: [
@@ -77,6 +114,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ],
           ),
           _SectionCard(
+            key: _sectionKeys[1],
+            sectionKey: 'conversion',
             title: l10n.conversionSettings,
             icon: Icons.tune,
             children: [
@@ -124,6 +163,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ],
           ),
           _SectionCard(
+            key: _sectionKeys[2],
+            sectionKey: 'appearance',
             title: l10n.appearance,
             icon: Icons.palette_outlined,
             children: [
@@ -163,6 +204,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ],
           ),
           _SectionCard(
+            key: _sectionKeys[3],
+            sectionKey: 'behaviors',
             title: l10n.behaviors,
             icon: Icons.playlist_add_check_circle_outlined,
             children: [
@@ -205,6 +248,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ],
           ),
           _SectionCard(
+            key: _sectionKeys[4],
+            sectionKey: 'quick-formats',
             title: l10n.quickFormats,
             icon: Icons.star_outline,
             children: [
@@ -238,24 +283,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.info_outline),
-            title: Text(l10n.about),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.go('/settings/about'),
-          ),
+          if (!wide) ...[
+            const SizedBox(height: 8),
+            ListTile(
+              key: const Key('settings-about-entry'),
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.info_outline),
+              title: Text(l10n.about),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.go('/settings/about'),
+            ),
+          ],
           const SizedBox(height: 24),
           Center(
             child: Text(
-              'Teigi v1.0.0',
+              'Teigi v0.0.2-alpha',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.outline,
                   ),
             ),
           ),
-        ],
+          ],
+        ),
     );
 
     return Scaffold(
@@ -278,15 +327,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         children: [
                           for (var i = 0; i < sections.length; i++)
                             ListTile(
+                              key: ValueKey('settings-category-$i'),
                               title: Text(sections[i]),
                               selected: _section == i,
-                              onTap: () {
-                                if (i == 5) {
-                                  context.go('/settings/about');
-                                  return;
-                                }
-                                setState(() => _section = i);
-                              },
+                              onTap: () => _selectSection(i),
                             ),
                         ],
                       ),
@@ -509,11 +553,14 @@ class _StatusRow extends ConsumerWidget {
 
 /// 设置分组卡片。
 class _SectionCard extends StatelessWidget {
+  final String sectionKey;
   final String title;
   final IconData icon;
   final List<Widget> children;
 
   const _SectionCard({
+    super.key,
+    required this.sectionKey,
     required this.title,
     required this.icon,
     required this.children,
@@ -527,6 +574,7 @@ class _SectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            key: Key('settings-content-$sectionKey'),
             children: [
               Icon(icon, size: 18),
               const SizedBox(width: 8),
@@ -540,4 +588,3 @@ class _SectionCard extends StatelessWidget {
     );
   }
 }
-

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teigi/core/models/conversion_options.dart';
@@ -6,6 +8,7 @@ import 'package:teigi/core/models/format_definitions.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/queue_provider.dart';
 import 'package:teigi/providers/quick_formats_provider.dart';
+import 'package:teigi/theme/tokens.dart';
 
 /// 转码参数配置编辑器（弹层）。
 ///
@@ -83,6 +86,8 @@ class OptionsForm extends ConsumerStatefulWidget {
 
 class _OptionsFormState extends ConsumerState<OptionsForm> {
   late ConversionOptions _options;
+  Timer? _savedNoticeTimer;
+  bool _savedNoticeVisible = false;
 
   /// 自定义格式（无内置类型）时用户选择的媒体类型。
   MediaType? _mediaTypeOverride;
@@ -108,6 +113,22 @@ class _OptionsFormState extends ConsumerState<OptionsForm> {
   void _update(ConversionOptions updated) {
     setState(() => _options = updated);
     widget.onChanged(updated);
+  }
+
+  @override
+  void dispose() {
+    _savedNoticeTimer?.cancel();
+    super.dispose();
+  }
+
+  void _showSavedNotice() {
+    _savedNoticeTimer?.cancel();
+    setState(() => _savedNoticeVisible = true);
+    _savedNoticeTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() => _savedNoticeVisible = false);
+      }
+    });
   }
 
   @override
@@ -145,14 +166,17 @@ class _OptionsFormState extends ConsumerState<OptionsForm> {
                     .read(quickFormatsProvider.notifier)
                     .updateOptions(fmt, _options);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.savedAsQuick)),
-                  );
+                  _showSavedNotice();
                 }
               },
               icon: const Icon(Icons.bookmark_add_outlined, size: 18),
               label: Text(l10n.saveAsPreset),
             ),
+          ),
+        if (_savedNoticeVisible)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _SavedNotice(message: l10n.savedAsQuick),
           ),
         if (type == MediaType.video) _videoSection(context),
         if (type == MediaType.audio) _audioSection(context),
@@ -302,6 +326,43 @@ class _OptionsFormState extends ConsumerState<OptionsForm> {
   }
 }
 
+class _SavedNotice extends StatelessWidget {
+  final String message;
+
+  const _SavedNotice({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      key: const Key('saved-as-quick-notice'),
+      padding: const EdgeInsets.symmetric(
+        horizontal: TeigiSpacing.sm,
+        vertical: TeigiSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: scheme.secondaryContainer,
+        borderRadius: TeigiRadii.medium,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.check_circle_outline,
+            size: 18,
+            color: scheme.onSecondaryContainer,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: scheme.onSecondaryContainer),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// 配置分组。
 class _Section extends StatelessWidget {
@@ -650,4 +711,3 @@ class _OptionTextFieldState extends State<_OptionTextField> {
     );
   }
 }
-
