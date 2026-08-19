@@ -32,7 +32,7 @@ class FfmpegStatusBanner extends ConsumerWidget {
         onAction: () => context.go('/settings'),
       ),
       data: (s) {
-        if (s.isAvailable) return const SizedBox.shrink();
+        if (s.isReady) return const SizedBox.shrink();
         return _MissingBar(
           text: l10n.ffmpegNotConfigured,
           actionLabel: l10n.navSettings,

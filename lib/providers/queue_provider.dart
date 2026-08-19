@@ -37,7 +37,9 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
       final format =
           targetFormat ?? preset?.extension ?? recommended?.preset.extension;
       final resolvedOptions =
-          options ?? preset?.resolvedOptions() ?? recommended?.preset.resolvedOptions();
+          options ??
+          preset?.resolvedOptions() ??
+          recommended?.preset.resolvedOptions();
       newTasks.add(
         ConversionTask(
           id: 'task_${_seq++}_${DateTime.now().millisecondsSinceEpoch}',
@@ -77,7 +79,10 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
 
   /// 移除所有非运行中任务。
   void removeAll() {
-    state = [for (final t in state) if (t.isRunning) t];
+    state = [
+      for (final t in state)
+        if (t.isRunning) t,
+    ];
   }
 
   void removeTasks(Iterable<String> ids) {
@@ -184,6 +189,7 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
             remaining: null,
             speedX: 0,
             error: null,
+            errorDetails: null,
           )
         else
           t,
@@ -193,14 +199,16 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
   /// 为单个任务设置选项。
   void setOptions(String id, ConversionOptions options) {
     state = [
-      for (final t in state) if (t.id == id) t.copyWith(options: options) else t,
+      for (final t in state)
+        if (t.id == id) t.copyWith(options: options) else t,
     ];
   }
 
   /// 更新任务状态（供引擎回调）。
   void updateTask(ConversionTask updated) {
     state = [
-      for (final t in state) if (t.id == updated.id) updated else t,
+      for (final t in state)
+        if (t.id == updated.id) updated else t,
     ];
   }
 
@@ -236,5 +244,5 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
 /// 转换队列 Provider。
 final queueProvider =
     StateNotifierProvider<QueueNotifier, List<ConversionTask>>((ref) {
-  return QueueNotifier();
-});
+      return QueueNotifier();
+    });

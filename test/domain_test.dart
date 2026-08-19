@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teigi/core/domain/conversion_error.dart';
 import 'package:teigi/core/domain/media_type.dart';
 import 'package:teigi/core/domain/media_type_infer.dart';
 import 'package:teigi/core/domain/preset_recommendation.dart';
@@ -131,6 +132,46 @@ void main() {
         overwritePolicy: OverwritePolicy.overwrite,
       );
       expect(path.replaceAll('\\\\', '/'), contains('Movie_mp4'));
+    });
+  });
+
+  group('ConversionError.fromFfmpeg', () {
+    test('maps cancelled results to cancelled', () {
+      final error = ConversionError.fromFfmpeg(
+        exitCode: 1,
+        cancelled: true,
+        error: 'ffmpeg 已取消',
+        stderr: 'raw log',
+      );
+      expect(error.kind, ConversionErrorKind.cancelled);
+      expect(error.details, 'raw log');
+    });
+
+    test('maps common stderr to friendly kinds', () {
+      expect(
+        ConversionError.fromFfmpeg(
+          exitCode: 1,
+          cancelled: false,
+          stderr: 'No such file or directory',
+        ).kind,
+        ConversionErrorKind.invalidInput,
+      );
+      expect(
+        ConversionError.fromFfmpeg(
+          exitCode: 1,
+          cancelled: false,
+          stderr: 'Permission denied',
+        ).kind,
+        ConversionErrorKind.permissionDenied,
+      );
+      expect(
+        ConversionError.fromFfmpeg(
+          exitCode: 1,
+          cancelled: false,
+          stderr: 'Unknown encoder: nope',
+        ).kind,
+        ConversionErrorKind.unsupportedCodec,
+      );
     });
   });
 }

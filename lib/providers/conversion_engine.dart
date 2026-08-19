@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
-import 'package:teigi/core/ffmpeg/ffmpeg_runner.dart';
+import 'package:teigi/core/domain/conversion_error.dart';
+import 'package:teigi/core/ffmpeg/engine/ffmpeg_engine.dart';
+import 'package:teigi/core/ffmpeg/ffmpeg_command_builder.dart';
+import 'package:teigi/core/ffmpeg/progress_parser.dart';
 import 'package:teigi/core/models/conversion_task.dart';
 import 'package:teigi/core/services/task_scheduler.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
@@ -16,16 +18,14 @@ import 'package:teigi/providers/settings_provider.dart';
 /// 手动启动模式：导入文件、设置格式后点击「开始转换」才会调度。
 /// 并发数由设置决定；剩余时间基于滑动窗口平均速度估算。
 class ConversionEngine {
-  ConversionEngine({
-    required this.ref,
-    Logger? logger,
-  }) : _logger = logger ?? Logger();
+  ConversionEngine({required this.ref, Logger? logger})
+    : _logger = logger ?? Logger();
 
   final Ref ref;
   final Logger _logger;
 
-  /// 运行中的任务 id -> 对应进程。
-  final Map<String, Process> _running = {};
+  /// 运行中的任务 id -> 对应引擎任务句柄。
+  final Map<String, FfmpegTaskHandle> _running = {};
   final TaskScheduler _scheduler = const TaskScheduler();
   bool _disposed = false;
   bool _started = false;
@@ -54,10 +54,8 @@ class ConversionEngine {
   /// 停止处理：终止所有运行中的进程。
   void stop() {
     _setRunning(false);
-    for (final process in _running.values) {
-      try {
-        process.kill(ProcessSignal.sigterm);
-      } catch (_) {}
+    for (final task in _running.values) {
+      unawaited(task.cancel());
     }
     _running.clear();
   }
@@ -65,10 +63,8 @@ class ConversionEngine {
   void dispose() {
     _disposed = true;
     _started = false;
-    for (final process in _running.values) {
-      try {
-        process.kill(ProcessSignal.sigterm);
-      } catch (_) {}
+    for (final task in _running.values) {
+      unawaited(task.cancel());
     }
     _running.clear();
   }
@@ -79,7 +75,7 @@ class ConversionEngine {
 
     final settings = ref.read(settingsProvider);
     final ffmpegStatus = ref.read(ffmpegStatusProvider);
-    if (!ffmpegStatus.hasValue || !ffmpegStatus.value!.isAvailable) return;
+    if (!ffmpegStatus.hasValue || !ffmpegStatus.value!.isReady) return;
 
     final capacity = settings.concurrency - _running.length;
     if (capacity <= 0) return;
@@ -104,8 +100,7 @@ class ConversionEngine {
 
   Future<void> _runTask(ConversionTask task) async {
     final settings = ref.read(settingsProvider);
-    final ffmpegPath = ref.read(ffmpegStatusProvider).value!.info.path;
-    final runner = FfmpegRunner(ffmpegPath: ffmpegPath);
+    final engine = ref.read(ffmpegEngineProvider);
     final notifier = ref.read(queueProvider.notifier);
     final speedSamples = _SpeedEstimator();
 
@@ -114,43 +109,69 @@ class ConversionEngine {
       options: task.options.copyWith(hardwareAccel: settings.hardwareAccel),
     );
 
-    notifier.updateTask(
-      effectiveTask.copyWith(
-        status: TaskStatus.running,
-        startedAt: DateTime.now(),
-      ),
-    );
-
+    StreamSubscription<ProgressUpdate>? progressSubscription;
+    StreamSubscription<String>? outputSubscription;
+    StreamSubscription<FfmpegTaskState>? stateSubscription;
     try {
-      final result = await runner.convert(
-        effectiveTask,
-        onProcessStart: (process) {
-          _running[task.id] = process;
-        },
-        onProgress: (update) {
-          if (_disposed) return;
-          final current = notifier.taskById(task.id);
-          if (current == null) return;
-          final progress = update.progress ?? current.progress;
-          notifier.updateTask(
-            current.copyWith(
-              progress: progress,
-              speedX: update.speed ?? current.speedX,
-              remaining: speedSamples.update(progress),
-            ),
-          );
-        },
-        onOutput: (outputPath) {
-          if (_disposed) return;
-          final current = notifier.taskById(task.id);
-          if (current == null) return;
-          notifier.updateTask(current.copyWith(outputPath: outputPath));
-        },
+      final command = const FfmpegCommandBuilder().build(effectiveTask);
+
+      notifier.updateTask(
+        effectiveTask.copyWith(
+          status: TaskStatus.running,
+          outputPath: command.outputPath,
+          startedAt: DateTime.now(),
+        ),
       );
+
+      final handle = engine.run(command);
+      _running[task.id] = handle;
+      progressSubscription = handle.progress.listen((update) {
+        if (_disposed) return;
+        final current = notifier.taskById(task.id);
+        if (current == null) return;
+        final progress = update.progress ?? current.progress;
+        notifier.updateTask(
+          current.copyWith(
+            progress: progress,
+            speedX: update.speed ?? current.speedX,
+            remaining: speedSamples.update(progress),
+          ),
+        );
+      });
+      outputSubscription = handle.outputPaths.listen((outputPath) {
+        if (_disposed) return;
+        final current = notifier.taskById(task.id);
+        if (current == null) return;
+        // 命令构造时已知的输出路径优先；stderr 解析只作为兜底。
+        if (current.outputPath != null) return;
+        notifier.updateTask(current.copyWith(outputPath: outputPath));
+      });
+      stateSubscription = handle.states.listen((state) {
+        if (_disposed) return;
+        final current = notifier.taskById(task.id);
+        if (current == null) return;
+        switch (state) {
+          case FfmpegTaskState.running:
+            if (current.status != TaskStatus.running) {
+              notifier.updateTask(current.copyWith(status: TaskStatus.running));
+            }
+            break;
+          case FfmpegTaskState.cancelled:
+            notifier.updateTask(current.copyWith(status: TaskStatus.canceled));
+            break;
+          case FfmpegTaskState.starting:
+          case FfmpegTaskState.completed:
+          case FfmpegTaskState.failed:
+            break;
+        }
+      });
+
+      final result = await handle.result;
+      final current = notifier.taskById(task.id) ?? effectiveTask;
 
       if (result.isSuccess) {
         notifier.updateTask(
-          effectiveTask.copyWith(
+          current.copyWith(
             status: TaskStatus.completed,
             progress: 1.0,
             outputPath: result.outputPath,
@@ -158,21 +179,49 @@ class ConversionEngine {
           ),
         );
         _logger.i('转换完成: ${task.source.path} → ${result.outputPath}');
-      } else {
+      } else if (result.isCancelled) {
         notifier.updateTask(
-          effectiveTask.copyWith(
-            status: TaskStatus.failed,
+          current.copyWith(
+            status: TaskStatus.canceled,
             error: result.error,
+            errorDetails: result.stderr,
           ),
         );
-        _logger.e('转换失败: ${task.source.path} (${result.error})');
+        _logger.i('转换取消: ${task.source.path}');
+      } else {
+        final conversionError = ConversionError.fromFfmpeg(
+          exitCode: result.exitCode,
+          cancelled: result.isCancelled,
+          error: result.error,
+          stderr: result.stderr,
+        );
+        notifier.updateTask(
+          current.copyWith(
+            status: TaskStatus.failed,
+            error: conversionError.message,
+            errorDetails: conversionError.details,
+          ),
+        );
+        _logger.e(
+          '转换失败: ${task.source.path} (${conversionError.kind}) '
+          '${conversionError.details ?? ''}',
+        );
       }
     } catch (e, stackTrace) {
+      final conversionError = ConversionError.unknown(e);
+      final current = notifier.taskById(task.id) ?? effectiveTask;
       notifier.updateTask(
-        effectiveTask.copyWith(status: TaskStatus.failed, error: e.toString()),
+        current.copyWith(
+          status: TaskStatus.failed,
+          error: conversionError.message,
+          errorDetails: conversionError.details,
+        ),
       );
       _logger.e('转换异常: ${task.source.path}', error: e, stackTrace: stackTrace);
     } finally {
+      await progressSubscription?.cancel();
+      await outputSubscription?.cancel();
+      await stateSubscription?.cancel();
       _running.remove(task.id);
       _schedule();
     }
@@ -226,5 +275,3 @@ final conversionEngineProvider = Provider<ConversionEngine>((ref) {
   engine.init();
   return engine;
 });
-
-

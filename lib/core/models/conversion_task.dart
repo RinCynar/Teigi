@@ -9,7 +9,7 @@ enum TaskStatus {
   paused,
   completed,
   failed,
-  canceled;
+  canceled,
 }
 
 /// 队列中的一个转换任务。
@@ -38,6 +38,9 @@ class ConversionTask {
   /// 失败原因。
   String? error;
 
+  /// 失败时的原始诊断信息（供查看详细错误）。
+  String? errorDetails;
+
   final DateTime? startedAt;
   final DateTime? completedAt;
 
@@ -55,6 +58,7 @@ class ConversionTask {
     this.speedX = 0,
     this.outputPath,
     this.error,
+    this.errorDetails,
     this.startedAt,
     this.completedAt,
     this.recommended = false,
@@ -80,6 +84,7 @@ class ConversionTask {
     double? speedX,
     String? outputPath,
     Object? error = _unset,
+    Object? errorDetails = _unset,
     DateTime? startedAt,
     DateTime? completedAt,
     bool? recommended,
@@ -95,6 +100,9 @@ class ConversionTask {
       speedX: speedX ?? this.speedX,
       outputPath: outputPath ?? this.outputPath,
       error: error == _unset ? this.error : error as String?,
+      errorDetails: errorDetails == _unset
+          ? this.errorDetails
+          : errorDetails as String?,
       startedAt: startedAt ?? this.startedAt,
       completedAt: completedAt ?? this.completedAt,
       recommended: recommended ?? this.recommended,

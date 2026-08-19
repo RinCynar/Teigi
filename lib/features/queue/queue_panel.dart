@@ -79,7 +79,8 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
               ChoiceChip(
                 label: Text(l10n.failed),
                 selected: _filter == _QueueFilter.failed,
-                onSelected: (_) => setState(() => _filter = _QueueFilter.failed),
+                onSelected: (_) =>
+                    setState(() => _filter = _QueueFilter.failed),
               ),
             ],
           ),
@@ -90,9 +91,8 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                     child: Text(
                       l10n.queueIdleHint,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   )
                 : ListView(
@@ -100,7 +100,11 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                       if (_filter == _QueueFilter.all) ...[
                         ..._group(l10n.converting, visible, TaskStatus.running),
                         ..._group(l10n.queued, visible, TaskStatus.queued),
-                        ..._group(l10n.completed, visible, TaskStatus.completed),
+                        ..._group(
+                          l10n.completed,
+                          visible,
+                          TaskStatus.completed,
+                        ),
                         ..._group(l10n.failed, visible, TaskStatus.failed),
                       ] else
                         for (final t in visible) _JobTile(task: t),
@@ -122,12 +126,19 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
     };
   }
 
-  List<Widget> _group(String title, List<ConversionTask> all, TaskStatus status) {
+  List<Widget> _group(
+    String title,
+    List<ConversionTask> all,
+    TaskStatus status,
+  ) {
     final items = all.where((t) => t.status == status).toList();
     if (items.isEmpty) return const [];
     return [
       Padding(
-        padding: const EdgeInsets.only(top: TeigiSpacing.sm, bottom: TeigiSpacing.xs),
+        padding: const EdgeInsets.only(
+          top: TeigiSpacing.sm,
+          bottom: TeigiSpacing.xs,
+        ),
         child: Text(title, style: Theme.of(context).textTheme.labelLarge),
       ),
       for (final t in items) _JobTile(task: t),
@@ -160,7 +171,11 @@ class _JobTile extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(pair, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    child: Text(
+                      pair,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   if (task.status == TaskStatus.failed)
                     TextButton(
@@ -174,10 +189,7 @@ class _JobTile extends ConsumerWidget {
                     onPressed: () => _menu(
                       context,
                       ref,
-                      Offset(
-                        MediaQuery.sizeOf(context).width - 40,
-                        80,
-                      ),
+                      Offset(MediaQuery.sizeOf(context).width - 40, 80),
                     ),
                   ),
                 ],
@@ -190,27 +202,24 @@ class _JobTile extends ConsumerWidget {
                   '${(task.progress * 100).toStringAsFixed(0)}%'
                   '${task.speedX > 0 ? ' · ${task.speedX.toStringAsFixed(1)}x' : ''}'
                   '${task.remaining != null ? ' · ETA ${l10n.formatDuration(task.remaining!)}' : ''}',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: scheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
               ],
               if (task.status == TaskStatus.failed && task.error != null)
                 Text(
                   task.error!,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: scheme.error),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: scheme.error),
                 ),
               if (task.status == TaskStatus.completed)
                 Text(
                   l10n.completed,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: scheme.primary),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: scheme.primary),
                 ),
             ],
           ),
@@ -223,13 +232,18 @@ class _JobTile extends ConsumerWidget {
     final l10n = ref.read(l10nProvider);
     final action = await showMenu<String>(
       context: context,
-      position: RelativeRect.fromLTRB(global.dx, global.dy, global.dx, global.dy),
+      position: RelativeRect.fromLTRB(
+        global.dx,
+        global.dy,
+        global.dx,
+        global.dy,
+      ),
       items: [
         if (task.status == TaskStatus.failed)
           PopupMenuItem(value: 'retry', child: Text(l10n.retry)),
         PopupMenuItem(value: 'open', child: Text(l10n.openFile)),
         PopupMenuItem(value: 'folder', child: Text(l10n.openFolder)),
-        if (task.error != null)
+        if (task.error != null || task.errorDetails != null)
           PopupMenuItem(value: 'log', child: Text(l10n.viewLog)),
         PopupMenuItem(value: 'remove', child: Text(l10n.remove)),
       ],
@@ -243,12 +257,13 @@ class _JobTile extends ConsumerWidget {
       case 'folder':
         await openParentFolder(task.outputPath ?? task.source.path);
       case 'log':
-        if (task.error != null) {
+        final logText = task.errorDetails ?? task.error;
+        if (logText != null) {
           await showDialog<void>(
             context: context,
             builder: (ctx) => AlertDialog(
               title: Text(l10n.viewLog),
-              content: SelectableText(task.error!),
+              content: SelectableText(logText),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:teigi/app.dart';
-import 'package:teigi/core/ffmpeg/ffmpeg_detector.dart';
+import 'package:teigi/core/ffmpeg/engine/ffmpeg_engine.dart';
 import 'package:teigi/core/models/app_settings.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
 import 'package:teigi/providers/settings_provider.dart';
@@ -136,11 +136,11 @@ void main() {
 /// 固定返回「可用」状态的假 ffmpeg 检测器。
 class _FakeFfmpegNotifier extends FfmpegStatusNotifier {
   @override
-  Future<FfmpegStatus> build() async {
-    return const FfmpegStatus(
-      status: FfmpegDetectionStatus.available,
-      info: FfmpegInfo(path: 'ffmpeg', version: 'test-0.0'),
-      message: '测试用 ffmpeg',
+  Future<FfmpegEngineStatus> build() async {
+    return const FfmpegEngineStatus(
+      isReady: true,
+      version: 'test-0.0',
+      resolvedExecutablePath: 'ffmpeg',
     );
   }
 }

@@ -2,7 +2,7 @@ import 'package:teigi/core/models/conversion_task.dart';
 
 /// Picks the next queued tasks without starting processes.
 ///
-/// [FfmpegRunner] executes a single task. This type only answers
+/// [FfmpegTaskHandle] executes a single task. This type only answers
 /// "how many / which tasks may start now".
 class TaskScheduler {
   const TaskScheduler();

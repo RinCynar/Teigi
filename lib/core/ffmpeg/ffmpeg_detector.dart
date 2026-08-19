@@ -1,76 +1,116 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
-
-/// ffmpeg 可用性检测结果。
-class FfmpegInfo {
-  final String path;
-  final String version;
-
-  const FfmpegInfo({required this.path, required this.version});
-
-  bool get isAvailable => path.isNotEmpty;
-
-  static const FfmpegInfo unavailable = FfmpegInfo(path: '', version: '');
-
-  @override
-  String toString() => 'FfmpegInfo(path: $path, version: $version)';
-}
+import 'package:teigi/core/ffmpeg/engine/ffmpeg_engine.dart';
 
 /// 负责在启动时检测 ffmpeg 是否可用。
 ///
 /// 检测顺序：
-/// 1. 安装目录内置的 `data/ffmpeg`（内嵌引擎优先）
-/// 2. 用户保存的自定义路径
+/// 1. 用户明确保存的自定义路径
+/// 2. 安装目录内置的 `data/ffmpeg`
 /// 3. 系统 PATH（`where ffmpeg` / `which ffmpeg`）
 class FfmpegDetector {
-  FfmpegDetector({Logger? logger}) : _logger = logger ?? Logger();
+  FfmpegDetector({
+    Logger? logger,
+    Future<String?> Function()? bundledPathResolver,
+    Future<String?> Function()? pathResolver,
+    Future<FfmpegEngineStatus> Function(String path)? probe,
+    Duration probeTimeout = const Duration(seconds: 10),
+  }) : this._fromResolvers(
+         logger ?? Logger(),
+         bundledPathResolver,
+         pathResolver,
+         probe,
+         probeTimeout,
+       );
+
+  FfmpegDetector._fromResolvers(
+    this._logger,
+    this._bundledPathResolver,
+    this._pathResolver,
+    this._probeOverride,
+    this._probeTimeout,
+  );
 
   final Logger _logger;
+  final Future<String?> Function()? _bundledPathResolver;
+  final Future<String?> Function()? _pathResolver;
+  final Future<FfmpegEngineStatus> Function(String path)? _probeOverride;
+  final Duration _probeTimeout;
 
-  /// 检测 ffmpeg。返回信息包含路径与版本号；找不到时返回
-  /// [FfmpegInfo.unavailable]。
-  Future<FfmpegInfo> detect({String? customPath}) async {
-    // 1. 内嵌引擎：安装目录 data/ffmpeg。
+  /// 检测 ffmpeg。返回信息包含实际使用的路径与版本号。
+  Future<FfmpegEngineStatus> detect({String? customPath}) async {
+    // An explicit user choice must win over every automatic source.
+    final custom = customPath?.trim();
+    if (custom != null && custom.isNotEmpty) {
+      final info = (await _probe(custom)).withSource(FfmpegEngineSource.custom);
+      if (info.isReady) {
+        _logger.i(
+          '使用自定义 ffmpeg 路径: ${info.resolvedExecutablePath} (${info.version})',
+        );
+        return info.withRequestedCustomPath(custom);
+      }
+      _logger.w('自定义 ffmpeg 路径无效: $custom (${info.errorMessage ?? '未知原因'})');
+
+      final fallback = await _detectAutomatic();
+      if (fallback != null && fallback.isReady) {
+        return fallback.withRequestedCustomPath(custom);
+      }
+      return info.withRequestedCustomPath(custom);
+    }
+
+    return await _detectAutomatic() ?? FfmpegEngineStatus.unavailable;
+  }
+
+  Future<FfmpegEngineStatus?> _detectAutomatic() async {
+    // Prefer the copy shipped by the installer over whatever happens to be
+    // installed in the user's PATH.
     final bundled = await _findBundled();
     if (bundled != null) {
-      final info = await _probe(bundled);
-      if (info.isAvailable) {
-        _logger.i('使用内置 ffmpeg: ${info.path} (${info.version})');
+      final info = (await _probe(
+        bundled,
+      )).withSource(FfmpegEngineSource.bundled);
+      if (info.isReady) {
+        _logger.i(
+          '使用内置 ffmpeg: ${info.resolvedExecutablePath} (${info.version})',
+        );
         return info;
       }
     }
 
-    // 2. 自定义路径（用户显式配置）。
-    if (customPath != null && customPath.isNotEmpty) {
-      final info = await _probe(customPath);
-      if (info.isAvailable) {
-        _logger.i('使用自定义 ffmpeg 路径: ${info.path} (${info.version})');
-        return info;
-      }
-      _logger.w('自定义 ffmpeg 路径无效: $customPath');
-    }
-
-    // 3. PATH 中查找。
+    // Fall back to PATH only when no higher-priority source is usable.
     final inPath = await _findInPath();
     if (inPath != null) {
-      final info = await _probe(inPath);
-      if (info.isAvailable) {
-        _logger.i('在 PATH 中发现 ffmpeg: ${info.path} (${info.version})');
+      final info = (await _probe(
+        inPath,
+      )).withSource(FfmpegEngineSource.systemPath);
+      if (info.isReady) {
+        _logger.i(
+          '在 PATH 中发现 ffmpeg: ${info.resolvedExecutablePath} (${info.version})',
+        );
         return info;
       }
     }
 
     _logger.w('未找到 ffmpeg');
-    return FfmpegInfo.unavailable;
+    return null;
   }
 
   /// 在软件安装目录中查找内置的 `data/ffmpeg/ffmpeg`。
   Future<String?> _findBundled() async {
+    if (_bundledPathResolver != null) return _bundledPathResolver();
+
     final exeDir = File(Platform.resolvedExecutable).parent.path;
     final candidates = <String>[
-      p.join(exeDir, 'data', 'ffmpeg', Platform.isWindows ? 'ffmpeg.exe' : 'ffmpeg'),
+      p.join(
+        exeDir,
+        'data',
+        'ffmpeg',
+        Platform.isWindows ? 'ffmpeg.exe' : 'ffmpeg',
+      ),
       p.join(
         Directory.current.path,
         'data',
@@ -86,6 +126,8 @@ class FfmpegDetector {
 
   /// 在 PATH 中查找 ffmpeg 可执行文件路径。
   Future<String?> _findInPath() async {
+    if (_pathResolver != null) return _pathResolver();
+
     try {
       if (Platform.isWindows) {
         final result = await Process.run('where', ['ffmpeg']);
@@ -110,19 +152,44 @@ class FfmpegDetector {
   }
 
   /// 校验路径并获取版本号。
-  Future<FfmpegInfo> _probe(String path) async {
-    if (!File(path).existsSync()) return FfmpegInfo.unavailable;
+  Future<FfmpegEngineStatus> _probe(String path) async {
+    if (_probeOverride != null) return _probeOverride(path);
+
+    if (!File(path).existsSync()) {
+      return FfmpegEngineStatus(isReady: false, errorMessage: '文件不存在：$path');
+    }
+
+    Process? process;
     try {
-      final result = await Process.run(path, ['-version']);
-      if (result.exitCode == 0) {
-        final firstLine = (result.stdout as String).trim().split('\n').first;
+      process = await Process.start(path, ['-version']);
+      final stdoutFuture = process.stdout.transform(utf8.decoder).join();
+      final stderrFuture = process.stderr.transform(utf8.decoder).join();
+      final exitCode = await process.exitCode.timeout(_probeTimeout);
+
+      if (exitCode == 0) {
+        final stdout = await stdoutFuture;
+        await stderrFuture;
+        final firstLine = stdout.trim().split('\n').first;
         final version = _parseVersion(firstLine);
-        return FfmpegInfo(path: path, version: version);
+        return FfmpegEngineStatus(
+          isReady: true,
+          version: version,
+          resolvedExecutablePath: path,
+        );
       }
+
+      await stderrFuture;
+      return FfmpegEngineStatus(
+        isReady: false,
+        errorMessage: '无法运行 ffmpeg：$path（退出码 $exitCode）',
+      );
+    } on TimeoutException {
+      process?.kill();
+      return FfmpegEngineStatus(isReady: false, errorMessage: '检测超时：$path');
     } catch (e) {
       _logger.w('探测 ffmpeg 失败 ($path): $e');
+      return FfmpegEngineStatus(isReady: false, errorMessage: '无法运行 ffmpeg：$e');
     }
-    return FfmpegInfo.unavailable;
   }
 
   /// 从 `ffmpeg version X.Y.Z ...` 首行解析版本号。

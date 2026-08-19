@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:teigi/core/ffmpeg/engine/ffmpeg_engine.dart';
 import 'package:teigi/core/models/app_settings.dart';
 import 'package:teigi/core/models/conversion_options.dart';
 import 'package:teigi/i18n/strings.dart';
@@ -22,18 +23,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   final ScrollController _bodyController = ScrollController();
   final List<GlobalKey> _sectionKeys = List.generate(5, (_) => GlobalKey());
 
-  // General contains the behavior controls; the other indices follow the sidebar.
-  static const _contentIndexForSection = [3, 1, 2, 0, 4];
-  static const _aboutSectionIndex = 5;
-
   @override
   void dispose() {
     _bodyController.dispose();
     super.dispose();
   }
 
-  void _selectSection(int index) {
-    if (index == _aboutSectionIndex) {
+  void _selectSection(
+    int index,
+    List<int> contentIndexForSection,
+    int aboutSectionIndex,
+  ) {
+    if (index == aboutSectionIndex) {
       context.go('/settings/about');
       return;
     }
@@ -41,7 +42,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     setState(() => _section = index);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final target = _sectionKeys[_contentIndexForSection[index]].currentContext;
+      final target = _sectionKeys[contentIndexForSection[index]].currentContext;
       if (target == null) return;
       Scrollable.ensureVisible(
         target,
@@ -56,63 +57,68 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
     final settings = ref.watch(settingsProvider);
+    final ffmpegEngine = ref.watch(ffmpegEngineProvider);
     final ffmpegStatus = ref.watch(ffmpegStatusProvider);
     final quickFormats = ref.watch(quickFormatsProvider);
 
     final wide = MediaQuery.sizeOf(context).width >= 1024;
-    final sections = [
+    final contentIndexForSection = <int>[3, 1, 2];
+    final sections = <String>[
       l10n.general,
       l10n.conversionSettings,
       l10n.appearance,
-      'FFmpeg',
-      l10n.navPresets,
-      l10n.about,
     ];
+    if (ffmpegEngine.capabilities.supportsCustomExecutablePath) {
+      sections.add('FFmpeg');
+      contentIndexForSection.add(0);
+    }
+    sections.add(l10n.navPresets);
+    contentIndexForSection.add(4);
+    sections.add(l10n.about);
+    final aboutSectionIndex = sections.length - 1;
 
     final body = SingleChildScrollView(
-        key: const Key('settings-body'),
-        controller: _bodyController,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-          _SectionCard(
-            key: _sectionKeys[0],
-            sectionKey: 'ffmpeg',
-            title: 'ffmpeg',
-            icon: Icons.movie_filter_outlined,
-            children: [
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.ffmpegPathTitle),
-                subtitle: Text(
-                  settings.ffmpegPath.isEmpty
-                      ? l10n.usePathFfmpeg
-                      : settings.ffmpegPath,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.folder_open),
-                      tooltip: l10n.browse,
-                      onPressed: () => _pickFfmpegPath(ref),
-                    ),
-                    if (settings.ffmpegPath.isNotEmpty)
+      key: const Key('settings-body'),
+      controller: _bodyController,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (ffmpegEngine.capabilities.supportsCustomExecutablePath)
+            _SectionCard(
+              key: _sectionKeys[0],
+              sectionKey: 'ffmpeg',
+              title: 'ffmpeg',
+              icon: Icons.movie_filter_outlined,
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.ffmpegPathTitle),
+                  subtitle: Text(
+                    _ffmpegPathSubtitle(settings, ffmpegStatus, l10n),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       IconButton(
-                        icon: const Icon(Icons.clear),
-                        tooltip: l10n.resetPathDetect,
-                        onPressed: () =>
-                            ref.read(settingsProvider.notifier).setFfmpegPath(''),
+                        icon: const Icon(Icons.folder_open),
+                        tooltip: l10n.browse,
+                        onPressed: () => _pickFfmpegPath(ref),
                       ),
-                  ],
+                      if (settings.ffmpegPath.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(Icons.clear),
+                          tooltip: l10n.resetPathDetect,
+                          onPressed: () => _clearFfmpegPath(ref),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              _StatusRow(ffmpegStatus: ffmpegStatus),
-            ],
-          ),
+                _StatusRow(ffmpegStatus: ffmpegStatus),
+              ],
+            ),
           _SectionCard(
             key: _sectionKeys[1],
             sectionKey: 'conversion',
@@ -190,14 +196,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 title: Text(l10n.themeMode),
                 trailing: SegmentedButton<String>(
                   segments: [
-                    ButtonSegment(value: 'system', label: Text(l10n.followSystem)),
+                    ButtonSegment(
+                      value: 'system',
+                      label: Text(l10n.followSystem),
+                    ),
                     ButtonSegment(value: 'light', label: Text(l10n.lightMode)),
                     ButtonSegment(value: 'dark', label: Text(l10n.darkMode)),
                   ],
                   selected: {settings.themeMode},
-                  onSelectionChanged: (s) => ref
-                      .read(settingsProvider.notifier)
-                      .setThemeMode(s.first),
+                  onSelectionChanged: (s) =>
+                      ref.read(settingsProvider.notifier).setThemeMode(s.first),
                 ),
               ),
               _SeedColorTile(l10n: l10n, settings: settings),
@@ -238,9 +246,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   ],
                   onChanged: (v) {
                     if (v != null) {
-                      ref.read(settingsProvider.notifier).update(
-                            settings.copyWith(overwritePolicy: v),
-                          );
+                      ref
+                          .read(settingsProvider.notifier)
+                          .update(settings.copyWith(overwritePolicy: v));
                     }
                   },
                 ),
@@ -257,10 +265,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   l10n.quickFormatsHint,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
               if (quickFormats.isEmpty)
@@ -276,8 +283,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     for (final f in quickFormats)
                       InputChip(
                         label: Text(f.extension.toUpperCase()),
-                        onDeleted: () =>
-                            ref.read(quickFormatsProvider.notifier).remove(f.extension),
+                        onDeleted: () => ref
+                            .read(quickFormatsProvider.notifier)
+                            .remove(f.extension),
                       ),
                   ],
                 ),
@@ -299,12 +307,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             child: Text(
               'Teigi v0.0.2-alpha',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
           ),
-          ],
-        ),
+        ],
+      ),
     );
 
     return Scaffold(
@@ -330,7 +338,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               key: ValueKey('settings-category-$i'),
                               title: Text(sections[i]),
                               selected: _section == i,
-                              onTap: () => _selectSection(i),
+                              onTap: () => _selectSection(
+                                i,
+                                contentIndexForSection,
+                                aboutSectionIndex,
+                              ),
                             ),
                         ],
                       ),
@@ -344,7 +356,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ),
     );
   }
-
 
   Future<void> _pickFfmpegPath(WidgetRef ref) async {
     final result = await FilePicker.pickFiles(
@@ -360,9 +371,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     }
   }
 
+  Future<void> _clearFfmpegPath(WidgetRef ref) async {
+    await ref.read(settingsProvider.notifier).setFfmpegPath('');
+    await ref.read(ffmpegStatusProvider.notifier).redetect();
+  }
+
+  String _ffmpegPathSubtitle(
+    AppSettings settings,
+    AsyncValue<FfmpegEngineStatus> status,
+    L10n l10n,
+  ) {
+    final detected = status.valueOrNull;
+    return switch (detected?.source) {
+      FfmpegEngineSource.custom =>
+        detected?.resolvedExecutablePath ?? settings.ffmpegPath,
+      FfmpegEngineSource.bundled => l10n.useBundledFfmpeg,
+      FfmpegEngineSource.systemPath => l10n.usePathFfmpeg,
+      null =>
+        settings.ffmpegPath.isEmpty ? l10n.usePathFfmpeg : settings.ffmpegPath,
+    };
+  }
+
   Future<void> _pickOutputDirectory(WidgetRef ref) async {
     final l10n = ref.read(l10nProvider);
-    final path = await FilePicker.getDirectoryPath(dialogTitle: l10n.outputDirectory);
+    final path = await FilePicker.getDirectoryPath(
+      dialogTitle: l10n.outputDirectory,
+    );
     if (path != null) {
       await ref.read(settingsProvider.notifier).setOutputDirectory(path);
     }
@@ -386,7 +420,9 @@ class _SeedColorTileState extends ConsumerState<_SeedColorTile> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: _toHex(widget.settings.seedColor));
+    _controller = TextEditingController(
+      text: _toHex(widget.settings.seedColor),
+    );
   }
 
   @override
@@ -426,12 +462,17 @@ class _SeedColorTileState extends ConsumerState<_SeedColorTile> {
             children: [
               for (final c in _presetColors)
                 InkWell(
-                  onTap: () => ref.read(settingsProvider.notifier).setSeedColor(c),
+                  onTap: () =>
+                      ref.read(settingsProvider.notifier).setSeedColor(c),
                   child: CircleAvatar(
                     backgroundColor: c,
                     radius: 16,
                     child: c == settings.seedColor
-                        ? Icon(Icons.check, size: 18, color: Theme.of(context).colorScheme.onPrimary)
+                        ? Icon(
+                            Icons.check,
+                            size: 18,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          )
                         : null,
                   ),
                 ),
@@ -454,9 +495,9 @@ class _SeedColorTileState extends ConsumerState<_SeedColorTile> {
                     final hex = v.replaceAll('#', '').trim();
                     final color = int.tryParse(hex, radix: 16);
                     if (color != null) {
-                      ref.read(settingsProvider.notifier).setSeedColor(
-                            Color(0xFF000000 | color),
-                          );
+                      ref
+                          .read(settingsProvider.notifier)
+                          .setSeedColor(Color(0xFF000000 | color));
                     }
                   },
                 ),
@@ -465,10 +506,9 @@ class _SeedColorTileState extends ConsumerState<_SeedColorTile> {
               Expanded(
                 child: Text(
                   l10n.seedColorHint,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],
@@ -479,10 +519,9 @@ class _SeedColorTileState extends ConsumerState<_SeedColorTile> {
   }
 }
 
-
 /// ffmpeg 检测结果状态行。
 class _StatusRow extends ConsumerWidget {
-  final AsyncValue<FfmpegStatus> ffmpegStatus;
+  final AsyncValue<FfmpegEngineStatus> ffmpegStatus;
 
   const _StatusRow({required this.ffmpegStatus});
 
@@ -501,18 +540,49 @@ class _StatusRow extends ConsumerWidget {
         l10n.detectFailed('$e'),
       ),
       data: (s) {
-        if (s.isAvailable) {
+        if (s.isReady && s.isFallback) {
+          final fallbackText = switch (s.source) {
+            FfmpegEngineSource.bundled => l10n.customPathInvalidUsingBundled,
+            FfmpegEngineSource.systemPath => l10n.customPathInvalidUsingPath,
+            _ => l10n.customPathInvalid,
+          };
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _statusChip(
+                scheme.errorContainer,
+                Icons.warning_amber_outlined,
+                fallbackText,
+                onPrimaryContainer: scheme.onErrorContainer,
+                button: TextButton.icon(
+                  onPressed: () =>
+                      ref.read(ffmpegStatusProvider.notifier).redetect(),
+                  icon: const Icon(Icons.refresh),
+                  label: Text(l10n.redetect),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _statusChip(
+                scheme.primaryContainer,
+                Icons.check_circle_outline,
+                l10n.ffmpegReady(s.version ?? ''),
+                onPrimaryContainer: scheme.onPrimaryContainer,
+              ),
+            ],
+          );
+        }
+        if (s.isReady) {
           return _statusChip(
             scheme.primaryContainer,
             Icons.check_circle_outline,
-            l10n.ffmpegReady(s.info.version),
+            l10n.ffmpegReady(s.version ?? ''),
             onPrimaryContainer: scheme.onPrimaryContainer,
           );
         }
         return _statusChip(
           scheme.errorContainer,
           Icons.warning_amber_outlined,
-          s.message ?? l10n.ffmpegNotFound,
+          s.errorMessage ?? l10n.ffmpegNotFound,
           onPrimaryContainer: scheme.onErrorContainer,
           button: TextButton.icon(
             onPressed: () => ref.read(ffmpegStatusProvider.notifier).redetect(),
