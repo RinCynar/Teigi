@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:teigi/core/ffmpeg/engine/ffmpeg_engine.dart';
 import 'package:teigi/core/models/app_settings.dart';
 import 'package:teigi/core/models/conversion_options.dart';
+import 'package:teigi/core/utils/platform_info.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
 import 'package:teigi/providers/quick_formats_provider.dart';
@@ -125,22 +126,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             title: l10n.conversionSettings,
             icon: Icons.tune,
             children: [
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.outputDirectory),
-                subtitle: Text(
-                  settings.outputDirectory.isEmpty
-                      ? l10n.sameAsSource
-                      : settings.outputDirectory,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+              if (isDesktop)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.outputDirectory),
+                  subtitle: Text(
+                    settings.outputDirectory.isEmpty
+                        ? l10n.sameAsSource
+                        : settings.outputDirectory,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.folder_open),
+                    tooltip: l10n.browse,
+                    onPressed: () => _pickOutputDirectory(ref),
+                  ),
                 ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.folder_open),
-                  tooltip: l10n.browse,
-                  onPressed: () => _pickOutputDirectory(ref),
-                ),
-              ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(l10n.concurrency),
