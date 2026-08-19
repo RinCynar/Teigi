@@ -473,6 +473,58 @@ class _SelectionBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
+    final compact = size == TeigiWindowSize.compact;
+    final actions = <Widget>[
+      TextButton(
+        onPressed: () {
+          final ids = ref
+              .read(queueProvider)
+              .where((t) => t.status == TaskStatus.queued)
+              .map((t) => t.id);
+          ref.read(selectionProvider.notifier).selectAll(ids);
+        },
+        child: Text(l10n.selectAll),
+      ),
+      TextButton(
+        onPressed: () async {
+          final fmt = await FormatPicker.show(
+            context,
+            current: null,
+            size: size,
+          );
+          if (fmt != null) {
+            ref.read(queueProvider.notifier).setTargetFormatFor(selected, fmt);
+          }
+        },
+        child: Text(l10n.targetFormat),
+      ),
+      TextButton(
+        onPressed: () => BatchConfigSheet.open(context, ids: selected),
+        child: Text(l10n.configure),
+      ),
+      TextButton(
+        onPressed: () {
+          ref.read(queueProvider.notifier).removeTasks(selected);
+          ref.read(selectionProvider.notifier).clear();
+        },
+        child: Text(l10n.remove),
+      ),
+    ];
+
+    if (compact) {
+      // 手机断点：标题一行、操作按钮换行，避免窄屏溢出。
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.selectedCount(selected.length),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: TeigiSpacing.xs),
+          Wrap(spacing: TeigiSpacing.xs, children: actions),
+        ],
+      );
+    }
     return Row(
       children: [
         Expanded(
@@ -481,40 +533,7 @@ class _SelectionBar extends ConsumerWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
-        TextButton(
-          onPressed: () {
-            final ids = ref
-                .read(queueProvider)
-                .where((t) => t.status == TaskStatus.queued)
-                .map((t) => t.id);
-            ref.read(selectionProvider.notifier).selectAll(ids);
-          },
-          child: Text(l10n.selectAll),
-        ),
-        TextButton(
-          onPressed: () async {
-            final fmt = await FormatPicker.show(
-              context,
-              current: null,
-              size: size,
-            );
-            if (fmt != null) {
-              ref.read(queueProvider.notifier).setTargetFormatFor(selected, fmt);
-            }
-          },
-          child: Text(l10n.targetFormat),
-        ),
-        TextButton(
-          onPressed: () => BatchConfigSheet.open(context, ids: selected),
-          child: Text(l10n.configure),
-        ),
-        TextButton(
-          onPressed: () {
-            ref.read(queueProvider.notifier).removeTasks(selected);
-            ref.read(selectionProvider.notifier).clear();
-          },
-          child: Text(l10n.remove),
-        ),
+        ...actions,
       ],
     );
   }

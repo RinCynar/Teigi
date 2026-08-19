@@ -15,6 +15,23 @@ class BatchConfigSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required Set<String> ids,
   }) {
+    // 手机断点（< 600dp）下用全屏页面，避免窄屏溢出。
+    final size = TeigiBreakpoints.sizeOf(MediaQuery.sizeOf(context).width);
+    if (size == TeigiWindowSize.compact) {
+      return Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          fullscreenDialog: true,
+          builder: (ctx) => Scaffold(
+            body: SafeArea(
+              child: BatchConfigSheet(
+                ids: ids,
+                onClose: () => Navigator.of(ctx).pop(),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,

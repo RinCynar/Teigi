@@ -26,6 +26,23 @@ class ConvertConfigSheet extends ConsumerStatefulWidget {
     required bool asOverlay,
   }) {
     if (asOverlay) return Future.value();
+    // 手机断点（< 600dp）下用全屏页面，避免窄屏溢出。
+    final size = TeigiBreakpoints.sizeOf(MediaQuery.sizeOf(context).width);
+    if (size == TeigiWindowSize.compact) {
+      return Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          fullscreenDialog: true,
+          builder: (ctx) => Scaffold(
+            body: SafeArea(
+              child: ConvertConfigSheet(
+                task: task,
+                onClose: () => Navigator.of(ctx).pop(),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return showGeneralDialog<void>(
       context: context,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
