@@ -42,6 +42,7 @@ dependencies:
   desktop_drop: ^0.7.1
   url_launcher: ^6.3.2
   ffmpeg_kit_flutter_new_full: ^2.5.2
+  flutter_foreground_task: ^11.0.0
 
 dev_dependencies:
   flutter_test:

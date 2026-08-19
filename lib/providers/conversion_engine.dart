@@ -8,6 +8,7 @@ import 'package:teigi/core/ffmpeg/engine/ffmpeg_engine.dart';
 import 'package:teigi/core/ffmpeg/ffmpeg_command_builder.dart';
 import 'package:teigi/core/ffmpeg/progress_parser.dart';
 import 'package:teigi/core/models/conversion_task.dart';
+import 'package:teigi/core/services/foreground_service.dart';
 import 'package:teigi/core/services/task_scheduler.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
 import 'package:teigi/providers/queue_provider.dart';
@@ -43,6 +44,17 @@ class ConversionEngine {
     ref.listen<List<ConversionTask>>(queueProvider, (prev, next) {
       if (_started) _schedule();
     });
+    // Android 前台服务通知的「取消」按钮 → 取消所有运行中的任务。
+    ForegroundService.actions.listen((action) {
+      if (action == ForegroundAction.cancel) _cancelAll();
+    });
+  }
+
+  /// 取消所有运行中的任务。
+  void _cancelAll() {
+    for (final task in _running.values) {
+      unawaited(task.cancel());
+    }
   }
 
   /// 开始处理队列。
@@ -93,8 +105,10 @@ class ConversionEngine {
     }
 
     // 队列耗尽且无运行中任务时自动复位，避免按钮停留在「转换中…」。
+    // Android：同时停止前台服务，释放通知栏。
     if (_running.isEmpty && _scheduler.isExhausted(ref.read(queueProvider))) {
       _setRunning(false);
+      unawaited(ForegroundService.stop());
     }
   }
 
@@ -125,6 +139,8 @@ class ConversionEngine {
 
       final handle = engine.run(command);
       _running[task.id] = handle;
+      // Android：启动前台服务，常驻通知显示文件名与取消按钮。
+      unawaited(ForegroundService.start(fileName: task.source.name));
       progressSubscription = handle.progress.listen((update) {
         if (_disposed) return;
         final current = notifier.taskById(task.id);
@@ -136,6 +152,10 @@ class ConversionEngine {
             speedX: update.speed ?? current.speedX,
             remaining: speedSamples.update(progress),
           ),
+        );
+        final percent = (progress * 100).round();
+        unawaited(
+          ForegroundService.updateProgress('${task.source.name} $percent%'),
         );
       });
       outputSubscription = handle.outputPaths.listen((outputPath) {

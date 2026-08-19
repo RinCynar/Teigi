@@ -12,3 +12,11 @@ bool get isMobile =>
     !kIsWeb &&
     (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS);
+
+/// 是否为 Android 平台。
+bool get isAndroid =>
+    !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+/// 是否为 iOS 平台。
+bool get isIOS =>
+    !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
