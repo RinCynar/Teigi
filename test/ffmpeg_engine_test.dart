@@ -41,9 +41,13 @@ void main() {
     expect(result.outputPath, 'unused');
   });
 
-  test('cancel terminates a running process tree on Windows', () async {
-    if (!Platform.isWindows) return;
-    final executable = Platform.environment['ComSpec'] ?? 'cmd.exe';
+  test('cancel terminates a running process on the host platform', () async {
+    final executable = Platform.isWindows
+        ? (Platform.environment['ComSpec'] ?? 'cmd.exe')
+        : '/bin/sleep';
+    final args = Platform.isWindows
+        ? <String>['/c', 'ping', '-n', '30', '127.0.0.1']
+        : <String>['30'];
     final engine = DesktopFfmpegEngine(
       detector: _FakeDetector(
         FfmpegEngineStatus(
@@ -59,10 +63,7 @@ void main() {
 
     final states = <FfmpegTaskState>[];
     final handle = engine.run(
-      FfmpegCommand(
-        args: ['/c', 'ping', '-n', '30', '127.0.0.1'],
-        outputPath: 'unused',
-      ),
+      FfmpegCommand(args: args, outputPath: 'unused'),
     );
     final subscription = handle.states.listen(states.add);
 

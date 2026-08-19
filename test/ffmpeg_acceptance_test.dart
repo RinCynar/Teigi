@@ -21,10 +21,12 @@ void main() {
   late File audioSource;
 
   setUpAll(() async {
-    if (!Platform.isWindows) return;
     ffmpegPath = await _findExecutable('ffmpeg');
     if (ffmpegPath.isEmpty) return;
-    ffprobePath = p.join(p.dirname(ffmpegPath), 'ffprobe.exe');
+    ffprobePath = p.join(
+      p.dirname(ffmpegPath),
+      Platform.isWindows ? 'ffprobe.exe' : 'ffprobe',
+    );
     if (!File(ffprobePath).existsSync()) {
       ffmpegPath = '';
       return;
@@ -91,7 +93,7 @@ void main() {
   test(
     'custom / bundled / systemPath 视频与音频转换验收',
     () async {
-      if (!Platform.isWindows || ffmpegPath.isEmpty) return;
+      if (ffmpegPath.isEmpty) return;
 
       await _runVideoAndAudio(
         tempDir: tempDir!,
@@ -213,13 +215,21 @@ Future<void> _convert({
 }
 
 Future<String> _findExecutable(String name) async {
-  if (!Platform.isWindows) return '';
-  final result = await Process.run('where', [name]);
-  if (result.exitCode != 0) return '';
-  final lines = (result.stdout as String).trim().split('\n');
-  for (final line in lines) {
-    final path = line.trim();
-    if (path.isNotEmpty && File(path).existsSync()) return path;
+  final pathVar = Platform.environment['PATH'];
+  if (pathVar == null || pathVar.isEmpty) return '';
+
+  final separator = Platform.isWindows ? ';' : ':';
+  final extensions = Platform.isWindows
+      ? const ['.exe', '.cmd', '.bat', '.com']
+      : const [''];
+
+  for (final dir in pathVar.split(separator)) {
+    final directory = dir.trim();
+    if (directory.isEmpty) continue;
+    for (final ext in extensions) {
+      final candidate = p.join(directory, '$name$ext');
+      if (File(candidate).existsSync()) return candidate;
+    }
   }
   return '';
 }
