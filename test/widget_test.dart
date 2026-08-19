@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:teigi/app.dart';
+import 'package:teigi/core/ffmpeg/engine/desktop_ffmpeg_engine.dart';
 import 'package:teigi/core/ffmpeg/engine/ffmpeg_engine.dart';
 import 'package:teigi/core/models/app_settings.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
@@ -62,6 +63,8 @@ void main() {
             (ref) => SettingsNotifier(settings, prefs),
           ),
           ffmpegStatusProvider.overrideWith(() => _FakeFfmpegNotifier()),
+          // 这些测试验证桌面布局，固定注入桌面引擎（含 FFmpeg 路径设置项）。
+          ffmpegEngineProvider.overrideWithValue(DesktopFfmpegEngine()),
         ],
         child: const TeigiApp(),
       ),
@@ -115,6 +118,8 @@ void main() {
             (ref) => SettingsNotifier(settings, prefs),
           ),
           ffmpegStatusProvider.overrideWith(() => _FakeFfmpegNotifier()),
+          // 这些测试验证桌面布局，固定注入桌面引擎（含 FFmpeg 路径设置项）。
+          ffmpegEngineProvider.overrideWithValue(DesktopFfmpegEngine()),
         ],
         child: const TeigiApp(),
       ),

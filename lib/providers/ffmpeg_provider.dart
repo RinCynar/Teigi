@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teigi/core/ffmpeg/engine/desktop_ffmpeg_engine.dart';
 import 'package:teigi/core/ffmpeg/engine/ffmpeg_engine.dart';
+import 'package:teigi/core/ffmpeg/engine/ffmpeg_engine_factory.dart';
 import 'package:teigi/providers/settings_provider.dart';
 
 /// The currently selected FFmpeg engine implementation.
 final ffmpegEngineProvider = Provider<FfmpegEngine>((ref) {
-  return DesktopFfmpegEngine();
+  return FfmpegEngineFactory.create();
 });
 
 /// Current FFmpeg engine detection state.

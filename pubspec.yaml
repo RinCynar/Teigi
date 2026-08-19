@@ -41,6 +41,7 @@ dependencies:
   window_manager: ^0.5.2
   desktop_drop: ^0.7.1
   url_launcher: ^6.3.2
+  ffmpeg_kit_flutter_new_full: ^2.5.2
 
 dev_dependencies:
   flutter_test:

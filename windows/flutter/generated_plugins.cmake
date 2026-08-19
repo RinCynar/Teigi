@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
+  ffmpeg_kit_flutter_new_full
   screen_retriever_windows
   url_launcher_windows
   window_manager
