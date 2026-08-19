@@ -44,6 +44,16 @@ class ForegroundService {
     _initialized = true;
   }
 
+  /// Android 13+ 请求通知权限（前台服务通知需要）。非 Android 下为 no-op。
+  static Future<void> ensureNotificationPermission() async {
+    if (!isAndroid) return;
+    initialize();
+    final permission = await FlutterForegroundTask.checkNotificationPermission();
+    if (permission != NotificationPermission.granted) {
+      await FlutterForegroundTask.requestNotificationPermission();
+    }
+  }
+
   /// 转码开始时启动前台服务。
   static Future<void> start({required String fileName}) async {
     if (!isAndroid) return;

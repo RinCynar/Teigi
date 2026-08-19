@@ -60,6 +60,8 @@ class ConversionEngine {
   /// 开始处理队列。
   void start() {
     _setRunning(true);
+    // Android 13+ 需要通知权限才能展示前台服务通知。
+    unawaited(ForegroundService.ensureNotificationPermission());
     _schedule();
   }
 
