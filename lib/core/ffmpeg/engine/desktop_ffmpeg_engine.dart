@@ -187,6 +187,10 @@ class _DesktopFfmpegTaskHandle implements FfmpegTaskHandle {
   }
 
   Future<void> _terminateProcess(Process process) async {
+    // Windows spawns may leave orphaned child processes behind, so kill the
+    // whole tree. On POSIX we start ffmpeg directly (no shell wrapper), so a
+    // plain SIGTERM is enough: ffmpeg shuts down gracefully and finalizes the
+    // output file instead of being force-killed.
     if (Platform.isWindows) {
       try {
         await Process.run('taskkill', ['/T', '/F', '/PID', '${process.pid}']);

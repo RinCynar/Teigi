@@ -11,7 +11,7 @@ import 'package:teigi/core/ffmpeg/engine/ffmpeg_engine.dart';
 /// 检测顺序：
 /// 1. 用户明确保存的自定义路径
 /// 2. 安装目录内置的 `data/ffmpeg`
-/// 3. 系统 PATH（`where ffmpeg` / `which ffmpeg`）
+/// 3. 系统 PATH（遍历 `PATH` 环境变量定位可执行文件）
 class FfmpegDetector {
   FfmpegDetector({
     Logger? logger,
@@ -125,30 +125,42 @@ class FfmpegDetector {
   }
 
   /// 在 PATH 中查找 ffmpeg 可执行文件路径。
+  ///
+  /// 不依赖 `where` / `which` 等外部命令，直接在 Dart 层遍历 `PATH`
+  /// 环境变量拼接候选路径并逐个探测，避免外部命令缺失带来的不确定性。
   Future<String?> _findInPath() async {
     if (_pathResolver != null) return _pathResolver();
 
-    try {
-      if (Platform.isWindows) {
-        final result = await Process.run('where', ['ffmpeg']);
-        if (result.exitCode == 0) {
-          final lines = (result.stdout as String).trim().split('\n');
-          for (final line in lines) {
-            final path = line.trim();
-            if (path.isNotEmpty && File(path).existsSync()) return path;
-          }
-        }
-      } else {
-        final result = await Process.run('which', ['ffmpeg']);
-        if (result.exitCode == 0) {
-          final path = (result.stdout as String).trim();
-          if (path.isNotEmpty && File(path).existsSync()) return path;
-        }
+    final pathVar = Platform.environment['PATH'];
+    if (pathVar == null || pathVar.isEmpty) return null;
+
+    final separator = Platform.isWindows ? ';' : ':';
+    final extensions = Platform.isWindows
+        ? _windowsExecutableExtensions()
+        : const <String>[''];
+
+    for (final dir in pathVar.split(separator)) {
+      final directory = dir.trim();
+      if (directory.isEmpty) continue;
+      for (final ext in extensions) {
+        final candidate = p.join(directory, 'ffmpeg$ext');
+        if (File(candidate).existsSync()) return candidate;
       }
-    } catch (e) {
-      _logger.w('PATH 查找失败: $e');
     }
     return null;
+  }
+
+  /// Windows 可执行文件扩展名列表，取自 `PATHEXT`，找不到时用常见默认值。
+  List<String> _windowsExecutableExtensions() {
+    final pathext = Platform.environment['PATHEXT'];
+    if (pathext == null || pathext.isEmpty) {
+      return const ['.exe', '.cmd', '.bat', '.com'];
+    }
+    return pathext
+        .split(';')
+        .where((e) => e.trim().isNotEmpty)
+        .map((e) => e.trim().toLowerCase())
+        .toList();
   }
 
   /// 校验路径并获取版本号。
