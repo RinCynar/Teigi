@@ -33,14 +33,10 @@ android {
         }
     }
 
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("armeabi-v7a", "arm64-v8a", "x86_64")
-            isUniversalApk = false
-        }
-    }
+    // 三架构 APK（armeabi-v7a / arm64-v8a / x86_64）由 Flutter 内置支持：
+    // `flutter build apk --split-per-abi` 会自动配置 abi splits（此 Flutter 版本
+    // 已内置 shouldProjectSplitPerAbi 逻辑），手动加 splits 会和 Flutter 默认的
+    // ndk.abiFilters 冲突，因此这里不再手动配置。
 }
 
 kotlin {
