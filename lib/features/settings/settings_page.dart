@@ -360,15 +360,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _pickFfmpegPath(WidgetRef ref) async {
-    final result = await FilePicker.pickFiles(
+    final file = await FilePicker.pickFile(
       dialogTitle: 'ffmpeg',
       type: FileType.custom,
       allowedExtensions: ['exe', 'bin', ''],
     );
-    if (result != null && result.files.single.path != null) {
+    if (file != null && file.path != null) {
       await ref
           .read(settingsProvider.notifier)
-          .setFfmpegPath(result.files.single.path!);
+          .setFfmpegPath(file.path!);
       await ref.read(ffmpegStatusProvider.notifier).redetect();
     }
   }

@@ -7,7 +7,7 @@ import Foundation
 
 import desktop_drop
 import ffmpeg_kit_flutter_new_full
-import file_picker
+import file_picker_darwin
 import screen_retriever_macos
 import shared_preferences_foundation
 import url_launcher_macos

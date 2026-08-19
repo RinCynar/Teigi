@@ -9,13 +9,9 @@ class MediaImport {
   const MediaImport();
 
   Future<List<MediaFile>> pickFiles() async {
-    final result = await FilePicker.pickFiles(
-      allowMultiple: true,
-      type: FileType.any,
-    );
-    if (result == null || result.files.isEmpty) return const [];
+    final files = await FilePicker.pickFiles(type: FileType.any);
     return [
-      for (final f in result.files)
+      for (final f in files)
         if (f.path != null) MediaFile(path: f.path!),
     ];
   }
