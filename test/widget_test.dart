@@ -133,6 +133,37 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.widgetWithText(AppBar, '设置'), findsOneWidget);
   });
+
+  testWidgets('设置页在紧凑窄屏上正常渲染 ThemeMode 且无溢出', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(360, 780);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    SharedPreferences.setMockInitialValues({'language': 'zh'});
+    final prefs = await SharedPreferences.getInstance();
+    final settings = await AppSettings.load(prefs);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          settingsProvider.overrideWith(
+            (ref) => SettingsNotifier(settings, prefs),
+          ),
+          ffmpegStatusProvider.overrideWith(() => _FakeFfmpegNotifier()),
+        ],
+        child: const TeigiApp(),
+      ),
+    );
+    await tester.pump();
+
+    router.go('/settings');
+    await tester.pumpAndSettle();
+
+    expect(find.text('主题模式'), findsOneWidget);
+    expect(find.byType(SegmentedButton<String>), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 /// 固定返回「可用」状态的假 ffmpeg 检测器。

@@ -7,6 +7,7 @@ import 'package:teigi/core/models/app_settings.dart';
 import 'package:teigi/core/models/conversion_options.dart';
 import 'package:teigi/core/utils/platform_info.dart';
 import 'package:teigi/i18n/strings.dart';
+import 'package:teigi/providers/app_info_provider.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
 import 'package:teigi/providers/quick_formats_provider.dart';
 import 'package:teigi/providers/settings_provider.dart';
@@ -214,21 +215,69 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     },
                   ),
                 ),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.themeMode),
-                trailing: SegmentedButton<String>(
-                  segments: [
-                    ButtonSegment(
-                      value: 'system',
-                      label: Text(l10n.followSystem),
-                    ),
-                    ButtonSegment(value: 'light', label: Text(l10n.lightMode)),
-                    ButtonSegment(value: 'dark', label: Text(l10n.darkMode)),
-                  ],
-                  selected: {settings.themeMode},
-                  onSelectionChanged: (s) =>
-                      ref.read(settingsProvider.notifier).setThemeMode(s.first),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isCompact = constraints.maxWidth < 480;
+                    final button = SegmentedButton<String>(
+                      style: const ButtonStyle(
+                        visualDensity: VisualDensity.compact,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      segments: [
+                        ButtonSegment(
+                          value: 'system',
+                          icon: const Icon(Icons.brightness_auto, size: 16),
+                          label: Text(l10n.followSystem),
+                        ),
+                        ButtonSegment(
+                          value: 'light',
+                          icon: const Icon(Icons.light_mode_outlined, size: 16),
+                          label: Text(l10n.lightMode),
+                        ),
+                        ButtonSegment(
+                          value: 'dark',
+                          icon: const Icon(Icons.dark_mode_outlined, size: 16),
+                          label: Text(l10n.darkMode),
+                        ),
+                      ],
+                      selected: {settings.themeMode},
+                      onSelectionChanged: (s) =>
+                          ref.read(settingsProvider.notifier).setThemeMode(s.first),
+                    );
+
+                    if (isCompact) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.themeMode,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: button,
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            l10n.themeMode,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        button,
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
@@ -328,7 +377,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           const SizedBox(height: 24),
           Center(
             child: Text(
-              'Teigi v0.0.2-alpha',
+              'Teigi v${ref.watch(appVersionProvider)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.outline,
               ),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:teigi/i18n/strings.dart';
+import 'package:teigi/providers/app_info_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// 关于界面：应用信息、开发者、项目地址、项目网站、开源声明。
@@ -12,11 +13,11 @@ class AboutPage extends ConsumerWidget {
   static const developerName = 'RinCynar';
   static const repositoryUrl = 'https://github.com/RinCynar/Teigi';
   static const websiteUrl = 'https://teigi.rincynar.top';
-  static const appVersion = '1.0.0';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
+    final version = ref.watch(appVersionProvider);
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -42,7 +43,7 @@ class AboutPage extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Text('Teigi', style: Theme.of(context).textTheme.headlineMedium),
                 Text(
-                  'v$appVersion',
+                  'v$version',
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
@@ -103,7 +104,7 @@ class AboutPage extends ConsumerWidget {
           const SizedBox(height: 24),
           Center(
             child: Text(
-              'Teigi v$appVersion',
+              'Teigi v$version',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
