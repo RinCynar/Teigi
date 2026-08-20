@@ -3,7 +3,7 @@
   "release": {
     "tagName": "v1.0.0",
     "name": "v1.0.0",
-    "body": "## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0",
+    "body": "## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0",
     "createdAt": "2026-08-20T11:06:41Z",
     "publishedAt": "2026-08-20T11:08:55Z",
     "htmlUrl": "https://github.com/RinCynar/Teigi/releases/tag/v1.0.0",
@@ -59,19 +59,13 @@
       },
       {
         "name": "windows-x64-ffmpeg-release.zip",
-        "size": 77974840,
+        "size": 77974828,
         "contentType": "application/zip",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.0/windows-x64-ffmpeg-release.zip"
       },
       {
-        "name": "windows-x64-installer.exe",
-        "size": 60791474,
-        "contentType": "application/x-msdos-program",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.0/windows-x64-installer.exe"
-      },
-      {
         "name": "windows-x64-release.zip",
-        "size": 77949644,
+        "size": 77949634,
         "contentType": "application/zip",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.0/windows-x64-release.zip"
       }
