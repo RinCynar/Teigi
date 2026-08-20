@@ -9,7 +9,7 @@ const localeInfo = {
 
 const translations = {
   zh: {
-    "meta.description": "Teigi 是一个基于 Flutter 和 FFmpeg 的桌面媒体转换工具",
+    "meta.description": "Teigi 是一个基于 Flutter 和 FFmpeg 的开源跨平台媒体转换工具（支持 Android / Windows / macOS / Linux）",
     "nav.label": "主导航",
     "nav.downloads": "下载",
     "nav.github": "打开 GitHub 仓库",
@@ -17,8 +17,8 @@ const translations = {
     "theme.toggle": "切换主题",
     "theme.switchToLight": "切换到浅色主题",
     "theme.switchToDark": "切换到深色主题",
-    "hero.eyebrow": "开源桌面工具",
-    "hero.copy": "安静、清晰地处理你的音频、视频与图片文件。",
+    "hero.eyebrow": "开源跨平台媒体工具",
+    "hero.copy": "在桌面端与移动端上，安静、清晰地处理你的音视频与图片文件。",
     "status.loadingManifest": "正在读取版本清单",
     "status.loadingLatest": "正在读取最新 Release",
     "status.synced": "已同步最新 Release",
@@ -35,7 +35,7 @@ const translations = {
     "downloads.syncing": "文件将从版本清单自动同步。",
     "downloads.refresh": "刷新",
     "downloads.loading": "正在加载下载文件",
-    "downloads.summary": ({ count }) => `${count} 个文件，按 Windows 架构整理。`,
+    "downloads.summary": ({ count }) => `${count} 个文件，覆盖 Android、Windows、macOS 与 Linux。`,
     "aside.releaseInfo": "版本信息",
     "facts.version": "发布版本",
     "facts.date": "发布日期",
@@ -44,22 +44,36 @@ const translations = {
     "project.title": "项目",
     "project.repository": "GitHub 仓库",
     "project.releases": "全部 Releases",
-    "footer.product": "Teigi · 开源桌面媒体转换工具",
+    "footer.product": "Teigi · 开源跨平台媒体转换工具",
     "footer.manifest": "Release 清单由仓库工作流自动同步",
+    "platform.android": "Android",
+    "platform.windows": "Windows",
+    "platform.macos": "macOS",
+    "platform.linux": "Linux",
+    "platform.other": "其他文件",
+    "asset.architecture.arm64_v8a": "ARM64-v8a",
+    "asset.architecture.armeabi_v7a": "ARMv7a (32位)",
+    "asset.architecture.arm64": "ARM64",
     "asset.architecture.x64": "x64",
-    "asset.architecture.arm64": "arm64",
+    "asset.architecture.x86_64": "x86_64",
+    "asset.architecture.x86": "x86 (32位)",
+    "asset.architecture.universal": "全架构通用",
     "asset.architecture.generic": "通用",
-    "asset.fileType.installer": "安装程序",
-    "asset.fileType.archive": "压缩包",
+    "asset.fileType.apk": "APK 安装包",
+    "asset.fileType.dmg": "DMG 安装镜像",
+    "asset.fileType.appimage": "AppImage 便携镜像",
+    "asset.fileType.installer": "安装程序 (Setup)",
+    "asset.fileType.archive": "免安装压缩包 (Portable)",
     "asset.fileType.file": "文件",
-    "asset.ffmpeg.optional": "安装时可选 FFmpeg",
+    "asset.ffmpeg.embedded": "原生内置 FFmpegKit",
     "asset.ffmpeg.bundled": "内置 FFmpeg",
-    "asset.ffmpeg.none": "不含 FFmpeg",
+    "asset.ffmpeg.optional": "安装时可选 FFmpeg",
+    "asset.ffmpeg.none": "需系统 FFmpeg",
     "asset.download": "下载",
     "asset.downloadAria": ({ name }) => `下载 ${name}`,
     "asset.sizeUnknown": "大小未知",
     "group.other": "其他文件",
-    "group.windows": ({ architecture }) => `Windows · ${architecture}`,
+    "group.platform": ({ platform }) => platform,
     "errors.manifestMissingTitle": "Release 清单尚未生成",
     "errors.noReleaseTitle": "还没有可用的 Release",
     "errors.manifestErrorTitle": "暂时无法读取 Release 清单",
@@ -74,7 +88,7 @@ const translations = {
     "errors.retry": "重新读取",
   },
   en: {
-    "meta.description": "Teigi is a desktop media converter built with Flutter and FFmpeg",
+    "meta.description": "Teigi is an open-source cross-platform media converter built with Flutter and FFmpeg (Android / Windows / macOS / Linux)",
     "nav.label": "Main navigation",
     "nav.downloads": "Downloads",
     "nav.github": "Open GitHub repository",
@@ -82,8 +96,8 @@ const translations = {
     "theme.toggle": "Toggle theme",
     "theme.switchToLight": "Switch to light theme",
     "theme.switchToDark": "Switch to dark theme",
-    "hero.eyebrow": "Open-source desktop tool",
-    "hero.copy": "Process your audio, video, and image files with clarity and control.",
+    "hero.eyebrow": "Open-source Cross-platform Tool",
+    "hero.copy": "Process your audio, video, and image files on desktop and mobile with ease.",
     "status.loadingManifest": "Reading release manifest",
     "status.loadingLatest": "Reading latest Release",
     "status.synced": "Latest Release synced",
@@ -100,7 +114,7 @@ const translations = {
     "downloads.syncing": "Files will be synchronized from the release manifest.",
     "downloads.refresh": "Refresh",
     "downloads.loading": "Loading download files",
-    "downloads.summary": ({ count }) => `${count} ${count === 1 ? "file" : "files"}, organized by Windows architecture.`,
+    "downloads.summary": ({ count }) => `${count} ${count === 1 ? "file" : "files"}, covering Android, Windows, macOS, and Linux.`,
     "aside.releaseInfo": "Release information",
     "facts.version": "Release version",
     "facts.date": "Release date",
@@ -109,22 +123,36 @@ const translations = {
     "project.title": "Project",
     "project.repository": "GitHub repository",
     "project.releases": "All Releases",
-    "footer.product": "Teigi · Open-source desktop media converter",
+    "footer.product": "Teigi · Open-source cross-platform media converter",
     "footer.manifest": "Release manifest synchronized by the repository workflow",
+    "platform.android": "Android",
+    "platform.windows": "Windows",
+    "platform.macos": "macOS",
+    "platform.linux": "Linux",
+    "platform.other": "Other Files",
+    "asset.architecture.arm64_v8a": "ARM64-v8a",
+    "asset.architecture.armeabi_v7a": "ARMv7a (32-bit)",
+    "asset.architecture.arm64": "ARM64",
     "asset.architecture.x64": "x64",
-    "asset.architecture.arm64": "arm64",
+    "asset.architecture.x86_64": "x86_64",
+    "asset.architecture.x86": "x86 (32-bit)",
+    "asset.architecture.universal": "Universal ABI",
     "asset.architecture.generic": "Universal",
-    "asset.fileType.installer": "Installer",
-    "asset.fileType.archive": "Archive",
+    "asset.fileType.apk": "APK Package",
+    "asset.fileType.dmg": "DMG Disk Image",
+    "asset.fileType.appimage": "AppImage Standalone",
+    "asset.fileType.installer": "Installer (Setup)",
+    "asset.fileType.archive": "Portable Archive",
     "asset.fileType.file": "File",
-    "asset.ffmpeg.optional": "FFmpeg selectable during setup",
-    "asset.ffmpeg.bundled": "FFmpeg included",
-    "asset.ffmpeg.none": "FFmpeg not included",
+    "asset.ffmpeg.embedded": "Native FFmpegKit Built-in",
+    "asset.ffmpeg.bundled": "FFmpeg Included",
+    "asset.ffmpeg.optional": "FFmpeg Selectable in Setup",
+    "asset.ffmpeg.none": "System FFmpeg Required",
     "asset.download": "Download",
     "asset.downloadAria": ({ name }) => `Download ${name}`,
     "asset.sizeUnknown": "Size unknown",
-    "group.other": "Other files",
-    "group.windows": ({ architecture }) => `Windows · ${architecture}`,
+    "group.other": "Other Files",
+    "group.platform": ({ platform }) => platform,
     "errors.manifestMissingTitle": "Release manifest is not ready",
     "errors.noReleaseTitle": "No Release is available yet",
     "errors.manifestErrorTitle": "Unable to read the Release manifest",
@@ -139,7 +167,7 @@ const translations = {
     "errors.retry": "Retry",
   },
   ja: {
-    "meta.description": "Teigi は Flutter と FFmpeg で作られたデスクトップメディア変換ツールです",
+    "meta.description": "Teigi は Flutter と FFmpeg で構築されたオープンソースのクロスプラットフォームメディア変換ツールです（Android / Windows / macOS / Linux）",
     "nav.label": "メインナビゲーション",
     "nav.downloads": "ダウンロード",
     "nav.github": "GitHub リポジトリを開く",
@@ -147,8 +175,8 @@ const translations = {
     "theme.toggle": "テーマを切り替え",
     "theme.switchToLight": "ライトテーマに切り替え",
     "theme.switchToDark": "ダークテーマに切り替え",
-    "hero.eyebrow": "オープンソースのデスクトップツール",
-    "hero.copy": "音声、動画、画像ファイルをシンプルかつ明快に処理できます。",
+    "hero.eyebrow": "オープンソースのクロスプラットフォームツール",
+    "hero.copy": "デスクトップとモバイルで、音声・動画・画像ファイルをシンプルかつ明快に処理。",
     "status.loadingManifest": "リリース一覧を読み込み中",
     "status.loadingLatest": "最新 Release を読み込み中",
     "status.synced": "最新 Release を同期しました",
@@ -165,7 +193,7 @@ const translations = {
     "downloads.syncing": "ファイルはリリース一覧から自動的に同期されます。",
     "downloads.refresh": "更新",
     "downloads.loading": "ダウンロードファイルを読み込み中",
-    "downloads.summary": ({ count }) => `${count} 件のファイルを Windows アーキテクチャ別に表示しています。`,
+    "downloads.summary": ({ count }) => `${count} 件のファイル（Android、Windows、macOS、Linux 対応）。`,
     "aside.releaseInfo": "バージョン情報",
     "facts.version": "リリースバージョン",
     "facts.date": "リリース日",
@@ -174,22 +202,36 @@ const translations = {
     "project.title": "プロジェクト",
     "project.repository": "GitHub リポジトリ",
     "project.releases": "すべての Releases",
-    "footer.product": "Teigi · オープンソースのデスクトップメディア変換ツール",
+    "footer.product": "Teigi · オープンソースのクロスプラットフォームメディア変換ツール",
     "footer.manifest": "リリース一覧はリポジトリのワークフローで自動同期されます",
+    "platform.android": "Android",
+    "platform.windows": "Windows",
+    "platform.macos": "macOS",
+    "platform.linux": "Linux",
+    "platform.other": "その他のファイル",
+    "asset.architecture.arm64_v8a": "ARM64-v8a",
+    "asset.architecture.armeabi_v7a": "ARMv7a (32bit)",
+    "asset.architecture.arm64": "ARM64",
     "asset.architecture.x64": "x64",
-    "asset.architecture.arm64": "arm64",
+    "asset.architecture.x86_64": "x86_64",
+    "asset.architecture.x86": "x86 (32bit)",
+    "asset.architecture.universal": "ユニバーサル (全アーキテクチャ)",
     "asset.architecture.generic": "共通",
-    "asset.fileType.installer": "インストーラー",
-    "asset.fileType.archive": "アーカイブ",
+    "asset.fileType.apk": "APK パッケージ",
+    "asset.fileType.dmg": "DMG ディスクイメージ",
+    "asset.fileType.appimage": "AppImage スタンドアロン",
+    "asset.fileType.installer": "インストーラー (Setup)",
+    "asset.fileType.archive": "ポータブルアーカイブ",
     "asset.fileType.file": "ファイル",
-    "asset.ffmpeg.optional": "インストール時に FFmpeg を選択可能",
+    "asset.ffmpeg.embedded": "FFmpegKit 内蔵",
     "asset.ffmpeg.bundled": "FFmpeg 内蔵",
-    "asset.ffmpeg.none": "FFmpeg なし",
+    "asset.ffmpeg.optional": "インストール時に FFmpeg を選択可能",
+    "asset.ffmpeg.none": "システム FFmpeg が必要",
     "asset.download": "ダウンロード",
     "asset.downloadAria": ({ name }) => `${name} をダウンロード`,
     "asset.sizeUnknown": "サイズ不明",
     "group.other": "その他のファイル",
-    "group.windows": ({ architecture }) => `Windows · ${architecture}`,
+    "group.platform": ({ platform }) => platform,
     "errors.manifestMissingTitle": "リリース一覧はまだ生成されていません",
     "errors.noReleaseTitle": "利用可能な Release はありません",
     "errors.manifestErrorTitle": "Release 一覧を読み込めません",
@@ -224,7 +266,7 @@ const elements = {
 
 const themeStorageKey = "teigi-pages-theme";
 const languageStorageKey = "teigi-pages-language";
-let currentLocale = "en";
+let currentLocale = "zh";
 let latestRelease = null;
 let latestError = null;
 let syncState = {
@@ -234,7 +276,7 @@ let syncState = {
 };
 
 function t(key, values = {}) {
-  const entry = translations[currentLocale]?.[key] ?? translations.en[key];
+  const entry = translations[currentLocale]?.[key] ?? translations.zh[key] ?? translations.en[key];
   if (typeof entry === "function") return entry(values);
   if (typeof entry !== "string") return key;
   return entry.replace(/\{\{(\w+)\}\}/g, (_, name) => values[name] ?? "");
@@ -248,6 +290,7 @@ function initializeIcons() {
 
 function setSyncStatus(state, messageKey, icon) {
   syncState = { state, messageKey, icon };
+  if (!elements.syncStatus) return;
   elements.syncStatus.dataset.state = state;
   elements.syncStatus.replaceChildren();
   const iconElement = document.createElement("i");
@@ -289,26 +332,89 @@ function formatBytes(bytes) {
 
 function getAssetInfo(asset) {
   const name = asset.name.toLowerCase();
-  const architecture = name.includes("arm64") || name.includes("aarch64")
-    ? "arm64"
-    : name.includes("x64") || name.includes("amd64") || name.includes("win64")
-      ? "x64"
-      : "generic";
-  const isInstaller = name.includes("installer") || name.endsWith(".exe");
-  const bundledFfmpeg = name.includes("ffmpeg");
-  const ffmpegMode = isInstaller
-    ? "optional"
-    : bundledFfmpeg
-      ? "bundled"
-      : "none";
-  const isArchive = /\.(zip|7z|tar\.gz|dmg|pkg|deb|appimage)$/i.test(name);
-  const fileType = isInstaller ? "installer" : isArchive ? "archive" : "file";
+
+  // 1. Platform Detection
+  let platform = "other";
+  if (name.includes("android") || name.endsWith(".apk")) {
+    platform = "android";
+  } else if (name.includes("windows") || name.endsWith(".exe") || name.endsWith(".msi")) {
+    platform = "windows";
+  } else if (name.includes("macos") || name.includes("darwin") || name.endsWith(".dmg") || name.endsWith(".pkg")) {
+    platform = "macos";
+  } else if (name.includes("linux") || name.endsWith(".appimage") || name.endsWith(".deb") || name.endsWith(".rpm")) {
+    platform = "linux";
+  }
+
+  // 2. Architecture Detection
+  let architecture = "generic";
+  if (name.includes("arm64-v8a") || name.includes("arm64_v8a") || name.includes("arm64v8a")) {
+    architecture = "arm64_v8a";
+  } else if (name.includes("armeabi-v7a") || name.includes("armv7a") || name.includes("armv7")) {
+    architecture = "armeabi_v7a";
+  } else if (name.includes("arm64") || name.includes("aarch64")) {
+    architecture = "arm64";
+  } else if (name.includes("x86_64") || name.includes("x86-64")) {
+    architecture = "x86_64";
+  } else if (name.includes("x64") || name.includes("amd64") || name.includes("win64")) {
+    architecture = "x64";
+  } else if (name.includes("x86") || name.includes("i686") || name.includes("i386") || name.includes("win32")) {
+    architecture = "x86";
+  } else if (name.includes("universal") || name.includes("all")) {
+    architecture = "universal";
+  }
+
+  // 3. File Type & Icon
+  let fileType = "file";
+  let iconName = "file";
+  if (name.endsWith(".apk")) {
+    fileType = "apk";
+    iconName = "smartphone";
+  } else if (name.endsWith(".dmg")) {
+    fileType = "dmg";
+    iconName = "disc";
+  } else if (name.endsWith(".appimage")) {
+    fileType = "appimage";
+    iconName = "box";
+  } else if (name.includes("installer") || name.endsWith(".exe") || name.endsWith(".msi")) {
+    fileType = "installer";
+    iconName = "app-window";
+  } else if (/\.(zip|7z|tar\.gz|tgz)$/i.test(name)) {
+    fileType = "archive";
+    iconName = "file-archive";
+  }
+
+  // 4. FFmpeg Mode
+  let ffmpegMode = "none";
+  if (platform === "android") {
+    ffmpegMode = "embedded";
+  } else if (fileType === "installer") {
+    ffmpegMode = "optional";
+  } else if (name.includes("ffmpeg")) {
+    ffmpegMode = "bundled";
+  } else {
+    ffmpegMode = "none";
+  }
+
+  const platformOrder = { android: 0, windows: 1, macos: 2, linux: 3, other: 4 };
+  const archOrder = {
+    arm64_v8a: 0,
+    arm64: 1,
+    universal: 2,
+    x64: 3,
+    x86_64: 4,
+    armeabi_v7a: 5,
+    x86: 6,
+    generic: 7,
+  };
+  const sortKey = `${platformOrder[platform] ?? 9}-${archOrder[architecture] ?? 9}-${fileType}`;
 
   return {
+    platform,
     architecture,
-    ffmpegMode,
     fileType,
-    sortKey: `${architecture === "x64" ? "0" : architecture === "arm64" ? "1" : "2"}-${ffmpegMode === "optional" ? "0" : ffmpegMode === "none" ? "1" : "2"}`,
+    ffmpegMode,
+    iconName,
+    sortKey,
   };
 }
 
@@ -333,7 +439,7 @@ function renderAsset(asset) {
 
   const icon = document.createElement("div");
   icon.className = "asset-icon";
-  icon.append(createIcon(info.fileType === "installer" ? "app-window" : "file-archive"));
+  icon.append(createIcon(info.iconName));
 
   const main = document.createElement("div");
   main.className = "asset-main";
@@ -344,7 +450,7 @@ function renderAsset(asset) {
   meta.className = "asset-meta";
   meta.append(
     makeTag(t(`asset.architecture.${info.architecture}`), info.architecture !== "generic"),
-    makeTag(t(`asset.ffmpeg.${info.ffmpegMode}`)),
+    makeTag(t(`asset.ffmpeg.${info.ffmpegMode}`), info.ffmpegMode === "embedded" || info.ffmpegMode === "bundled"),
   );
   const details = document.createElement("span");
   details.textContent = `${t(`asset.fileType.${info.fileType}`)} · ${formatBytes(asset.size)}`;
@@ -388,26 +494,41 @@ function renderAssets(assets) {
     return getAssetInfo(a).sortKey.localeCompare(getAssetInfo(b).sortKey) || a.name.localeCompare(b.name);
   });
 
+  const platformIcons = {
+    android: "smartphone",
+    windows: "monitor",
+    macos: "laptop",
+    linux: "terminal",
+    other: "package",
+  };
+
   for (const asset of sortedAssets) {
     const info = getAssetInfo(asset);
-    const groupName = info.architecture === "generic"
-      ? t("group.other")
-      : t("group.windows", { architecture: t(`asset.architecture.${info.architecture}`) });
-    if (!groups.has(groupName)) groups.set(groupName, []);
-    groups.get(groupName).push(asset);
+    const platformKey = info.platform;
+    if (!groups.has(platformKey)) groups.set(platformKey, []);
+    groups.get(platformKey).push(asset);
   }
 
-  for (const [groupName, groupAssets] of groups) {
+  for (const [platformKey, groupAssets] of groups) {
     const group = document.createElement("section");
     group.className = "download-group";
     const heading = document.createElement("div");
     heading.className = "group-heading";
+
+    const titleWrap = document.createElement("div");
+    titleWrap.style.display = "inline-flex";
+    titleWrap.style.alignItems = "center";
+    titleWrap.style.gap = "8px";
+
+    const pIcon = createIcon(platformIcons[platformKey] || "package");
     const title = document.createElement("span");
-    title.textContent = groupName;
+    title.textContent = t(`platform.${platformKey}`);
+    titleWrap.append(pIcon, title);
+
     const count = document.createElement("span");
     count.className = "group-count";
     count.textContent = t("facts.assetCount", { count: groupAssets.length });
-    heading.append(title, count);
+    heading.append(titleWrap, count);
     group.append(heading);
 
     for (const asset of groupAssets) {
@@ -422,7 +543,7 @@ function renderAssets(assets) {
 function excerptReleaseNotes(body) {
   if (!body) return "";
   const text = body.replace(/[#*_>`]/g, "").replace(/\s+/g, " ").trim();
-  return text.length > 180 ? `${text.slice(0, 180)}…` : text;
+  return text.length > 200 ? `${text.slice(0, 200)}…` : text;
 }
 
 function renderRelease(release) {
@@ -564,7 +685,9 @@ function applyTranslations() {
   document.querySelectorAll("[data-i18n-title]").forEach((element) => {
     element.setAttribute("title", t(element.dataset.i18nTitle));
   });
-  elements.languageSelect.value = currentLocale;
+  if (elements.languageSelect) {
+    elements.languageSelect.value = currentLocale;
+  }
 }
 
 function normalizeLocale(value) {
@@ -575,7 +698,7 @@ function normalizeLocale(value) {
 }
 
 function applyLocale(locale) {
-  currentLocale = supportedLocales.includes(locale) ? locale : "en";
+  currentLocale = supportedLocales.includes(locale) ? locale : "zh";
   applyTranslations();
   if (latestRelease) renderRelease(latestRelease);
   if (latestError) renderLoadError(latestError);
@@ -591,10 +714,12 @@ function initializeLocale() {
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   const isDark = theme === "dark";
-  elements.themeToggle.replaceChildren(createIcon(isDark ? "sun" : "moon"));
-  const label = isDark ? t("theme.switchToLight") : t("theme.switchToDark");
-  elements.themeToggle.setAttribute("aria-label", label);
-  elements.themeToggle.title = label;
+  if (elements.themeToggle) {
+    elements.themeToggle.replaceChildren(createIcon(isDark ? "sun" : "moon"));
+    const label = isDark ? t("theme.switchToLight") : t("theme.switchToDark");
+    elements.themeToggle.setAttribute("aria-label", label);
+    elements.themeToggle.title = label;
+  }
   initializeIcons();
 }
 
@@ -607,17 +732,23 @@ function initializeTheme() {
   applyTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
 }
 
-elements.refreshButton.addEventListener("click", loadLatestRelease);
-elements.languageSelect.addEventListener("change", (event) => {
-  const nextLocale = supportedLocales.includes(event.target.value) ? event.target.value : "en";
-  localStorage.setItem(languageStorageKey, nextLocale);
-  applyLocale(nextLocale);
-});
-elements.themeToggle.addEventListener("click", () => {
-  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-  localStorage.setItem(themeStorageKey, next);
-  applyTheme(next);
-});
+if (elements.refreshButton) {
+  elements.refreshButton.addEventListener("click", loadLatestRelease);
+}
+if (elements.languageSelect) {
+  elements.languageSelect.addEventListener("change", (event) => {
+    const nextLocale = supportedLocales.includes(event.target.value) ? event.target.value : "zh";
+    localStorage.setItem(languageStorageKey, nextLocale);
+    applyLocale(nextLocale);
+  });
+}
+if (elements.themeToggle) {
+  elements.themeToggle.addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    localStorage.setItem(themeStorageKey, next);
+    applyTheme(next);
+  });
+}
 
 initializeLocale();
 initializeTheme();
