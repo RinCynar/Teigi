@@ -3,9 +3,9 @@
   "release": {
     "tagName": "v1.0.0",
     "name": "v1.0.0",
-    "body": "## What's Changed\r\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\r\n\r\n## New Contributors\r\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\r\n\r\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0\n\n## What's Changed\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\n\n## New Contributors\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0",
-    "createdAt": "2026-08-20T12:36:27Z",
-    "publishedAt": "2026-08-20T12:38:52Z",
+    "body": "## What's Changed\r\n* Android support by @RinCynar in https://github.com/RinCynar/Teigi/pull/1\r\n\r\n## New Contributors\r\n* @RinCynar made their first contribution in https://github.com/RinCynar/Teigi/pull/1\r\n\r\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/0.0.2%CE%B1...v1.0.0",
+    "createdAt": "2026-08-20T12:56:56Z",
+    "publishedAt": "2026-08-20T12:59:16Z",
     "htmlUrl": "https://github.com/RinCynar/Teigi/releases/tag/v1.0.0",
     "prerelease": false,
     "assets": [
@@ -41,7 +41,7 @@
       },
       {
         "name": "teigi-linux-x64.tar.gz",
-        "size": 47103525,
+        "size": 47103566,
         "contentType": "application/gzip",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.0/teigi-linux-x64.tar.gz"
       },
@@ -59,7 +59,7 @@
       },
       {
         "name": "teigi-macos-universal.dmg",
-        "size": 85103672,
+        "size": 85103686,
         "contentType": "application/x-apple-diskimage",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.0/teigi-macos-universal.dmg"
       },
@@ -70,20 +70,38 @@
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.0/teigi-macos-universal.zip"
       },
       {
+        "name": "windows-arm64-ffmpeg-release.zip",
+        "size": 77985362,
+        "contentType": "application/zip",
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.0/windows-arm64-ffmpeg-release.zip"
+      },
+      {
+        "name": "windows-arm64-installer.exe",
+        "size": 60804925,
+        "contentType": "application/x-msdos-program",
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.0/windows-arm64-installer.exe"
+      },
+      {
+        "name": "windows-arm64-release.zip",
+        "size": 77960166,
+        "contentType": "application/zip",
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.0/windows-arm64-release.zip"
+      },
+      {
         "name": "windows-x64-ffmpeg-release.zip",
-        "size": 77985394,
+        "size": 77985324,
         "contentType": "application/zip",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.0/windows-x64-ffmpeg-release.zip"
       },
       {
         "name": "windows-x64-installer.exe",
-        "size": 60803490,
+        "size": 60804037,
         "contentType": "application/x-msdos-program",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.0/windows-x64-installer.exe"
       },
       {
         "name": "windows-x64-release.zip",
-        "size": 77960199,
+        "size": 77960129,
         "contentType": "application/zip",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.0/windows-x64-release.zip"
       }
