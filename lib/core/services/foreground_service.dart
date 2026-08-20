@@ -7,7 +7,6 @@ import 'package:teigi/core/utils/platform_info.dart';
 ///
 /// 仅在 Android 上有效；桌面/iOS 上调用都是安全的 no-op。
 ///
-/// TODO(hardware verification): 需真机验证 —— 通知显示/取消按钮回传、
 /// 前后台切换后转码是否持续、Android 14 及以下 mediaProcessing 类型兼容性。
 class ForegroundService {
   static bool _initialized = false;

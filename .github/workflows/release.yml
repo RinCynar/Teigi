@@ -54,16 +54,8 @@ jobs:
           generate_release_notes: true
 
   build-macos:
-    name: Build macOS (${{ matrix.arch }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: macos-latest
-            arch: arm64
-          - os: macos-13
-            arch: x64
-      fail-fast: false
+    name: Build macOS (Universal)
+    runs-on: macos-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -84,32 +76,22 @@ jobs:
         run: |
           mkdir -p dist
           APP_PATH="build/macos/Build/Products/Release/teigi.app"
-          hdiutil create -volname "Teigi" -srcfolder "$APP_PATH" -ov -format UDZO dist/teigi-macos-${{ matrix.arch }}.dmg
-          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" dist/teigi-macos-${{ matrix.arch }}.zip
+          hdiutil create -volname "Teigi" -srcfolder "$APP_PATH" -ov -format UDZO dist/teigi-macos-universal.dmg
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" dist/teigi-macos-universal.zip
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/teigi-macos-${{ matrix.arch }}.dmg
-            dist/teigi-macos-${{ matrix.arch }}.zip
+            dist/teigi-macos-universal.dmg
+            dist/teigi-macos-universal.zip
           draft: false
           prerelease: false
           generate_release_notes: true
 
   build-linux:
-    name: Build Linux (${{ matrix.arch }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            arch: x64
-            appimage_arch: x86_64
-          - os: ubuntu-24.04-arm
-            arch: arm64
-            appimage_arch: aarch64
-      fail-fast: false
+    name: Build Linux (x64)
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -134,14 +116,13 @@ jobs:
       - name: Package Linux Bundle (.tar.gz) and .AppImage
         run: |
           mkdir -p dist
-          BUNDLE_DIR=$(find build/linux -type d -name "bundle" | head -n 1)
-          tar -czvf dist/teigi-linux-${{ matrix.arch }}.tar.gz -C "$BUNDLE_DIR" .
+          tar -czvf dist/teigi-linux-x64.tar.gz -C build/linux/x64/release/bundle .
 
           # Create AppDir structure
           mkdir -p AppDir/usr/bin AppDir/usr/lib AppDir/usr/share/icons/hicolor/256x256/apps AppDir/usr/share/applications
-          cp -r "$BUNDLE_DIR"/* AppDir/usr/bin/
-          if [ -d "$BUNDLE_DIR/lib" ]; then
-            cp -r "$BUNDLE_DIR/lib"/* AppDir/usr/lib/ 2>/dev/null || true
+          cp -r build/linux/x64/release/bundle/* AppDir/usr/bin/
+          if [ -d build/linux/x64/release/bundle/lib ]; then
+            cp -r build/linux/x64/release/bundle/lib/* AppDir/usr/lib/ 2>/dev/null || true
           fi
 
           printf '[Desktop Entry]\nName=Teigi\nExec=teigi\nIcon=teigi\nType=Application\nCategories=AudioVideo;AudioVideoEditing;\nComment=Desktop media converter built with Flutter and FFmpeg\nTerminal=false\n' > AppDir/teigi.desktop
@@ -158,16 +139,16 @@ jobs:
           printf '#!/bin/bash\nHERE="$(dirname "$(readlink -f "${0}")")"\nexport LD_LIBRARY_PATH="${HERE}/usr/lib:${HERE}/usr/bin/lib:${LD_LIBRARY_PATH}"\nexport PATH="${HERE}/usr/bin:${PATH}"\nexec "${HERE}/usr/bin/teigi" "$@"\n' > AppDir/AppRun
           chmod +x AppDir/AppRun
 
-          wget -q -O appimagetool https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-${{ matrix.appimage_arch }}.AppImage || wget -q -O appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${{ matrix.appimage_arch }}.AppImage
+          wget -q -O appimagetool https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage || wget -q -O appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool
-          ARCH=${{ matrix.appimage_arch }} ./appimagetool --appimage-extract-and-run AppDir dist/teigi-linux-${{ matrix.arch }}.AppImage
+          ARCH=x86_64 ./appimagetool --appimage-extract-and-run AppDir dist/teigi-linux-x64.AppImage
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/teigi-linux-${{ matrix.arch }}.tar.gz
-            dist/teigi-linux-${{ matrix.arch }}.AppImage
+            dist/teigi-linux-x64.tar.gz
+            dist/teigi-linux-x64.AppImage
           draft: false
           prerelease: false
           generate_release_notes: true
