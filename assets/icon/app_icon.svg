@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Material You 风格低饱和度平滑渐变 / 色调容器 -->
+    <linearGradient id="m3_surface" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EADDFF"/>
+      <stop offset="100%" stop-color="#D0BCFF"/>
+    </linearGradient>
+    <linearGradient id="m3_accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#381E72"/>
+      <stop offset="100%" stop-color="#21005D"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 外层主圆 (Base Circular Plate) -->
+  <circle cx="256" cy="256" r="240" fill="url(#m3_surface)"/>
+
+  <!-- 内部几何图形：象征“定义、锚定、边界”的极简 t 结构与取景框倒角 -->
+  <!-- 竖向主干 -->
+  <rect x="220" y="140" width="72" height="232" rx="36" fill="url(#m3_accent)"/>
+  
+  <!-- 横向交叉轴 (不对称设计，契合 M3 现代韵律) -->
+  <rect x="156" y="204" width="180" height="64" rx="32" fill="url(#m3_accent)"/>
+  
+  <!-- 边界定义点 (Focus / Anchor point) -->
+  <circle cx="340" cy="336" r="28" fill="url(#m3_accent)"/>
+</svg>

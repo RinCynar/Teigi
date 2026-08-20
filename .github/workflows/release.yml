@@ -125,30 +125,18 @@ jobs:
             cp -r build/linux/x64/release/bundle/lib/* AppDir/usr/lib/ 2>/dev/null || true
           fi
 
-          cat << 'EOF' > AppDir/teigi.desktop
-[Desktop Entry]
-Name=Teigi
-Exec=teigi
-Icon=teigi
-Type=Application
-Categories=AudioVideo;AudioVideoEditing;
-Comment=Desktop media converter built with Flutter and FFmpeg
-Terminal=false
-EOF
+          printf '[Desktop Entry]\nName=Teigi\nExec=teigi\nIcon=teigi\nType=Application\nCategories=AudioVideo;AudioVideoEditing;\nComment=Desktop media converter built with Flutter and FFmpeg\nTerminal=false\n' > AppDir/teigi.desktop
           cp AppDir/teigi.desktop AppDir/usr/share/applications/
 
-          if [ -f macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png ]; then
+          if [ -f assets/icon/app_icon.png ]; then
+            cp assets/icon/app_icon.png AppDir/teigi.png
+            cp assets/icon/app_icon.png AppDir/usr/share/icons/hicolor/256x256/apps/teigi.png
+          elif [ -f macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png ]; then
             cp macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png AppDir/teigi.png
             cp macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png AppDir/usr/share/icons/hicolor/256x256/apps/teigi.png
           fi
 
-          cat << 'EOF' > AppDir/AppRun
-#!/bin/bash
-HERE="$(dirname "$(readlink -f "${0}")")"
-export LD_LIBRARY_PATH="${HERE}/usr/lib:${HERE}/usr/bin/lib:${LD_LIBRARY_PATH}"
-export PATH="${HERE}/usr/bin:${PATH}"
-exec "${HERE}/usr/bin/teigi" "$@"
-EOF
+          printf '#!/bin/bash\nHERE="$(dirname "$(readlink -f "${0}")")"\nexport LD_LIBRARY_PATH="${HERE}/usr/lib:${HERE}/usr/bin/lib:${LD_LIBRARY_PATH}"\nexport PATH="${HERE}/usr/bin:${PATH}"\nexec "${HERE}/usr/bin/teigi" "$@"\n' > AppDir/AppRun
           chmod +x AppDir/AppRun
 
           wget -q -O appimagetool https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage || wget -q -O appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
