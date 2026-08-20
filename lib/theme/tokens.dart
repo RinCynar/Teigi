@@ -64,7 +64,7 @@ abstract final class TeigiMotion {
   static const Duration medium = Duration(milliseconds: 220);
 }
 
-/// Default brand seed: indigo, not a saturated purple wash.
+/// Default brand seed: Miku teal fallback.
 abstract final class TeigiColors {
-  static const Color seed = Color(0xFF3D5BA9);
+  static const Color seed = Color(0xFF39C5BB);
 }

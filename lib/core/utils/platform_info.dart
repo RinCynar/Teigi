@@ -1,22 +1,22 @@
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 
 /// 是否有真实桌面窗口（Windows / Linux / macOS）。
 bool get isDesktop =>
     !kIsWeb &&
-    (defaultTargetPlatform == TargetPlatform.windows ||
-        defaultTargetPlatform == TargetPlatform.linux ||
-        defaultTargetPlatform == TargetPlatform.macOS);
+    (Platform.isWindows ||
+        Platform.isLinux ||
+        Platform.isMacOS);
 
 /// 是否为移动平台（Android / iOS）。
 bool get isMobile =>
     !kIsWeb &&
-    (defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS);
+    (Platform.isAndroid || Platform.isIOS);
 
 /// 是否为 Android 平台。
 bool get isAndroid =>
-    !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    !kIsWeb && Platform.isAndroid;
 
 /// 是否为 iOS 平台。
 bool get isIOS =>
-    !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+    !kIsWeb && Platform.isIOS;

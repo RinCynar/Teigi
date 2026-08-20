@@ -1,5 +1,3 @@
-import 'dart:ui' show Color;
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teigi/core/models/app_settings.dart';
@@ -44,12 +42,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   Future<void> setThemeMode(String mode) =>
       update(state.copyWith(themeMode: mode));
-
-  Future<void> setSeedColor(Color color) =>
-      update(state.copyWith(seedColor: color));
-
-  Future<void> setUseDynamicColor(bool value) =>
-      update(state.copyWith(useDynamicColor: value));
 
   Future<void> setOpenOutputAfterDone(bool value) =>
       update(state.copyWith(openOutputAfterDone: value));

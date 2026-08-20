@@ -6,6 +6,7 @@ import 'package:teigi/core/models/format_preset.dart';
 import 'package:teigi/core/models/media_file.dart';
 import 'package:teigi/core/utils/file_identity.dart';
 import 'package:teigi/core/utils/open_path.dart';
+import 'package:teigi/core/utils/platform_info.dart';
 import 'package:teigi/features/convert/batch_config_sheet.dart';
 import 'package:teigi/features/convert/config_sheet.dart';
 import 'package:teigi/features/convert/media_import.dart';
@@ -91,53 +92,62 @@ class _ConvertPageState extends ConsumerState<ConvertPage> {
             ),
     );
 
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyA, control: true): () {
-          ref.read(selectionProvider.notifier).selectAll(workspace.map((t) => t.id));
-        },
-        const SingleActivator(LogicalKeyboardKey.escape): () {
+    return PopScope(
+      canPop: selected.isEmpty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
           ref.read(selectionProvider.notifier).clear();
           setState(() => _configuringId = null);
-        },
-        const SingleActivator(LogicalKeyboardKey.delete): () {
-          ref.read(queueProvider.notifier).removeTasks(ref.read(selectionProvider));
-          ref.read(selectionProvider.notifier).clear();
-        },
-        const SingleActivator(LogicalKeyboardKey.enter): () {
-          final ids = ref.read(selectionProvider);
-          if (ids.length == 1) {
-            ConversionTask? task;
-            for (final t in workspace) {
-              if (t.id == ids.first) task = t;
-            }
-            if (task != null) _openConfig(task, size);
-          } else if (ids.length > 1) {
-            BatchConfigSheet.open(context, ids: ids);
-          }
-        },
+        }
       },
-      child: Focus(
-        autofocus: true,
-        child: Stack(
-      children: [
-        page,
-        if (configuring != null && size == TeigiWindowSize.expanded)
-          Positioned(
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: TeigiBreakpoints.configSheet,
-            child: Material(
-              elevation: 1,
-              color: Theme.of(context).colorScheme.surfaceContainerLow,
-              child: ConvertConfigSheet(
-                task: configuring,
-                onClose: () => setState(() => _configuringId = null),
-              ),
-            ),
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.keyA, control: true): () {
+            ref.read(selectionProvider.notifier).selectAll(workspace.map((t) => t.id));
+          },
+          const SingleActivator(LogicalKeyboardKey.escape): () {
+            ref.read(selectionProvider.notifier).clear();
+            setState(() => _configuringId = null);
+          },
+          const SingleActivator(LogicalKeyboardKey.delete): () {
+            ref.read(queueProvider.notifier).removeTasks(ref.read(selectionProvider));
+            ref.read(selectionProvider.notifier).clear();
+          },
+          const SingleActivator(LogicalKeyboardKey.enter): () {
+            final ids = ref.read(selectionProvider);
+            if (ids.length == 1) {
+              ConversionTask? task;
+              for (final t in workspace) {
+                if (t.id == ids.first) task = t;
+              }
+              if (task != null) _openConfig(task, size);
+            } else if (ids.length > 1) {
+              BatchConfigSheet.open(context, ids: ids);
+            }
+          },
+        },
+        child: Focus(
+          autofocus: true,
+          child: Stack(
+            children: [
+              page,
+              if (configuring != null && size == TeigiWindowSize.expanded)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: TeigiBreakpoints.configSheet,
+                  child: Material(
+                    elevation: 1,
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
+                    child: ConvertConfigSheet(
+                      task: configuring,
+                      onClose: () => setState(() => _configuringId = null),
+                    ),
+                  ),
+                ),
+            ],
           ),
-      ],
         ),
       ),
     );
@@ -309,7 +319,7 @@ class _EmptyWorkspace extends ConsumerWidget {
                   ),
                   const SizedBox(height: TeigiSpacing.sm),
                   Text(
-                    l10n.dropToStart,
+                    isMobile ? l10n.selectToStart : l10n.dropToStart,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: scheme.onSurfaceVariant,
@@ -323,7 +333,8 @@ class _EmptyWorkspace extends ConsumerWidget {
                   ),
                   const SizedBox(height: TeigiSpacing.md),
                   Text(
-                    l10n.dropHint,
+                    isMobile ? l10n.mobileImportHint : l10n.dropHint,
+                    textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -475,6 +486,10 @@ class _SelectionBar extends ConsumerWidget {
     final l10n = ref.watch(l10nProvider);
     final compact = size == TeigiWindowSize.compact;
     final actions = <Widget>[
+      TextButton(
+        onPressed: () => ref.read(selectionProvider.notifier).clear(),
+        child: Text(l10n.deselect),
+      ),
       TextButton(
         onPressed: () {
           final ids = ref

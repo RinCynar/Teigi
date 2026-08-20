@@ -126,23 +126,37 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             title: l10n.conversionSettings,
             icon: Icons.tune,
             children: [
-              if (isDesktop)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l10n.outputDirectory),
-                  subtitle: Text(
-                    settings.outputDirectory.isEmpty
-                        ? l10n.sameAsSource
-                        : settings.outputDirectory,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.folder_open),
-                    tooltip: l10n.browse,
-                    onPressed: () => _pickOutputDirectory(ref),
-                  ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.outputDirectory),
+                subtitle: Text(
+                  settings.outputDirectory.isEmpty
+                      ? (isAndroid
+                          ? 'Download/Teigi (${l10n.followSystem})'
+                          : l10n.sameAsSource)
+                      : settings.outputDirectory,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.folder_open),
+                      tooltip: l10n.browse,
+                      onPressed: () => _pickOutputDirectory(ref),
+                    ),
+                    if (settings.outputDirectory.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.clear),
+                        tooltip: l10n.reset,
+                        onPressed: () => ref
+                            .read(settingsProvider.notifier)
+                            .setOutputDirectory(''),
+                      ),
+                  ],
+                ),
+              ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(l10n.concurrency),
@@ -176,23 +190,30 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             title: l10n.appearance,
             icon: Icons.palette_outlined,
             children: [
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.languageLabel),
-                trailing: DropdownButton<String>(
-                  value: settings.language,
-                  items: const [
-                    DropdownMenuItem(value: 'zh', child: Text('简体中文')),
-                    DropdownMenuItem(value: 'ja', child: Text('日本語')),
-                    DropdownMenuItem(value: 'en', child: Text('English')),
-                  ],
-                  onChanged: (v) {
-                    if (v != null) {
-                      ref.read(settingsProvider.notifier).setLanguage(v);
-                    }
-                  },
+              if (!isAndroid)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.languageLabel),
+                  trailing: DropdownButton<String>(
+                    value: L10n.supported.contains(settings.language)
+                        ? settings.language
+                        : 'system',
+                    items: [
+                      DropdownMenuItem(
+                        value: 'system',
+                        child: Text(l10n.followSystem),
+                      ),
+                      const DropdownMenuItem(value: 'zh', child: Text('简体中文')),
+                      const DropdownMenuItem(value: 'ja', child: Text('日本語')),
+                      const DropdownMenuItem(value: 'en', child: Text('English')),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) {
+                        ref.read(settingsProvider.notifier).setLanguage(v);
+                      }
+                    },
+                  ),
                 ),
-              ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(l10n.themeMode),
@@ -210,7 +231,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ref.read(settingsProvider.notifier).setThemeMode(s.first),
                 ),
               ),
-              _SeedColorTile(l10n: l10n, settings: settings),
             ],
           ),
           _SectionCard(
@@ -219,14 +239,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             title: l10n.behaviors,
             icon: Icons.playlist_add_check_circle_outlined,
             children: [
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.openOutputAfterDone),
-                value: settings.openOutputAfterDone,
-                onChanged: (v) => ref
-                    .read(settingsProvider.notifier)
-                    .setOpenOutputAfterDone(v),
-              ),
+              if (!isMobile)
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.openOutputAfterDone),
+                  value: settings.openOutputAfterDone,
+                  onChanged: (v) => ref
+                      .read(settingsProvider.notifier)
+                      .setOpenOutputAfterDone(v),
+                ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(l10n.conflictPolicy),
@@ -402,122 +423,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     if (path != null) {
       await ref.read(settingsProvider.notifier).setOutputDirectory(path);
     }
-  }
-}
-
-/// 种子颜色设置行：预设色板 + 十六进制输入。
-class _SeedColorTile extends ConsumerStatefulWidget {
-  final L10n l10n;
-  final AppSettings settings;
-
-  const _SeedColorTile({required this.l10n, required this.settings});
-
-  @override
-  ConsumerState<_SeedColorTile> createState() => _SeedColorTileState();
-}
-
-class _SeedColorTileState extends ConsumerState<_SeedColorTile> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(
-      text: _toHex(widget.settings.seedColor),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  static const List<Color> _presetColors = [
-    Color(0xFF6750A4), // 紫
-    Color(0xFF00696D), // 青
-    Color(0xFF006D40), // 绿
-    Color(0xFFB3261E), // 红
-    Color(0xFF8F4C00), // 橙
-    Color(0xFF3D5BA9), // 蓝
-    Color(0xFF000000), // 黑
-    Color(0xFF9E9E9E), // 灰
-  ];
-
-  static String _toHex(Color c) =>
-      '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = widget.l10n;
-    final settings = widget.settings;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.seedColor, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (final c in _presetColors)
-                InkWell(
-                  onTap: () =>
-                      ref.read(settingsProvider.notifier).setSeedColor(c),
-                  child: CircleAvatar(
-                    backgroundColor: c,
-                    radius: 16,
-                    child: c == settings.seedColor
-                        ? Icon(
-                            Icons.check,
-                            size: 18,
-                            color: Theme.of(context).colorScheme.onPrimary,
-                          )
-                        : null,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              SizedBox(
-                width: 130,
-                child: TextField(
-                  controller: _controller,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: '#6750A4',
-                    labelText: l10n.seedColor,
-                    prefixText: '#',
-                  ),
-                  onSubmitted: (v) {
-                    final hex = v.replaceAll('#', '').trim();
-                    final color = int.tryParse(hex, radix: 16);
-                    if (color != null) {
-                      ref
-                          .read(settingsProvider.notifier)
-                          .setSeedColor(Color(0xFF000000 | color));
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  l10n.seedColorHint,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 }
 

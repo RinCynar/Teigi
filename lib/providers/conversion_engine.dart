@@ -9,7 +9,9 @@ import 'package:teigi/core/ffmpeg/ffmpeg_command_builder.dart';
 import 'package:teigi/core/ffmpeg/progress_parser.dart';
 import 'package:teigi/core/models/conversion_task.dart';
 import 'package:teigi/core/services/foreground_service.dart';
+import 'package:teigi/core/services/platform_storage.dart';
 import 'package:teigi/core/services/task_scheduler.dart';
+import 'package:teigi/core/utils/platform_info.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
 import 'package:teigi/providers/queue_provider.dart';
 import 'package:teigi/providers/settings_provider.dart';
@@ -120,9 +122,18 @@ class ConversionEngine {
     final notifier = ref.read(queueProvider.notifier);
     final speedSamples = _SpeedEstimator();
 
+    // 输出目录：若未指定且为 Android，自动使用公共存储 Download/Teigi
+    var outDir = task.options.outputDirectory;
+    if ((outDir == null || outDir.isEmpty) && isAndroid) {
+      outDir = await PlatformStorage.getDefaultOutputDirectory();
+    }
+
     // 硬件加速为全局设置：调度时统一应用到任务选项。
     final effectiveTask = task.copyWith(
-      options: task.options.copyWith(hardwareAccel: settings.hardwareAccel),
+      options: task.options.copyWith(
+        outputDirectory: outDir,
+        hardwareAccel: settings.hardwareAccel,
+      ),
     );
 
     StreamSubscription<ProgressUpdate>? progressSubscription;
@@ -157,7 +168,11 @@ class ConversionEngine {
         );
         final percent = (progress * 100).round();
         unawaited(
-          ForegroundService.updateProgress('${task.source.name} $percent%'),
+          ForegroundService.updateProgress(
+            progress > 0
+                ? '${task.source.name} $percent%'
+                : '${task.source.name} 转换中',
+          ),
         );
       });
       outputSubscription = handle.outputPaths.listen((outputPath) {
@@ -200,6 +215,9 @@ class ConversionEngine {
             completedAt: DateTime.now(),
           ),
         );
+        if (result.outputPath != null) {
+          unawaited(PlatformStorage.scanMediaFile(result.outputPath!));
+        }
         _logger.i('转换完成: ${task.source.path} → ${result.outputPath}');
       } else if (result.isCancelled) {
         notifier.updateTask(

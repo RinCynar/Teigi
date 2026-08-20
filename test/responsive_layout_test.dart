@@ -18,7 +18,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'language': 'zh'});
     final prefs = await SharedPreferences.getInstance();
     final settings = await AppSettings.load(prefs);
 

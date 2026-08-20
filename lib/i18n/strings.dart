@@ -1,7 +1,9 @@
+import 'dart:ui' show Locale, PlatformDispatcher;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:teigi/core/utils/platform_info.dart';
 import 'package:teigi/providers/settings_provider.dart';
 
-/// 轻量级本地化：支持 简体中文(zh) / 日本語(ja) / English(en)。
+/// 轻量级本地化：支持 跟随系统(system) / 简体中文(zh) / 日本語(ja) / English(en)。
 ///
 /// 所有界面文案集中在此，通过 [l10nProvider] 随语言设置切换。
 class L10n {
@@ -9,9 +11,26 @@ class L10n {
 
   const L10n(this.language);
 
-  static const supported = ['zh', 'ja', 'en'];
+  static const supported = ['system', 'zh', 'ja', 'en'];
 
-  String _t(Map<String, String> m) => m[language] ?? m['en'] ?? m.values.first;
+  /// 将设置中的语言偏好解析为实际生效的代码（'zh' / 'ja' / 'en'）。
+  static String resolveLanguage(String preference, [Locale? systemLocale]) {
+    if (!isAndroid && preference != 'system' && preference.isNotEmpty) {
+      if (preference == 'zh' || preference == 'ja' || preference == 'en') {
+        return preference;
+      }
+    }
+    // Android 或跟随系统：读取系统语言，除 zh/ja 外统一 Fallback 至 en (English)
+    final locale = systemLocale ?? PlatformDispatcher.instance.locale;
+    final code = locale.languageCode.toLowerCase();
+    if (code.startsWith('zh')) return 'zh';
+    if (code.startsWith('ja')) return 'ja';
+    if (code.startsWith('en')) return 'en';
+    return 'en';
+  }
+
+  String _t(Map<String, String> m) =>
+      m[language] ?? m['en'] ?? m['zh'] ?? m.values.first;
 
   /// 格式化时长（剩余时间等）。
   String formatDuration(Duration d) {
@@ -34,6 +53,16 @@ class L10n {
   String get convertTitle => _t({'zh': '转换', 'ja': '変換', 'en': 'Convert'});
   String get convertSubtitle =>
       _t({'zh': '转换你的媒体', 'ja': 'メディアを変換', 'en': 'Convert your media'});
+  String get selectToStart => _t({
+    'zh': '选择媒体文件开始转换',
+    'ja': 'ファイルを選択して変換を開始',
+    'en': 'Select media files to get started',
+  });
+  String get mobileImportHint => _t({
+    'zh': '支持选取文件或通过其他应用分享导入',
+    'ja': 'ファイル選択または共有から追加できます',
+    'en': 'Select files or import via system share',
+  });
   String get dropToStart => _t({
     'zh': '把文件拖到这里开始',
     'ja': 'ファイルをドロップして開始',
@@ -82,6 +111,7 @@ class L10n {
   String get customExtension =>
       _t({'zh': '自定义扩展名', 'ja': 'カスタム拡張子', 'en': 'Custom extension'});
   String get selectAll => _t({'zh': '全选', 'ja': 'すべて選択', 'en': 'Select all'});
+  String get deselect => _t({'zh': '取消选择', 'ja': '選択解除', 'en': 'Deselect'});
   String selectedCount(int n) =>
       _t({'zh': '已选 $n 项', 'ja': '$n 件選択', 'en': '$n selected'});
   String applyToFiles(int n) =>
@@ -194,10 +224,10 @@ class L10n {
   String get openSource =>
       _t({'zh': '开源声明', 'ja': 'オープンソース', 'en': 'Open source'});
   String get openSourceDesc => _t({
-    'zh': 'Teigi 是一款开源的桌面媒体转换工具，基于 Flutter 构建。\n核心功能依赖 ffmpeg。',
-    'ja': 'Teigi は Flutter 製のオープンソースメディア変換ツールです。\n変換エンジンとして ffmpeg を使用します。',
+    'zh': 'Teigi 是一款开源的跨平台媒体转换工具，基于 Flutter 构建。\n核心功能依赖 FFmpeg。',
+    'ja': 'Teigi は Flutter 製のオープンソース・クロスプラットフォームメディア変換ツールです。\n変換エンジンとして FFmpeg を使用します。',
     'en':
-        'Teigi is an open-source desktop media converter built with Flutter.\nIt relies on ffmpeg for conversion.',
+        'Teigi is an open-source cross-platform media converter built with Flutter.\nIt relies on FFmpeg for conversion.',
   });
 
   // ---- 导入 ----
@@ -326,6 +356,7 @@ class L10n {
     'en': 'Use the ffmpeg bundled with the installation',
   });
   String get browse => _t({'zh': '浏览…', 'ja': '参照…', 'en': 'Browse…'});
+  String get reset => _t({'zh': '重置', 'ja': 'リセット', 'en': 'Reset'});
   String get resetPathDetect =>
       _t({'zh': '恢复 PATH 检测', 'ja': 'PATH 検出に戻す', 'en': 'Use PATH detection'});
   String get customPathInvalid => _t({
@@ -408,13 +439,22 @@ class L10n {
     'ja': 'カスタム形式のショートカット。ここで削除できます',
     'en': 'Custom format shortcuts. Remove here.',
   });
+  String get shareFile =>
+      _t({'zh': '分享文件', 'ja': 'ファイルを共有', 'en': 'Share file'});
+  String get copyLog =>
+      _t({'zh': '复制日志', 'ja': 'ログをコピー', 'en': 'Copy log'});
+  String get logCopied => _t({
+    'zh': '日志已复制到剪贴板',
+    'ja': 'ログをクリップボードにコピーしました',
+    'en': 'Log copied to clipboard',
+  });
   String get conversionSettings =>
       _t({'zh': '转换', 'ja': '変換', 'en': 'Conversion'});
   String get appearance => _t({'zh': '外观', 'ja': '外観', 'en': 'Appearance'});
 }
 
-/// 当前语言下的文案 Provider。
+/// 当前语言下的文案 Provider（支持跟随系统）。
 final l10nProvider = Provider<L10n>((ref) {
   final lang = ref.watch(settingsProvider).language;
-  return L10n(L10n.supported.contains(lang) ? lang : 'zh');
+  return L10n(L10n.resolveLanguage(lang));
 });

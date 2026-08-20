@@ -19,8 +19,10 @@ class ProgressParser {
     r"Output #0,.*?to\s+'(.+)':",
   );
 
-  /// 总时长（毫秒）。由 [parseDurationLine] 预先设置。
+  /// 总时长（毫秒）。由 [parseDurationLine] 预先设置或初始化传入。
   Duration? totalDuration;
+
+  ProgressParser({Duration? initialDuration}) : totalDuration = initialDuration;
 
   /// 解析 `Duration: 00:01:23.45` 行，返回总时长并缓存。
   Duration? parseDurationLine(String line) {

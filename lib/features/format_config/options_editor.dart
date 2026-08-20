@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teigi/core/models/conversion_options.dart';
 import 'package:teigi/core/models/conversion_task.dart';
 import 'package:teigi/core/models/format_definitions.dart';
+import 'package:teigi/core/utils/platform_info.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/queue_provider.dart';
 import 'package:teigi/providers/quick_formats_provider.dart';
@@ -195,9 +196,21 @@ class _OptionsFormState extends ConsumerState<OptionsForm> {
           label: l10n.encoding,
           copy: _options.copyVideo,
           encoder: _options.videoEncoder,
-          encoders: const [
-            'libx264', 'libx265', 'libvpx-vp9', 'mpeg4', 'h264_nvenc', 'hevc_nvenc',
-          ],
+          encoders: isAndroid
+              ? const [
+                  'h264_mediacodec',
+                  'hevc_mediacodec',
+                  'vp9_mediacodec',
+                  'mpeg4',
+                ]
+              : const [
+                  'libx264',
+                  'libx265',
+                  'libvpx-vp9',
+                  'mpeg4',
+                  'h264_nvenc',
+                  'hevc_nvenc',
+                ],
           onChanged: (copy, encoder) => _update(
             _options.copyWith(copyVideo: copy, videoEncoder: encoder),
           ),
@@ -246,9 +259,22 @@ class _OptionsFormState extends ConsumerState<OptionsForm> {
           label: l10n.encoding,
           copy: _options.copyAudio,
           encoder: _options.audioEncoder,
-          encoders: const [
-            'aac', 'libmp3lame', 'libopus', 'libvorbis', 'flac', 'pcm_s16le',
-          ],
+          encoders: isAndroid
+              ? const [
+                  'aac',
+                  'libmp3lame',
+                  'opus',
+                  'flac',
+                  'pcm_s16le',
+                ]
+              : const [
+                  'aac',
+                  'libmp3lame',
+                  'libopus',
+                  'libvorbis',
+                  'flac',
+                  'pcm_s16le',
+                ],
           onChanged: (copy, encoder) => _update(
             _options.copyWith(copyAudio: copy, audioEncoder: encoder),
           ),

@@ -14,19 +14,29 @@ class TeigiTheme {
     };
   }
 
-  static ThemeData light({Color seed = seedLight, String? language}) {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: seed,
-      brightness: Brightness.light,
-    );
+  static ThemeData light({
+    ColorScheme? colorScheme,
+    Color seed = seedLight,
+    String? language,
+  }) {
+    final scheme = colorScheme ??
+        ColorScheme.fromSeed(
+          seedColor: seed,
+          brightness: Brightness.light,
+        );
     return _base(scheme, fontFamily: fontFamilyFor(language));
   }
 
-  static ThemeData dark({Color seed = seedDark, String? language}) {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: seed,
-      brightness: Brightness.dark,
-    );
+  static ThemeData dark({
+    ColorScheme? colorScheme,
+    Color seed = seedDark,
+    String? language,
+  }) {
+    final scheme = colorScheme ??
+        ColorScheme.fromSeed(
+          seedColor: seed,
+          brightness: Brightness.dark,
+        );
     return _base(scheme, fontFamily: fontFamilyFor(language));
   }
 

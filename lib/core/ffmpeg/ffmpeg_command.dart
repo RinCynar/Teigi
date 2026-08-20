@@ -2,8 +2,13 @@
 class FfmpegCommand {
   final List<String> args;
   final String outputPath;
+  final Duration? inputDuration;
 
-  const FfmpegCommand({required this.args, required this.outputPath});
+  const FfmpegCommand({
+    required this.args,
+    required this.outputPath,
+    this.inputDuration,
+  });
 
   /// Human-readable preview for Advanced settings. Not an executable string.
   String get preview {

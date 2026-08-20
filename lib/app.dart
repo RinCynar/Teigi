@@ -1,3 +1,4 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -58,16 +59,26 @@ class TeigiApp extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final l10n = ref.watch(l10nProvider);
 
-    return MaterialApp.router(
-      title: l10n.appTitle,
-      debugShowCheckedModeBanner: false,
-      routerConfig: router,
-      theme: TeigiTheme.light(seed: settings.seedColor, language: settings.language),
-      darkTheme: TeigiTheme.dark(seed: settings.seedColor, language: settings.language),
-      themeMode: switch (settings.themeMode) {
-        'light' => ThemeMode.light,
-        'dark' => ThemeMode.dark,
-        _ => ThemeMode.system,
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        return MaterialApp.router(
+          title: l10n.appTitle,
+          debugShowCheckedModeBanner: false,
+          routerConfig: router,
+          theme: TeigiTheme.light(
+            colorScheme: lightDynamic,
+            language: l10n.language,
+          ),
+          darkTheme: TeigiTheme.dark(
+            colorScheme: darkDynamic,
+            language: l10n.language,
+          ),
+          themeMode: switch (settings.themeMode) {
+            'light' => ThemeMode.light,
+            'dark' => ThemeMode.dark,
+            _ => ThemeMode.system,
+          },
+        );
       },
     );
   }

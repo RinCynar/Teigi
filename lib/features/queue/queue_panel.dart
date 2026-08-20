@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teigi/core/models/conversion_task.dart';
+import 'package:teigi/core/services/platform_storage.dart';
 import 'package:teigi/core/utils/open_path.dart';
+import 'package:teigi/core/utils/platform_info.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/conversion_engine.dart';
 import 'package:teigi/providers/queue_provider.dart';
@@ -196,12 +199,21 @@ class _JobTile extends ConsumerWidget {
               ),
               if (task.isRunning) ...[
                 const SizedBox(height: TeigiSpacing.xs),
-                LinearProgressIndicator(value: task.progress, minHeight: 4),
+                LinearProgressIndicator(
+                  value: task.progress > 0 ? task.progress : null,
+                  minHeight: 4,
+                ),
                 const SizedBox(height: 4),
                 Text(
-                  '${(task.progress * 100).toStringAsFixed(0)}%'
-                  '${task.speedX > 0 ? ' · ${task.speedX.toStringAsFixed(1)}x' : ''}'
-                  '${task.remaining != null ? ' · ETA ${l10n.formatDuration(task.remaining!)}' : ''}',
+                  (task.progress > 0
+                          ? '${(task.progress * 100).toStringAsFixed(0)}%'
+                          : l10n.converting) +
+                      (task.speedX > 0
+                          ? ' · ${task.speedX.toStringAsFixed(1)}x'
+                          : '') +
+                      (task.remaining != null
+                          ? ' · ETA ${l10n.formatDuration(task.remaining!)}'
+                          : ''),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -242,7 +254,10 @@ class _JobTile extends ConsumerWidget {
         if (task.status == TaskStatus.failed)
           PopupMenuItem(value: 'retry', child: Text(l10n.retry)),
         PopupMenuItem(value: 'open', child: Text(l10n.openFile)),
-        PopupMenuItem(value: 'folder', child: Text(l10n.openFolder)),
+        if (task.status == TaskStatus.completed && isMobile)
+          PopupMenuItem(value: 'share', child: Text(l10n.shareFile)),
+        if (!isMobile)
+          PopupMenuItem(value: 'folder', child: Text(l10n.openFolder)),
         if (task.error != null || task.errorDetails != null)
           PopupMenuItem(value: 'log', child: Text(l10n.viewLog)),
         PopupMenuItem(value: 'remove', child: Text(l10n.remove)),
@@ -253,7 +268,9 @@ class _JobTile extends ConsumerWidget {
       case 'retry':
         ref.read(queueProvider.notifier).retryTask(task.id);
       case 'open':
-        await openLocalPath(task.outputPath ?? task.source.path);
+        await PlatformStorage.openFile(task.outputPath ?? task.source.path);
+      case 'share':
+        await PlatformStorage.shareFile(task.outputPath ?? task.source.path);
       case 'folder':
         await openParentFolder(task.outputPath ?? task.source.path);
       case 'log':
@@ -263,8 +280,30 @@ class _JobTile extends ConsumerWidget {
             context: context,
             builder: (ctx) => AlertDialog(
               title: Text(l10n.viewLog),
-              content: SelectableText(logText),
+              content: SizedBox(
+                width: 600,
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    logText,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
               actions: [
+                TextButton(
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: logText));
+                    if (ctx.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l10n.logCopied)),
+                      );
+                    }
+                  },
+                  child: Text(l10n.copyLog),
+                ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
                   child: Text(l10n.ok),

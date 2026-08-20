@@ -37,7 +37,7 @@ class SelectionNotifier extends StateNotifier<Set<String>> {
       selectRange(orderedIds, anchorId, id);
       return;
     }
-    if (ctrl) {
+    if (ctrl || state.length > 1 || (state.length == 1 && state.contains(id))) {
       toggle(id);
       return;
     }

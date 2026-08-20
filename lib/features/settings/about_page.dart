@@ -12,7 +12,7 @@ class AboutPage extends ConsumerWidget {
   static const developerName = 'RinCynar';
   static const repositoryUrl = 'https://github.com/RinCynar/Teigi';
   static const websiteUrl = 'https://teigi.rincynar.top';
-  static const appVersion = '0.0.2-alpha';
+  static const appVersion = '1.0.0';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

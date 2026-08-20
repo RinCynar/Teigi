@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:teigi/core/services/sharing_intent_service.dart';
 import 'package:teigi/features/convert/media_import.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/conversion_engine.dart';
@@ -34,6 +35,28 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   bool _dragOver = false;
   static const _import = MediaImport();
+
+  @override
+  void initState() {
+    super.initState();
+    SharingIntentService.instance.init(
+      onFilesReceived: (files) {
+        if (!mounted || files.isEmpty) return;
+        final pending = ref.read(pendingPresetProvider);
+        ref.read(queueProvider.notifier).addFiles(files, preset: pending);
+        if (pending != null) {
+          ref.read(pendingPresetProvider.notifier).state = null;
+        }
+        context.go('/convert');
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    SharingIntentService.instance.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,35 +104,39 @@ class _AppShellState extends ConsumerState<AppShell> {
           child: Stack(
             children: [
               Scaffold(
-                body: Row(
-                  children: [
-                    if (size != TeigiWindowSize.compact)
-                      NavigationRail(
-                        selectedIndex: selected,
-                        extended: false,
-                        labelType: size == TeigiWindowSize.expanded
-                            ? NavigationRailLabelType.all
-                            : NavigationRailLabelType.selected,
-                        onDestinationSelected: (i) => context.go(AppShell.locations[i]),
-                        leading: const Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: TeigiSpacing.md,
-                          ),
-                          child: TeigiMark(size: 32),
-                        ),
-                        destinations: [
-                          for (final d in destinations)
-                            NavigationRailDestination(
-                              icon: Icon(d.icon),
-                              selectedIcon: Icon(d.selectedIcon),
-                              label: Text(d.label),
+                body: SafeArea(
+                  top: true,
+                  bottom: size != TeigiWindowSize.compact,
+                  child: Row(
+                    children: [
+                      if (size != TeigiWindowSize.compact)
+                        NavigationRail(
+                          selectedIndex: selected,
+                          extended: false,
+                          labelType: size == TeigiWindowSize.expanded
+                              ? NavigationRailLabelType.all
+                              : NavigationRailLabelType.selected,
+                          onDestinationSelected: (i) => context.go(AppShell.locations[i]),
+                          leading: const Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: TeigiSpacing.md,
                             ),
-                        ],
-                      ),
-                    if (size != TeigiWindowSize.compact)
-                      const VerticalDivider(width: 1),
-                    Expanded(child: widget.child),
-                  ],
+                            child: TeigiMark(size: 32),
+                          ),
+                          destinations: [
+                            for (final d in destinations)
+                              NavigationRailDestination(
+                                icon: Icon(d.icon),
+                                selectedIcon: Icon(d.selectedIcon),
+                                label: Text(d.label),
+                              ),
+                          ],
+                        ),
+                      if (size != TeigiWindowSize.compact)
+                        const VerticalDivider(width: 1),
+                      Expanded(child: widget.child),
+                    ],
+                  ),
                 ),
                 bottomNavigationBar: size == TeigiWindowSize.compact
                     ? NavigationBar(

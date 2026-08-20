@@ -8,7 +8,14 @@ Future<void> openLocalPath(String path) async {
     await Process.start('explorer', [path]);
     return;
   }
-  await launchUrl(Uri.file(path));
+  try {
+    final uri = Uri.file(path);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  } catch (_) {
+    // 移动端未注册文件关联或无默认应用时不抛异常
+  }
 }
 
 Future<void> openParentFolder(String filePath) async {

@@ -177,7 +177,9 @@ class _TeigiFileCardState extends State<TeigiFileCard> {
               ClipRRect(
                 borderRadius: TeigiRadii.extraSmall,
                 child: LinearProgressIndicator(
-                  value: task.status == TaskStatus.queued ? null : task.progress,
+                  value: (task.status == TaskStatus.queued || task.progress == 0)
+                      ? null
+                      : task.progress,
                   minHeight: 4,
                 ),
               ),

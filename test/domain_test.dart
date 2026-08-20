@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teigi/core/domain/conversion_error.dart';
 import 'package:teigi/core/domain/media_type.dart';
@@ -10,6 +11,10 @@ import 'package:teigi/core/models/format_preset.dart';
 import 'package:teigi/core/models/media_file.dart';
 import 'package:teigi/core/services/task_scheduler.dart';
 import 'package:teigi/core/utils/file_naming.dart';
+import 'package:teigi/i18n/strings.dart';
+import 'package:teigi/providers/selection_provider.dart';
+import 'package:teigi/theme/teigi_theme.dart';
+import 'package:teigi/theme/tokens.dart';
 
 void main() {
   group('inferMediaType', () {
@@ -172,6 +177,55 @@ void main() {
         ).kind,
         ConversionErrorKind.unsupportedCodec,
       );
+    });
+  });
+
+  group('L10n.resolveLanguage', () {
+    test('resolves system locales with English fallback', () {
+      expect(L10n.resolveLanguage('system', const Locale('zh', 'CN')), 'zh');
+      expect(L10n.resolveLanguage('system', const Locale('ja', 'JP')), 'ja');
+      expect(L10n.resolveLanguage('system', const Locale('en', 'US')), 'en');
+      expect(L10n.resolveLanguage('system', const Locale('de', 'DE')), 'en');
+      expect(L10n.resolveLanguage('system', const Locale('fr', 'FR')), 'en');
+      expect(L10n.resolveLanguage('system', const Locale('ko', 'KR')), 'en');
+    });
+  });
+
+  group('SelectionNotifier', () {
+    test('toggles and exits selection on tap', () {
+      final notifier = SelectionNotifier();
+      expect(notifier.state, isEmpty);
+
+      notifier.handleClick('1', orderedIds: ['1', '2'], ctrl: false, shift: false);
+      expect(notifier.state, {'1'});
+
+      // Tapping the selected single item toggles it off
+      notifier.handleClick('1', orderedIds: ['1', '2'], ctrl: false, shift: false);
+      expect(notifier.state, isEmpty);
+
+      // Tapping another item selects it
+      notifier.handleClick('2', orderedIds: ['1', '2'], ctrl: false, shift: false);
+      expect(notifier.state, {'2'});
+    });
+  });
+
+  group('TeigiTheme & DynamicColor', () {
+    test('default brand seed is #39C5BB', () {
+      expect(TeigiColors.seed, const Color(0xFF39C5BB));
+      expect(TeigiTheme.seedLight, const Color(0xFF39C5BB));
+      expect(TeigiTheme.seedDark, const Color(0xFF39C5BB));
+    });
+
+    test('builds theme with dynamic colorScheme and default seed fallback', () {
+      final defaultLight = TeigiTheme.light();
+      expect(defaultLight.colorScheme.primary, isNotNull);
+
+      final customScheme = ColorScheme.fromSeed(
+        seedColor: const Color(0xFFFF0000),
+        brightness: Brightness.light,
+      );
+      final dynamicLight = TeigiTheme.light(colorScheme: customScheme);
+      expect(dynamicLight.colorScheme.primary, customScheme.primary);
     });
   });
 }

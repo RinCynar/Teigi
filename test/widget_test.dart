@@ -15,19 +15,17 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('应用根组件可构建', (WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'language': 'zh'});
     final prefs = await SharedPreferences.getInstance();
     final settings = await AppSettings.load(prefs);
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          // 注入 SharedPreferences 实例。
           sharedPreferencesProvider.overrideWithValue(prefs),
           settingsProvider.overrideWith(
             (ref) => SettingsNotifier(settings, prefs),
           ),
-          // 避免测试中真实调用 Process.run 检测 ffmpeg。
           ffmpegStatusProvider.overrideWith(
             () => _FakeFfmpegNotifier(),
           ),
@@ -51,7 +49,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'language': 'zh'});
     final prefs = await SharedPreferences.getInstance();
     final settings = await AppSettings.load(prefs);
 
@@ -106,7 +104,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'language': 'zh'});
     final prefs = await SharedPreferences.getInstance();
     final settings = await AppSettings.load(prefs);
 
@@ -118,7 +116,6 @@ void main() {
             (ref) => SettingsNotifier(settings, prefs),
           ),
           ffmpegStatusProvider.overrideWith(() => _FakeFfmpegNotifier()),
-          // 这些测试验证桌面布局，固定注入桌面引擎（含 FFmpeg 路径设置项）。
           ffmpegEngineProvider.overrideWithValue(DesktopFfmpegEngine()),
         ],
         child: const TeigiApp(),
@@ -149,4 +146,3 @@ class _FakeFfmpegNotifier extends FfmpegStatusNotifier {
     );
   }
 }
-

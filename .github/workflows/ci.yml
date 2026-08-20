@@ -82,3 +82,6 @@ jobs:
 
       - name: Build debug APK
         run: flutter build apk --debug
+
+      - name: Build release APK (split-per-abi)
+        run: flutter build apk --release --split-per-abi

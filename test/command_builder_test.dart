@@ -73,17 +73,55 @@ void main() {
     test('applies audio bitrate and quality', () {
       final args = builder.buildArgs(
         task(
-          target: 'mp3',
+          target: 'mp4',
           options: const ConversionOptions(
             crf: 20,
             bitrateKbps: 320,
             outputDirectory: '/out',
           ),
         ),
-        '/out/a.mp3',
+        '/out/a.mp4',
       );
       expect(args, containsAllInOrder(['-b:a', '320k']));
       expect(args, containsAllInOrder(['-crf', '20']));
+    });
+
+    test('Android maps MP4 and MKV to mediacodec and uses -b:v', () {
+      const androidBuilder = FfmpegCommandBuilder(isAndroidOverride: true);
+      final mp4Cmd = androidBuilder.build(
+        task(
+          target: 'mp4',
+          options: const ConversionOptions(crf: 23, outputDirectory: '/out'),
+        ),
+      );
+      expect(mp4Cmd.args, containsAllInOrder(['-c:v', 'h264_mediacodec']));
+      expect(mp4Cmd.args, containsAllInOrder(['-b:v', '3500k']));
+      expect(mp4Cmd.args, containsAllInOrder(['-pix_fmt', 'yuv420p']));
+      expect(mp4Cmd.args, isNot(contains('-crf')));
+
+      final mkvCmd = androidBuilder.build(
+        task(
+          target: 'mkv',
+          options: const ConversionOptions(crf: 18, outputDirectory: '/out'),
+        ),
+      );
+      expect(mkvCmd.args, containsAllInOrder(['-c:v', 'hevc_mediacodec']));
+      expect(mkvCmd.args, containsAllInOrder(['-b:v', '6000k']));
+      expect(mkvCmd.args, isNot(contains('-crf')));
+    });
+
+    test('Opus audio conversion configures -vn, -c:a libopus, -ar 48000, -b:a', () {
+      const androidBuilder = FfmpegCommandBuilder(isAndroidOverride: true);
+      final opusCmd = androidBuilder.build(
+        task(
+          target: 'opus',
+          options: const ConversionOptions(outputDirectory: '/out'),
+        ),
+      );
+      expect(opusCmd.args, contains('-vn'));
+      expect(opusCmd.args, containsAllInOrder(['-c:a', 'libopus']));
+      expect(opusCmd.args, containsAllInOrder(['-ar', '48000']));
+      expect(opusCmd.args, containsAllInOrder(['-b:a', '128k']));
     });
   });
 }

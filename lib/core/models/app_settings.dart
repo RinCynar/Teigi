@@ -1,5 +1,3 @@
-import 'dart:ui' show Color;
-
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teigi/core/models/conversion_options.dart';
 
@@ -17,12 +15,6 @@ class AppSettings {
   /// 是否默认启用硬件加速。
   final bool hardwareAccel;
 
-  /// 是否使用动态主题色。
-  final bool useDynamicColor;
-
-  /// 主题种子色（useDynamicColor=false 时生效）。
-  final Color seedColor;
-
   /// 主题模式：system / light / dark。
   final String themeMode;
 
@@ -35,7 +27,7 @@ class AppSettings {
   /// 日志级别：debug / info / warn / error。
   final String logLevel;
 
-  /// 语言代码：zh / en。
+  /// 语言代码：system / zh / ja / en。
   final String language;
 
   const AppSettings({
@@ -43,13 +35,11 @@ class AppSettings {
     this.outputDirectory = '',
     this.concurrency = 2,
     this.hardwareAccel = false,
-    this.useDynamicColor = true,
-    this.seedColor = const Color(0xFF3D5BA9),
     this.themeMode = 'system',
     this.openOutputAfterDone = false,
     this.overwritePolicy = OverwritePolicy.keepBoth,
     this.logLevel = 'info',
-    this.language = 'zh',
+    this.language = 'system',
   });
 
   AppSettings copyWith({
@@ -57,8 +47,6 @@ class AppSettings {
     String? outputDirectory,
     int? concurrency,
     bool? hardwareAccel,
-    bool? useDynamicColor,
-    Color? seedColor,
     String? themeMode,
     bool? openOutputAfterDone,
     OverwritePolicy? overwritePolicy,
@@ -70,8 +58,6 @@ class AppSettings {
       outputDirectory: outputDirectory ?? this.outputDirectory,
       concurrency: concurrency ?? this.concurrency,
       hardwareAccel: hardwareAccel ?? this.hardwareAccel,
-      useDynamicColor: useDynamicColor ?? this.useDynamicColor,
-      seedColor: seedColor ?? this.seedColor,
       themeMode: themeMode ?? this.themeMode,
       openOutputAfterDone: openOutputAfterDone ?? this.openOutputAfterDone,
       overwritePolicy: overwritePolicy ?? this.overwritePolicy,
@@ -87,14 +73,12 @@ class AppSettings {
       outputDirectory: prefs.getString('output_directory') ?? '',
       concurrency: prefs.getInt('concurrency') ?? 2,
       hardwareAccel: prefs.getBool('hardware_accel') ?? false,
-      useDynamicColor: prefs.getBool('use_dynamic_color') ?? true,
-      seedColor: _parseColor(prefs.getString('seed_color'), 0xFF3D5BA9),
       themeMode: prefs.getString('theme_mode') ?? 'system',
       openOutputAfterDone: prefs.getBool('open_output_after_done') ?? false,
       overwritePolicy: OverwritePolicy.values[
           prefs.getInt('overwrite_policy') ?? OverwritePolicy.keepBoth.index],
       logLevel: prefs.getString('log_level') ?? 'info',
-      language: prefs.getString('language') ?? 'zh',
+      language: prefs.getString('language') ?? 'system',
     );
   }
 
@@ -104,24 +88,10 @@ class AppSettings {
     await prefs.setString('output_directory', outputDirectory);
     await prefs.setInt('concurrency', concurrency);
     await prefs.setBool('hardware_accel', hardwareAccel);
-    await prefs.setBool('use_dynamic_color', useDynamicColor);
-    await prefs.setString(
-      'seed_color',
-      '0x${seedColor.toARGB32().toRadixString(16).padLeft(8, '0')}',
-    );
     await prefs.setString('theme_mode', themeMode);
     await prefs.setBool('open_output_after_done', openOutputAfterDone);
     await prefs.setInt('overwrite_policy', overwritePolicy.index);
     await prefs.setString('log_level', logLevel);
     await prefs.setString('language', language);
-  }
-
-  static Color _parseColor(String? value, int fallback) {
-    if (value == null) return Color(fallback);
-    try {
-      return Color(int.parse(value));
-    } catch (_) {
-      return Color(fallback);
-    }
   }
 }

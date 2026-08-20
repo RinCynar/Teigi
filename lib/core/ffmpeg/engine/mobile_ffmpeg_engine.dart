@@ -57,7 +57,8 @@ class MobileFfmpegEngine implements FfmpegEngine {
 }
 
 class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
-  _MobileFfmpegTaskHandle({required this.command}) {
+  _MobileFfmpegTaskHandle({required this.command})
+      : _parser = ProgressParser(initialDuration: command.inputDuration) {
     unawaited(_start());
   }
 
@@ -70,7 +71,7 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
       StreamController<FfmpegTaskState>.broadcast();
   final Completer<FfmpegResult> _resultCompleter = Completer<FfmpegResult>();
 
-  final ProgressParser _parser = ProgressParser();
+  final ProgressParser _parser;
   final StringBuffer _logs = StringBuffer();
 
   FFmpegSession? _session;
@@ -91,16 +92,23 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
   @override
   Future<void> cancel() async {
     _cancelRequested = true;
-    final session = _session;
-    if (session == null) return;
-    await session.cancel();
+    try {
+      final session = _session;
+      if (session != null) {
+        await session.cancel();
+      }
+    } catch (_) {}
   }
 
   Future<void> _start() async {
     _emitState(FfmpegTaskState.starting);
-    _outputController.add(command.outputPath);
+    if (!_outputController.isClosed) {
+      _outputController.add(command.outputPath);
+    }
 
     try {
+      await FFmpegKitConfig.setLogLevel(Level.avLogInfo);
+
       final session = await FFmpegKit.executeWithArgumentsAsync(
         command.args,
         _onComplete,
@@ -121,6 +129,7 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
           state: FfmpegTaskState.failed,
           outputPath: command.outputPath,
           error: e.toString(),
+          stderr: _logs.toString(),
         ),
       );
       await _closeControllers();
@@ -128,67 +137,104 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
   }
 
   void _onLog(Log log) {
-    final message = log.getMessage();
-    _logs.writeln(message);
-    _parser.parseDurationLine(message);
+    try {
+      final message = log.getMessage();
+      _logs.writeln(message);
+      if (_parser.totalDuration == null) {
+        _parser.parseDurationLine(message);
+      }
+    } catch (_) {}
   }
 
   void _onStatistics(Statistics statistics) {
-    final elapsed = Duration(milliseconds: statistics.getTime());
-    final speed = statistics.getSpeed();
+    try {
+      final timeMs = statistics.getTime();
+      if (timeMs < 0) return;
+      final elapsed = Duration(milliseconds: timeMs);
+      final speed = statistics.getSpeed();
 
-    double? progress;
-    final total = _parser.totalDuration;
-    if (total != null && total.inMilliseconds > 0) {
-      progress = (elapsed.inMilliseconds / total.inMilliseconds)
-          .clamp(0.0, 1.0);
-    }
+      double? progress;
+      final total = _parser.totalDuration;
+      if (total != null && total.inMilliseconds > 0) {
+        progress = (elapsed.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0);
+      }
 
-    if (!_progressController.isClosed) {
-      _progressController.add(
-        ProgressUpdate(elapsed: elapsed, speed: speed, progress: progress),
-      );
-    }
+      if (!_progressController.isClosed) {
+        _progressController.add(
+          ProgressUpdate(elapsed: elapsed, speed: speed, progress: progress),
+        );
+      }
+    } catch (_) {}
   }
 
   Future<void> _onComplete(FFmpegSession session) async {
-    final returnCode = await session.getReturnCode();
+    try {
+      final returnCode = await session.getReturnCode();
+      final failStackTrace = await session.getFailStackTrace();
 
-    if (_cancelRequested || ReturnCode.isCancel(returnCode)) {
-      _emitState(FfmpegTaskState.cancelled);
-      _completeResult(
-        FfmpegResult(
-          exitCode: returnCode?.getValue() ?? -1,
-          state: FfmpegTaskState.cancelled,
-          outputPath: command.outputPath,
-          error: 'ffmpeg 已取消',
-          stderr: _logs.toString(),
-        ),
-      );
-    } else if (ReturnCode.isSuccess(returnCode)) {
-      _emitState(FfmpegTaskState.completed);
-      _completeResult(
-        FfmpegResult(
-          exitCode: 0,
-          state: FfmpegTaskState.completed,
-          outputPath: command.outputPath,
-          stderr: _logs.toString(),
-        ),
-      );
-    } else {
+      var logText = _logs.toString();
+      if (logText.isEmpty) {
+        try {
+          final sessionLogs = await session.getAllLogsAsString();
+          if (sessionLogs != null && sessionLogs.isNotEmpty) {
+            logText = sessionLogs;
+          }
+        } catch (_) {}
+      }
+
+      final fullStderr = [
+        if (logText.isNotEmpty) logText,
+        if (failStackTrace != null && failStackTrace.isNotEmpty)
+          'StackTrace: $failStackTrace',
+      ].join('\n');
+
+      if (_cancelRequested || (returnCode != null && ReturnCode.isCancel(returnCode))) {
+        _emitState(FfmpegTaskState.cancelled);
+        _completeResult(
+          FfmpegResult(
+            exitCode: returnCode?.getValue() ?? -1,
+            state: FfmpegTaskState.cancelled,
+            outputPath: command.outputPath,
+            error: 'ffmpeg 已取消',
+            stderr: fullStderr,
+          ),
+        );
+      } else if (returnCode != null && ReturnCode.isSuccess(returnCode)) {
+        _emitState(FfmpegTaskState.completed);
+        _completeResult(
+          FfmpegResult(
+            exitCode: 0,
+            state: FfmpegTaskState.completed,
+            outputPath: command.outputPath,
+            stderr: fullStderr,
+          ),
+        );
+      } else {
+        _emitState(FfmpegTaskState.failed);
+        _completeResult(
+          FfmpegResult(
+            exitCode: returnCode?.getValue() ?? -1,
+            state: FfmpegTaskState.failed,
+            outputPath: command.outputPath,
+            error: 'ffmpeg 退出码 ${returnCode?.getValue() ?? '未知'}',
+            stderr: fullStderr,
+          ),
+        );
+      }
+    } catch (e) {
       _emitState(FfmpegTaskState.failed);
       _completeResult(
         FfmpegResult(
-          exitCode: returnCode?.getValue() ?? -1,
+          exitCode: -1,
           state: FfmpegTaskState.failed,
           outputPath: command.outputPath,
-          error: 'ffmpeg 退出码 ${returnCode?.getValue() ?? '未知'}',
+          error: 'Session 处理异常: $e',
           stderr: _logs.toString(),
         ),
       );
+    } finally {
+      await _closeControllers();
     }
-
-    await _closeControllers();
   }
 
   void _emitState(FfmpegTaskState state) {
@@ -200,8 +246,8 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
   }
 
   Future<void> _closeControllers() async {
-    await _progressController.close();
-    await _outputController.close();
-    await _stateController.close();
+    if (!_progressController.isClosed) await _progressController.close();
+    if (!_outputController.isClosed) await _outputController.close();
+    if (!_stateController.isClosed) await _stateController.close();
   }
 }
