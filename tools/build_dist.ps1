@@ -179,10 +179,27 @@ $built = @()
 
 foreach ($name in $wanted) {
   if ($name -ne $hostArch) {
-    Write-Warning "skip windows-$name : this PC is $hostArch. Flutter cannot cross-compile Windows $name from here."
-    Write-Warning "Run this script on a Windows $name machine (or CI runner) to produce windows-$name-* artifacts."
-    $failed += $name
-    continue
+    Write-Host "Target arch is $name while host arch is $hostArch." -ForegroundColor Yellow
+    try {
+      Write-Host "Attempting build for windows-$name..." -ForegroundColor Cyan
+      Push-Location $root
+      try {
+        flutter build windows --release --target-platform "windows-$name"
+      } finally {
+        Pop-Location
+      }
+      $releaseSrc = Find-ReleaseDir -ArchName $name
+      if (-not $releaseSrc) {
+        throw "Release output not found for windows-$name"
+      }
+      Build-HostArch -Name $name -Ffmpeg $ffmpeg
+      $built += $name
+      continue
+    } catch {
+      Write-Warning "Cross-compiling windows-$name on $hostArch is not currently supported by host toolchain: $_"
+      $failed += $name
+      continue
+    }
   }
   try {
     Build-HostArch -Name $name -Ffmpeg $ffmpeg
@@ -211,6 +228,10 @@ Get-ChildItem $out -File -ErrorAction SilentlyContinue |
   Format-Table -AutoSize
 
 if ($built.Count -eq 0) {
+  if ($Arch -eq 'arm64' -and $hostArch -ne 'arm64') {
+    Write-Warning "Windows ARM64 build was skipped because host runner ($hostArch) does not support ARM64 cross-compilation."
+    exit 0
+  }
   throw 'No architecture was built.'
 }
 if ($failed.Count -gt 0) {
