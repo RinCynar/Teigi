@@ -13,6 +13,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: release-manifest
@@ -24,6 +26,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate release manifest
         uses: actions/github-script@v7
@@ -72,4 +77,4 @@ jobs:
             exit 0
           fi
           git commit -m "chore: sync latest release manifest"
-          git push
+          git push origin HEAD:main

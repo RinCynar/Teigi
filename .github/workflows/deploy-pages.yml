@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Check out site
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
