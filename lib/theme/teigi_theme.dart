@@ -40,12 +40,22 @@ class TeigiTheme {
     return _base(scheme, fontFamily: fontFamilyFor(language));
   }
 
+  static const List<String> fontFallbacks = [
+    'Microsoft YaHei',
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Noto Sans CJK SC',
+    'WenQuanYi Micro Hei',
+    'sans-serif',
+  ];
+
   static ThemeData _base(ColorScheme scheme, {required String fontFamily}) {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: scheme.surface,
       fontFamily: fontFamily,
+      fontFamilyFallback: fontFallbacks,
       visualDensity: VisualDensity.adaptivePlatformDensity,
       appBarTheme: AppBarTheme(
         centerTitle: false,

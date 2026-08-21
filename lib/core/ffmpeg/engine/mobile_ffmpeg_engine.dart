@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:ffmpeg_kit_flutter_new_full/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new_full/ffmpeg_kit_config.dart';
@@ -72,7 +73,7 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
   final Completer<FfmpegResult> _resultCompleter = Completer<FfmpegResult>();
 
   final ProgressParser _parser;
-  final StringBuffer _logs = StringBuffer();
+  final ListQueue<String> _recentLogs = ListQueue<String>(100);
 
   FFmpegSession? _session;
   bool _cancelRequested = false;
@@ -129,7 +130,7 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
           state: FfmpegTaskState.failed,
           outputPath: command.outputPath,
           error: e.toString(),
-          stderr: _logs.toString(),
+          stderr: _recentLogs.isNotEmpty ? _recentLogs.join('\n') : null,
         ),
       );
       await _closeControllers();
@@ -139,7 +140,10 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
   void _onLog(Log log) {
     try {
       final message = log.getMessage();
-      _logs.writeln(message);
+      if (_recentLogs.length >= 100) {
+        _recentLogs.removeFirst();
+      }
+      _recentLogs.addLast(message);
       if (_parser.totalDuration == null) {
         _parser.parseDurationLine(message);
       }
@@ -172,7 +176,7 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
       final returnCode = await session.getReturnCode();
       final failStackTrace = await session.getFailStackTrace();
 
-      var logText = _logs.toString();
+      var logText = _recentLogs.join('\n');
       if (logText.isEmpty) {
         try {
           final sessionLogs = await session.getAllLogsAsString();
@@ -196,7 +200,7 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
             state: FfmpegTaskState.cancelled,
             outputPath: command.outputPath,
             error: 'ffmpeg 已取消',
-            stderr: fullStderr,
+            stderr: fullStderr.isNotEmpty ? fullStderr : null,
           ),
         );
       } else if (returnCode != null && ReturnCode.isSuccess(returnCode)) {
@@ -206,7 +210,7 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
             exitCode: 0,
             state: FfmpegTaskState.completed,
             outputPath: command.outputPath,
-            stderr: fullStderr,
+            stderr: null,
           ),
         );
       } else {
@@ -217,7 +221,7 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
             state: FfmpegTaskState.failed,
             outputPath: command.outputPath,
             error: 'ffmpeg 退出码 ${returnCode?.getValue() ?? '未知'}',
-            stderr: fullStderr,
+            stderr: fullStderr.isNotEmpty ? fullStderr : null,
           ),
         );
       }
@@ -229,10 +233,11 @@ class _MobileFfmpegTaskHandle implements FfmpegTaskHandle {
           state: FfmpegTaskState.failed,
           outputPath: command.outputPath,
           error: 'Session 处理异常: $e',
-          stderr: _logs.toString(),
+          stderr: _recentLogs.isNotEmpty ? _recentLogs.join('\n') : null,
         ),
       );
     } finally {
+      _recentLogs.clear();
       await _closeControllers();
     }
   }

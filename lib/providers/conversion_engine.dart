@@ -11,6 +11,7 @@ import 'package:teigi/core/models/conversion_task.dart';
 import 'package:teigi/core/services/foreground_service.dart';
 import 'package:teigi/core/services/platform_storage.dart';
 import 'package:teigi/core/services/task_scheduler.dart';
+import 'package:teigi/core/utils/memory_trimmer.dart';
 import 'package:teigi/core/utils/platform_info.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
 import 'package:teigi/providers/queue_provider.dart';
@@ -30,6 +31,7 @@ class ConversionEngine {
   /// 运行中的任务 id -> 对应引擎任务句柄。
   final Map<String, FfmpegTaskHandle> _running = {};
   final TaskScheduler _scheduler = const TaskScheduler();
+  StreamSubscription<ForegroundAction>? _foregroundSubscription;
   bool _disposed = false;
   bool _started = false;
 
@@ -47,7 +49,7 @@ class ConversionEngine {
       if (_started) _schedule();
     });
     // Android 前台服务通知的「取消」按钮 → 取消所有运行中的任务。
-    ForegroundService.actions.listen((action) {
+    _foregroundSubscription = ForegroundService.actions.listen((action) {
       if (action == ForegroundAction.cancel) _cancelAll();
     });
   }
@@ -79,6 +81,8 @@ class ConversionEngine {
   void dispose() {
     _disposed = true;
     _started = false;
+    _foregroundSubscription?.cancel();
+    _foregroundSubscription = null;
     for (final task in _running.values) {
       unawaited(task.cancel());
     }
@@ -113,6 +117,7 @@ class ConversionEngine {
     if (_running.isEmpty && _scheduler.isExhausted(ref.read(queueProvider))) {
       _setRunning(false);
       unawaited(ForegroundService.stop());
+      MemoryTrimmer.trimIdleMemory(delay: const Duration(milliseconds: 500));
     }
   }
 

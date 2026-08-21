@@ -5,6 +5,7 @@ import 'package:teigi/core/models/conversion_options.dart';
 import 'package:teigi/core/models/conversion_task.dart';
 import 'package:teigi/core/models/format_preset.dart';
 import 'package:teigi/core/models/media_file.dart';
+import 'package:teigi/core/utils/memory_trimmer.dart';
 
 /// 队列管理器：维护转换任务列表并控制其状态流转。
 ///
@@ -60,18 +61,22 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
 
   /// 移除指定任务。
   void removeTask(String id) {
-    state = state.where((t) => t.id != id).toList();
+    final next = state.where((t) => t.id != id).toList();
+    state = next.isEmpty ? const [] : next;
+    if (state.isEmpty) MemoryTrimmer.trimIdleMemory();
   }
 
   /// Remove finished tasks only. Never touches running work.
   void clearCompleted() {
-    state = [
+    final next = [
       for (final t in state)
         if (t.status != TaskStatus.completed &&
             t.status != TaskStatus.failed &&
             t.status != TaskStatus.canceled)
           t,
     ];
+    state = next.isEmpty ? const [] : next;
+    if (state.isEmpty) MemoryTrimmer.trimIdleMemory();
   }
 
   /// 清空队列（移除已完成/失败/取消的任务；运行中的任务由引擎负责取消）。
@@ -79,18 +84,22 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
 
   /// 移除所有非运行中任务。
   void removeAll() {
-    state = [
+    final next = [
       for (final t in state)
         if (t.isRunning) t,
     ];
+    state = next.isEmpty ? const [] : next;
+    if (state.isEmpty) MemoryTrimmer.trimIdleMemory();
   }
 
   void removeTasks(Iterable<String> ids) {
     final skip = ids.toSet();
-    state = [
+    final next = [
       for (final t in state)
         if (!skip.contains(t.id) || t.isRunning) t,
     ];
+    state = next.isEmpty ? const [] : next;
+    if (state.isEmpty) MemoryTrimmer.trimIdleMemory();
   }
 
   void setTargetFormatFor(Iterable<String> ids, String? format) {

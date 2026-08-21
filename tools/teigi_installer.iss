@@ -1,7 +1,7 @@
 ; Teigi Inno Setup installer script (English only).
 ; Invoked by tools\build_dist.ps1; normalized to UTF-8 BOM before compile.
 #define MyAppName "Teigi"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppPublisher "RinCynar"
 #define MyAppURL "https://teigi.rincynar.top"
 #define MyAppExeName "teigi.exe"

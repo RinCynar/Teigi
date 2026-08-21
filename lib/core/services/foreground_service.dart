@@ -21,7 +21,7 @@ class ForegroundService {
       _actionController?.stream ?? const Stream<ForegroundAction>.empty();
 
   static void initialize() {
-    if (_initialized) return;
+    if (!isAndroid || _initialized) return;
     _actionController = StreamController<ForegroundAction>.broadcast();
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(

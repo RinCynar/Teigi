@@ -162,9 +162,10 @@ class _JobTile extends ConsumerWidget {
         ? task.source.name
         : '${task.source.name} → ${task.targetFormat!.toUpperCase()}';
 
-    return Material(
-      color: scheme.surface,
-      child: InkWell(
+    return RepaintBoundary(
+      child: Material(
+        color: scheme.surface,
+        child: InkWell(
         onSecondaryTapDown: (d) => _menu(context, ref, d.globalPosition),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: TeigiSpacing.sm),
@@ -237,7 +238,8 @@ class _JobTile extends ConsumerWidget {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Future<void> _menu(BuildContext context, WidgetRef ref, Offset global) async {

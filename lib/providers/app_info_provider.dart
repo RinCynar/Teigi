@@ -9,8 +9,8 @@ final packageInfoProvider = FutureProvider<PackageInfo>((ref) async {
     return PackageInfo(
       appName: 'Teigi',
       packageName: 'com.example.teigi',
-      version: const String.fromEnvironment('BUILD_VERSION', defaultValue: '1.0.0'),
-      buildNumber: '1',
+      version: const String.fromEnvironment('BUILD_VERSION', defaultValue: '1.0.1'),
+      buildNumber: '2',
     );
   }
 });
@@ -21,5 +21,5 @@ final appVersionProvider = Provider<String>((ref) {
   if (info != null && info.version.isNotEmpty) {
     return info.version;
   }
-  return const String.fromEnvironment('BUILD_VERSION', defaultValue: '1.0.0');
+  return const String.fromEnvironment('BUILD_VERSION', defaultValue: '1.0.1');
 });

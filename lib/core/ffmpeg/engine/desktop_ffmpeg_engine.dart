@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:teigi/core/ffmpeg/ffmpeg_command.dart';
@@ -97,6 +98,16 @@ class _DesktopFfmpegTaskHandle implements FfmpegTaskHandle {
       return;
     }
 
+    final recentStderrLines = ListQueue<String>(100);
+
+    void recordStderrLine(String line) {
+      if (line.isEmpty) return;
+      if (recentStderrLines.length >= 100) {
+        recentStderrLines.removeFirst();
+      }
+      recentStderrLines.addLast(line);
+    }
+
     try {
       _outputExistedBeforeStart = File(command.outputPath).existsSync();
       final process = await Process.start(path, command.args);
@@ -108,14 +119,15 @@ class _DesktopFfmpegTaskHandle implements FfmpegTaskHandle {
 
       final parser = ProgressParser();
       String buffer = '';
-      final stderrBuffer = StringBuffer();
       String? outputPath = command.outputPath;
       final stderrCompleter = Completer<void>();
 
       process.stderr.listen(
         (chunk) {
           final lines = decodeChunkLines(chunk);
-          stderrBuffer.write(lines.join('\n'));
+          for (final l in lines) {
+            recordStderrLine(l);
+          }
           buffer += lines.join('\n');
           while (true) {
             final nl = buffer.indexOf('\n');
@@ -127,7 +139,9 @@ class _DesktopFfmpegTaskHandle implements FfmpegTaskHandle {
         },
         onDone: () {
           if (buffer.isNotEmpty) {
-            outputPath = _handleLine(buffer.trimRight(), parser, outputPath);
+            final trimmed = buffer.trimRight();
+            outputPath = _handleLine(trimmed, parser, outputPath);
+            recordStderrLine(trimmed);
           }
           if (!stderrCompleter.isCompleted) stderrCompleter.complete();
         },
@@ -151,7 +165,7 @@ class _DesktopFfmpegTaskHandle implements FfmpegTaskHandle {
             state: state,
             outputPath: command.outputPath,
             error: _cancelRequested ? 'ffmpeg 已取消' : 'ffmpeg 退出码 $exitCode',
-            stderr: stderrBuffer.toString(),
+            stderr: recentStderrLines.join('\n'),
           ),
         );
       } else {
@@ -161,7 +175,7 @@ class _DesktopFfmpegTaskHandle implements FfmpegTaskHandle {
             exitCode: 0,
             state: FfmpegTaskState.completed,
             outputPath: command.outputPath,
-            stderr: stderrBuffer.toString(),
+            stderr: null,
           ),
         );
       }
@@ -177,9 +191,13 @@ class _DesktopFfmpegTaskHandle implements FfmpegTaskHandle {
           state: state,
           outputPath: command.outputPath,
           error: error.toString(),
+          stderr: recentStderrLines.isNotEmpty
+              ? recentStderrLines.join('\n')
+              : null,
         ),
       );
     } finally {
+      recentStderrLines.clear();
       await _progressController.close();
       await _outputController.close();
       await _stateController.close();

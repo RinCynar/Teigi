@@ -110,31 +110,35 @@ class _AppShellState extends ConsumerState<AppShell> {
                   child: Row(
                     children: [
                       if (size != TeigiWindowSize.compact)
-                        NavigationRail(
-                          selectedIndex: selected,
-                          extended: false,
-                          labelType: size == TeigiWindowSize.expanded
-                              ? NavigationRailLabelType.all
-                              : NavigationRailLabelType.selected,
-                          onDestinationSelected: (i) => context.go(AppShell.locations[i]),
-                          leading: const Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: TeigiSpacing.md,
-                            ),
-                            child: TeigiMark(size: 32),
-                          ),
-                          destinations: [
-                            for (final d in destinations)
-                              NavigationRailDestination(
-                                icon: Icon(d.icon),
-                                selectedIcon: Icon(d.selectedIcon),
-                                label: Text(d.label),
+                        RepaintBoundary(
+                          child: NavigationRail(
+                            selectedIndex: selected,
+                            extended: false,
+                            labelType: size == TeigiWindowSize.expanded
+                                ? NavigationRailLabelType.all
+                                : NavigationRailLabelType.selected,
+                            onDestinationSelected: (i) => context.go(AppShell.locations[i]),
+                            leading: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: TeigiSpacing.md,
                               ),
-                          ],
+                              child: TeigiMark(size: 32),
+                            ),
+                            destinations: [
+                              for (final d in destinations)
+                                NavigationRailDestination(
+                                  icon: Icon(d.icon),
+                                  selectedIcon: Icon(d.selectedIcon),
+                                  label: Text(d.label),
+                                ),
+                            ],
+                          ),
                         ),
                       if (size != TeigiWindowSize.compact)
                         const VerticalDivider(width: 1),
-                      Expanded(child: widget.child),
+                      Expanded(
+                        child: RepaintBoundary(child: widget.child),
+                      ),
                     ],
                   ),
                 ),

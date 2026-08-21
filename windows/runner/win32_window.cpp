@@ -1,6 +1,7 @@
 #include "win32_window.h"
 
 #include <dwmapi.h>
+#include <psapi.h>
 #include <flutter_windows.h>
 
 #include "resource.h"
@@ -203,6 +204,9 @@ Win32Window::MessageHandler(HWND hwnd,
         // Size and position the child window.
         MoveWindow(child_content_, rect.left, rect.top, rect.right - rect.left,
                    rect.bottom - rect.top, TRUE);
+      }
+      if (wparam == SIZE_MINIMIZED) {
+        ::EmptyWorkingSet(::GetCurrentProcess());
       }
       return 0;
     }

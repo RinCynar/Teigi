@@ -57,7 +57,6 @@ class _ConvertPageState extends ConsumerState<ConvertPage> {
     final selected = ref.watch(selectionProvider);
     final width = MediaQuery.sizeOf(context).width;
     final size = TeigiBreakpoints.sizeOf(width);
-    ref.watch(conversionEngineProvider);
     ref.watch(ffmpegStatusProvider);
 
     ConversionTask? configuring;
@@ -67,13 +66,14 @@ class _ConvertPageState extends ConsumerState<ConvertPage> {
       }
     }
 
-    final page = ContentConstraint(
-      padding: EdgeInsets.fromLTRB(
-        size == TeigiWindowSize.compact ? TeigiSpacing.md : TeigiSpacing.page,
-        TeigiSpacing.lg,
-        size == TeigiWindowSize.compact ? TeigiSpacing.md : TeigiSpacing.page,
-        TeigiSpacing.page,
-      ),
+    final page = RepaintBoundary(
+      child: ContentConstraint(
+        padding: EdgeInsets.fromLTRB(
+          size == TeigiWindowSize.compact ? TeigiSpacing.md : TeigiSpacing.page,
+          TeigiSpacing.lg,
+          size == TeigiWindowSize.compact ? TeigiSpacing.md : TeigiSpacing.page,
+          TeigiSpacing.page,
+        ),
       child: workspace.isEmpty
           ? _EmptyWorkspace(
               onAddFiles: () => _addFromPicker(),
@@ -90,6 +90,7 @@ class _ConvertPageState extends ConsumerState<ConvertPage> {
               onClick: (task, ctrl, shift) => _click(task, workspace, ctrl, shift),
               onContext: (task, pos) => _contextMenu(task, pos, size),
             ),
+      ),
     );
 
     return PopScope(

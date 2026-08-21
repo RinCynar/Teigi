@@ -220,6 +220,8 @@ class _MediaWell extends StatelessWidget {
       child = Image.file(
         File(task.source.path),
         fit: BoxFit.cover,
+        cacheWidth: 144,
+        cacheHeight: 112,
         errorBuilder: (_, _, _) => Icon(
           Icons.image_outlined,
           color: scheme.onSurfaceVariant,
