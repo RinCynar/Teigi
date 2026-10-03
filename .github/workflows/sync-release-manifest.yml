@@ -1,6 +1,14 @@
 name: Sync Release Manifest
 
 on:
+  workflow_run:
+    workflows:
+      - Release
+    types:
+      - completed
+  push:
+    branches:
+      - main
   release:
     types:
       - published
@@ -19,6 +27,7 @@ concurrency:
 
 jobs:
   sync:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository

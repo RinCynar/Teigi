@@ -22,6 +22,8 @@ const translations = {
     "mirror.label": "下载线路",
     "mirror.proxy": "镜像加速 (git.rincynar.top)",
     "mirror.direct": "官方直连 (GitHub)",
+    "mirror.proxyTitle": "镜像加速",
+    "mirror.directTitle": "官方直连",
     "hero.eyebrow": "开源跨平台媒体工具",
     "hero.copy": "在桌面端与移动端上，安静、清晰地处理你的音视频与图片文件。",
     "status.loadingManifest": "正在读取版本清单",
@@ -109,6 +111,8 @@ const translations = {
     "mirror.label": "Download Source",
     "mirror.proxy": "Fast Mirror (git.rincynar.top)",
     "mirror.direct": "Direct (GitHub)",
+    "mirror.proxyTitle": "Fast Mirror",
+    "mirror.directTitle": "Direct",
     "hero.eyebrow": "Open-source Cross-platform Tool",
     "hero.copy": "Process your audio, video, and image files on desktop and mobile with ease.",
     "status.loadingManifest": "Reading release manifest",
@@ -196,6 +200,8 @@ const translations = {
     "mirror.label": "ダウンロード回線",
     "mirror.proxy": "高速ミラー (git.rincynar.top)",
     "mirror.direct": "公式直通 (GitHub)",
+    "mirror.proxyTitle": "高速ミラー",
+    "mirror.directTitle": "公式直通",
     "hero.eyebrow": "オープンソースのクロスプラットフォームツール",
     "hero.copy": "デスクトップとモバイルで、音声・動画・画像ファイルをシンプルかつ明快に処理。",
     "status.loadingManifest": "リリース一覧を読み込み中",
@@ -283,7 +289,12 @@ const elements = {
   assetsSummary: document.querySelector("#assets-summary"),
   downloadList: document.querySelector("#download-list"),
   refreshButton: document.querySelector("#refresh-button"),
-  mirrorSelect: document.querySelector("#mirror-select"),
+  mirrorMenuWrap: document.querySelector("#mirror-menu-wrap"),
+  mirrorMenuBtn: document.querySelector("#mirror-menu-btn"),
+  mirrorMenu: document.querySelector("#mirror-menu"),
+  mirrorAnchorText: document.querySelector("#mirror-anchor-text"),
+  mirrorAnchorIcon: document.querySelector("#mirror-anchor-icon"),
+  mirrorMenuItems: document.querySelectorAll("#mirror-menu .md3-menu-item"),
   factVersion: document.querySelector("#fact-version"),
   factDate: document.querySelector("#fact-date"),
   factAssets: document.querySelector("#fact-assets"),
@@ -318,6 +329,25 @@ function updateFactMirror() {
       ? t("facts.mirrorProxy")
       : t("facts.mirrorDirect");
   }
+}
+
+function updateMirrorUI() {
+  const isProxy = currentMirror === "proxy";
+  if (elements.mirrorAnchorText) {
+    elements.mirrorAnchorText.textContent = isProxy ? t("mirror.proxyTitle") : t("mirror.directTitle");
+  }
+  if (elements.mirrorAnchorIcon) {
+    elements.mirrorAnchorIcon.setAttribute("data-lucide", isProxy ? "zap" : "globe");
+  }
+  if (elements.mirrorMenuItems) {
+    elements.mirrorMenuItems.forEach((item) => {
+      const active = item.dataset.value === currentMirror;
+      item.classList.toggle("active", active);
+      item.setAttribute("aria-checked", active ? "true" : "false");
+    });
+  }
+  updateFactMirror();
+  initializeIcons();
 }
 
 function t(key, values = {}) {
@@ -738,9 +768,7 @@ function applyTranslations() {
   if (elements.languageSelect) {
     elements.languageSelect.value = currentLocale;
   }
-  if (elements.mirrorSelect) {
-    elements.mirrorSelect.value = currentMirror;
-  }
+  updateMirrorUI();
 }
 
 function normalizeLocale(value) {
@@ -772,10 +800,50 @@ function initializeMirror() {
   } else {
     currentMirror = "proxy";
   }
-  if (elements.mirrorSelect) {
-    elements.mirrorSelect.value = currentMirror;
+  updateMirrorUI();
+}
+
+function setupMirrorMenu() {
+  if (!elements.mirrorMenuBtn || !elements.mirrorMenuWrap) return;
+
+  function toggleMenu(open) {
+    const shouldOpen = open !== undefined ? open : !elements.mirrorMenuWrap.classList.contains("is-open");
+    elements.mirrorMenuWrap.classList.toggle("is-open", shouldOpen);
+    elements.mirrorMenuBtn.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
   }
-  updateFactMirror();
+
+  elements.mirrorMenuBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    toggleMenu();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!elements.mirrorMenuWrap.contains(event.target)) {
+      toggleMenu(false);
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && elements.mirrorMenuWrap.classList.contains("is-open")) {
+      toggleMenu(false);
+      elements.mirrorMenuBtn.focus();
+    }
+  });
+
+  if (elements.mirrorMenuItems) {
+    elements.mirrorMenuItems.forEach((item) => {
+      item.addEventListener("click", () => {
+        const nextMirror = item.dataset.value === "direct" ? "direct" : "proxy";
+        if (nextMirror !== currentMirror) {
+          currentMirror = nextMirror;
+          localStorage.setItem(MIRROR_STORAGE_KEY, currentMirror);
+          updateMirrorUI();
+          if (latestRelease) renderRelease(latestRelease);
+        }
+        toggleMenu(false);
+      });
+    });
+  }
 }
 
 function applyTheme(theme) {
@@ -809,14 +877,6 @@ if (elements.languageSelect) {
     applyLocale(nextLocale);
   });
 }
-if (elements.mirrorSelect) {
-  elements.mirrorSelect.addEventListener("change", (event) => {
-    currentMirror = event.target.value === "direct" ? "direct" : "proxy";
-    localStorage.setItem(MIRROR_STORAGE_KEY, currentMirror);
-    updateFactMirror();
-    if (latestRelease) renderRelease(latestRelease);
-  });
-}
 if (elements.themeToggle) {
   elements.themeToggle.addEventListener("click", () => {
     const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
@@ -825,6 +885,7 @@ if (elements.themeToggle) {
   });
 }
 
+setupMirrorMenu();
 initializeMirror();
 initializeLocale();
 initializeTheme();
