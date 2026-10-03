@@ -1,9 +1,6 @@
 name: Sync Release Manifest
 
 on:
-  push:
-    branches:
-      - main
   release:
     types:
       - published
