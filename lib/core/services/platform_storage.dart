@@ -10,7 +10,7 @@ import 'package:teigi/core/utils/platform_info.dart';
 /// - 调用系统播放器/查看器打开文件
 /// - 调用系统分享面板（Share Sheet）
 class PlatformStorage {
-  static const _channel = MethodChannel('com.example.teigi/platform');
+  static const _channel = MethodChannel('top.rincynar.teigi/platform');
 
   /// 获取平台的默认输出目录。
   /// Android 下默认为公共存储 Download/Teigi；桌面端默认为空（表示与源文件同目录）。

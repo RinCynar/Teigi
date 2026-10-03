@@ -1,4 +1,4 @@
-package com.example.teigi
+package top.rincynar.teigi
 
 import android.content.Intent
 import android.media.MediaScannerConnection
@@ -11,7 +11,7 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.example.teigi/platform"
+    private val CHANNEL = "top.rincynar.teigi/platform"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
