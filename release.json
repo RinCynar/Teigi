@@ -1,97 +1,97 @@
 {
   "repository": "RinCynar/Teigi",
   "release": {
-    "tagName": "v1.0.1",
-    "name": "v1.0.1",
-    "body": "**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.0...v1.0.1",
-    "createdAt": "2026-08-21T16:15:20Z",
-    "publishedAt": "2026-08-21T16:18:19Z",
-    "htmlUrl": "https://github.com/RinCynar/Teigi/releases/tag/v1.0.1",
+    "tagName": "v1.0.2",
+    "name": "v1.0.2",
+    "body": "**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.1...v1.0.2\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.1...v1.0.2\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.1...v1.0.2\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.1...v1.0.2\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.1...v1.0.2",
+    "createdAt": "2026-10-03T18:52:12Z",
+    "publishedAt": "2026-10-03T18:54:08Z",
+    "htmlUrl": "https://github.com/RinCynar/Teigi/releases/tag/v1.0.2",
     "prerelease": false,
     "assets": [
       {
         "name": "teigi-android-arm64-v8a.apk",
-        "size": 75054221,
+        "size": 75054229,
         "contentType": "application/vnd.android.package-archive",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/teigi-android-arm64-v8a.apk"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/teigi-android-arm64-v8a.apk"
       },
       {
         "name": "teigi-android-armeabi-v7a.apk",
-        "size": 95607979,
+        "size": 95607987,
         "contentType": "application/vnd.android.package-archive",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/teigi-android-armeabi-v7a.apk"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/teigi-android-armeabi-v7a.apk"
       },
       {
         "name": "teigi-android-universal.apk",
-        "size": 192890507,
+        "size": 192890515,
         "contentType": "application/vnd.android.package-archive",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/teigi-android-universal.apk"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/teigi-android-universal.apk"
       },
       {
         "name": "teigi-android-x86_64.apk",
-        "size": 79264671,
+        "size": 79264683,
         "contentType": "application/vnd.android.package-archive",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/teigi-android-x86_64.apk"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/teigi-android-x86_64.apk"
       },
       {
         "name": "teigi-linux-x64.AppImage",
         "size": 46004728,
         "contentType": "application/octet-stream",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/teigi-linux-x64.AppImage"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/teigi-linux-x64.AppImage"
       },
       {
         "name": "teigi-linux-x64.tar.gz",
-        "size": 47107123,
+        "size": 47114623,
         "contentType": "application/gzip",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/teigi-linux-x64.tar.gz"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/teigi-linux-x64.tar.gz"
       },
       {
         "name": "teigi-macos-universal.dmg",
-        "size": 85096320,
+        "size": 85095473,
         "contentType": "application/x-apple-diskimage",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/teigi-macos-universal.dmg"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/teigi-macos-universal.dmg"
       },
       {
         "name": "teigi-macos-universal.zip",
-        "size": 79029455,
+        "size": 79030606,
         "contentType": "application/zip",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/teigi-macos-universal.zip"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/teigi-macos-universal.zip"
       },
       {
         "name": "windows-arm64-ffmpeg-release.zip",
-        "size": 77993387,
+        "size": 77994094,
         "contentType": "application/zip",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/windows-arm64-ffmpeg-release.zip"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/windows-arm64-ffmpeg-release.zip"
       },
       {
         "name": "windows-arm64-installer.exe",
-        "size": 60812399,
+        "size": 60808027,
         "contentType": "application/x-msdos-program",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/windows-arm64-installer.exe"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/windows-arm64-installer.exe"
       },
       {
         "name": "windows-arm64-release.zip",
-        "size": 77968191,
+        "size": 77968899,
         "contentType": "application/zip",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/windows-arm64-release.zip"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/windows-arm64-release.zip"
       },
       {
         "name": "windows-x64-ffmpeg-release.zip",
-        "size": 77993409,
+        "size": 77994077,
         "contentType": "application/zip",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/windows-x64-ffmpeg-release.zip"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/windows-x64-ffmpeg-release.zip"
       },
       {
         "name": "windows-x64-installer.exe",
-        "size": 60809552,
+        "size": 60806243,
         "contentType": "application/x-msdos-program",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/windows-x64-installer.exe"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/windows-x64-installer.exe"
       },
       {
         "name": "windows-x64-release.zip",
-        "size": 77968213,
+        "size": 77968882,
         "contentType": "application/zip",
-        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.1/windows-x64-release.zip"
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.2/windows-x64-release.zip"
       }
     ]
   }
