@@ -1,5 +1,7 @@
 const REPOSITORY = "RinCynar/Teigi";
 const RELEASE_MANIFEST = "./release.json";
+const PROXY_HOST = "git.rincynar.top";
+const MIRROR_STORAGE_KEY = "teigi-pages-mirror";
 const supportedLocales = ["zh", "en", "ja"];
 const localeInfo = {
   zh: { html: "zh-CN", intl: "zh-CN" },
@@ -17,6 +19,9 @@ const translations = {
     "theme.toggle": "切换主题",
     "theme.switchToLight": "切换到浅色主题",
     "theme.switchToDark": "切换到深色主题",
+    "mirror.label": "下载线路",
+    "mirror.proxy": "镜像加速 (git.rincynar.top)",
+    "mirror.direct": "官方直连 (GitHub)",
     "hero.eyebrow": "开源跨平台媒体工具",
     "hero.copy": "在桌面端与移动端上，安静、清晰地处理你的音视频与图片文件。",
     "status.loadingManifest": "正在读取版本清单",
@@ -41,6 +46,9 @@ const translations = {
     "facts.date": "发布日期",
     "facts.assets": "可用文件",
     "facts.assetCount": ({ count }) => `${count} 个`,
+    "facts.mirror": "下载线路",
+    "facts.mirrorProxy": "镜像加速",
+    "facts.mirrorDirect": "官方直连",
     "project.title": "项目",
     "project.repository": "GitHub 仓库",
     "project.releases": "全部 Releases",
@@ -71,6 +79,8 @@ const translations = {
     "asset.ffmpeg.none": "需系统 FFmpeg",
     "asset.download": "下载",
     "asset.downloadAria": ({ name }) => `下载 ${name}`,
+    "asset.downloadViaMirror": ({ host }) => `通过 ${host} 镜像加速下载`,
+    "asset.downloadViaDirect": "通过 GitHub 官方直连下载",
     "asset.sizeUnknown": "大小未知",
     "group.other": "其他文件",
     "group.platform": ({ platform }) => platform,
@@ -96,6 +106,9 @@ const translations = {
     "theme.toggle": "Toggle theme",
     "theme.switchToLight": "Switch to light theme",
     "theme.switchToDark": "Switch to dark theme",
+    "mirror.label": "Download Source",
+    "mirror.proxy": "Fast Mirror (git.rincynar.top)",
+    "mirror.direct": "Direct (GitHub)",
     "hero.eyebrow": "Open-source Cross-platform Tool",
     "hero.copy": "Process your audio, video, and image files on desktop and mobile with ease.",
     "status.loadingManifest": "Reading release manifest",
@@ -120,6 +133,9 @@ const translations = {
     "facts.date": "Release date",
     "facts.assets": "Available files",
     "facts.assetCount": ({ count }) => `${count}`,
+    "facts.mirror": "Download Source",
+    "facts.mirrorProxy": "Fast Mirror",
+    "facts.mirrorDirect": "Direct",
     "project.title": "Project",
     "project.repository": "GitHub repository",
     "project.releases": "All Releases",
@@ -150,6 +166,8 @@ const translations = {
     "asset.ffmpeg.none": "System FFmpeg Required",
     "asset.download": "Download",
     "asset.downloadAria": ({ name }) => `Download ${name}`,
+    "asset.downloadViaMirror": ({ host }) => `Download via ${host} mirror`,
+    "asset.downloadViaDirect": "Download directly from GitHub",
     "asset.sizeUnknown": "Size unknown",
     "group.other": "Other Files",
     "group.platform": ({ platform }) => platform,
@@ -175,6 +193,9 @@ const translations = {
     "theme.toggle": "テーマを切り替え",
     "theme.switchToLight": "ライトテーマに切り替え",
     "theme.switchToDark": "ダークテーマに切り替え",
+    "mirror.label": "ダウンロード回線",
+    "mirror.proxy": "高速ミラー (git.rincynar.top)",
+    "mirror.direct": "公式直通 (GitHub)",
     "hero.eyebrow": "オープンソースのクロスプラットフォームツール",
     "hero.copy": "デスクトップとモバイルで、音声・動画・画像ファイルをシンプルかつ明快に処理。",
     "status.loadingManifest": "リリース一覧を読み込み中",
@@ -199,6 +220,9 @@ const translations = {
     "facts.date": "リリース日",
     "facts.assets": "利用可能なファイル",
     "facts.assetCount": ({ count }) => `${count} 件`,
+    "facts.mirror": "ダウンロード回線",
+    "facts.mirrorProxy": "高速ミラー",
+    "facts.mirrorDirect": "公式直通",
     "project.title": "プロジェクト",
     "project.repository": "GitHub リポジトリ",
     "project.releases": "すべての Releases",
@@ -208,7 +232,7 @@ const translations = {
     "platform.windows": "Windows",
     "platform.macos": "macOS",
     "platform.linux": "Linux",
-    "platform.other": "その他のファイル",
+    "platform.other": "その他の文件",
     "asset.architecture.arm64_v8a": "ARM64-v8a",
     "asset.architecture.armeabi_v7a": "ARMv7a (32bit)",
     "asset.architecture.arm64": "ARM64",
@@ -229,21 +253,23 @@ const translations = {
     "asset.ffmpeg.none": "システム FFmpeg が必要",
     "asset.download": "ダウンロード",
     "asset.downloadAria": ({ name }) => `${name} をダウンロード`,
+    "asset.downloadViaMirror": ({ host }) => `${host} ミラー経由でダウンロード`,
+    "asset.downloadViaDirect": "GitHub 公式から直接ダウンロード",
     "asset.sizeUnknown": "サイズ不明",
-    "group.other": "その他のファイル",
+    "group.other": "Other Files",
     "group.platform": ({ platform }) => platform,
-    "errors.manifestMissingTitle": "リリース一覧はまだ生成されていません",
-    "errors.noReleaseTitle": "利用可能な Release はありません",
-    "errors.manifestErrorTitle": "Release 一覧を読み込めません",
-    "errors.manifestMissingCopy": "リポジトリのワークフローがリリース一覧を生成しています。少し待ってから更新してください。",
-    "errors.noReleaseCopy": "最初の GitHub Release が公開されると、ダウンロードファイルがここに表示されます。",
-    "errors.manifestErrorCopy": "リリース一覧を読み込めませんでした。後でもう一度試すか、リポジトリを直接開いてください。",
-    "errors.noVersion": "バージョンなし",
-    "errors.notSynced": "Release データはまだ同期されていません。",
-    "errors.noFiles": "表示できるダウンロードファイルはありません。",
-    "errors.emptyTitle": "この Release にはダウンロードファイルがありません",
-    "errors.emptyCopy": "GitHub Release ページでバージョンの詳細を確認してください。",
-    "errors.retry": "再読み込み",
+    "errors.manifestMissingTitle": "Release manifest is not ready",
+    "errors.noReleaseTitle": "No Release is available yet",
+    "errors.manifestErrorTitle": "Unable to read the Release manifest",
+    "errors.manifestMissingCopy": "The repository workflow is generating the release manifest. Refresh in a moment.",
+    "errors.noReleaseCopy": "Download files will appear here after the first GitHub Release is published.",
+    "errors.manifestErrorCopy": "The manifest could not be read. Try again later or open the repository directly.",
+    "errors.noVersion": "No version",
+    "errors.notSynced": "Release data has not been synchronized.",
+    "errors.noFiles": "No download files to display.",
+    "errors.emptyTitle": "This Release has no downloadable files",
+    "errors.emptyCopy": "Open the GitHub Release page to view its details.",
+    "errors.retry": "Retry",
   },
 };
 
@@ -257,9 +283,11 @@ const elements = {
   assetsSummary: document.querySelector("#assets-summary"),
   downloadList: document.querySelector("#download-list"),
   refreshButton: document.querySelector("#refresh-button"),
+  mirrorSelect: document.querySelector("#mirror-select"),
   factVersion: document.querySelector("#fact-version"),
   factDate: document.querySelector("#fact-date"),
   factAssets: document.querySelector("#fact-assets"),
+  factMirror: document.querySelector("#fact-mirror"),
   themeToggle: document.querySelector("#theme-toggle"),
   languageSelect: document.querySelector("#language-select"),
 };
@@ -267,6 +295,7 @@ const elements = {
 const themeStorageKey = "teigi-pages-theme";
 const languageStorageKey = "teigi-pages-language";
 let currentLocale = "zh";
+let currentMirror = "proxy";
 let latestRelease = null;
 let latestError = null;
 let syncState = {
@@ -274,6 +303,22 @@ let syncState = {
   messageKey: "status.loadingManifest",
   icon: "loader-circle",
 };
+
+function getDownloadUrl(originalUrl) {
+  if (!originalUrl) return "";
+  if (currentMirror === "proxy") {
+    return originalUrl.replace(/^https?:\/\/github\.com\//, `https://${PROXY_HOST}/`);
+  }
+  return originalUrl;
+}
+
+function updateFactMirror() {
+  if (elements.factMirror) {
+    elements.factMirror.textContent = currentMirror === "proxy"
+      ? t("facts.mirrorProxy")
+      : t("facts.mirrorDirect");
+  }
+}
 
 function t(key, values = {}) {
   const entry = translations[currentLocale]?.[key] ?? translations.zh[key] ?? translations.en[key];
@@ -459,11 +504,14 @@ function renderAsset(asset) {
 
   const download = document.createElement("a");
   download.className = "download-button";
-  download.href = asset.browser_download_url;
+  download.href = getDownloadUrl(asset.browser_download_url);
   download.target = "_blank";
   download.rel = "noreferrer";
   download.setAttribute("download", asset.name);
   download.setAttribute("aria-label", t("asset.downloadAria", { name: asset.name }));
+  download.title = currentMirror === "proxy"
+    ? t("asset.downloadViaMirror", { host: PROXY_HOST })
+    : t("asset.downloadViaDirect");
   download.append(createIcon("download"));
   const downloadLabel = document.createElement("span");
   downloadLabel.textContent = t("asset.download");
@@ -565,6 +613,7 @@ function renderRelease(release) {
   elements.factVersion.textContent = tag;
   elements.factDate.textContent = date;
   elements.factAssets.textContent = t("facts.assetCount", { count: assets.length });
+  updateFactMirror();
   renderAssets(assets);
 }
 
@@ -592,6 +641,7 @@ function renderLoadError(error) {
   elements.factVersion.textContent = "—";
   elements.factDate.textContent = "—";
   elements.factAssets.textContent = "—";
+  if (elements.factMirror) elements.factMirror.textContent = "—";
   elements.downloadList.replaceChildren();
 
   const state = document.createElement("div");
@@ -688,6 +738,9 @@ function applyTranslations() {
   if (elements.languageSelect) {
     elements.languageSelect.value = currentLocale;
   }
+  if (elements.mirrorSelect) {
+    elements.mirrorSelect.value = currentMirror;
+  }
 }
 
 function normalizeLocale(value) {
@@ -700,6 +753,7 @@ function normalizeLocale(value) {
 function applyLocale(locale) {
   currentLocale = supportedLocales.includes(locale) ? locale : "zh";
   applyTranslations();
+  updateFactMirror();
   if (latestRelease) renderRelease(latestRelease);
   if (latestError) renderLoadError(latestError);
   setSyncStatus(syncState.state, syncState.messageKey, syncState.icon);
@@ -709,6 +763,19 @@ function initializeLocale() {
   const saved = localStorage.getItem(languageStorageKey);
   const browserLanguage = navigator.languages?.[0] || navigator.language;
   applyLocale(supportedLocales.includes(saved) ? saved : normalizeLocale(browserLanguage));
+}
+
+function initializeMirror() {
+  const saved = localStorage.getItem(MIRROR_STORAGE_KEY);
+  if (saved === "proxy" || saved === "direct") {
+    currentMirror = saved;
+  } else {
+    currentMirror = "proxy";
+  }
+  if (elements.mirrorSelect) {
+    elements.mirrorSelect.value = currentMirror;
+  }
+  updateFactMirror();
 }
 
 function applyTheme(theme) {
@@ -742,6 +809,14 @@ if (elements.languageSelect) {
     applyLocale(nextLocale);
   });
 }
+if (elements.mirrorSelect) {
+  elements.mirrorSelect.addEventListener("change", (event) => {
+    currentMirror = event.target.value === "direct" ? "direct" : "proxy";
+    localStorage.setItem(MIRROR_STORAGE_KEY, currentMirror);
+    updateFactMirror();
+    if (latestRelease) renderRelease(latestRelease);
+  });
+}
 if (elements.themeToggle) {
   elements.themeToggle.addEventListener("click", () => {
     const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
@@ -750,6 +825,7 @@ if (elements.themeToggle) {
   });
 }
 
+initializeMirror();
 initializeLocale();
 initializeTheme();
 initializeIcons();
