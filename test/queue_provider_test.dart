@@ -17,6 +17,19 @@ void main() {
       expect(notifier.state[1].source, b);
     });
 
+    test('重新添加已取消任务的文件会生成新任务', () {
+      final notifier = QueueNotifier();
+      final a = MediaFile(path: '/media/a.mp4');
+      notifier.addFiles([a]);
+      notifier.updateTask(
+        notifier.state.single.copyWith(status: TaskStatus.canceled),
+      );
+
+      notifier.addFiles([a]);
+      expect(notifier.state.length, 2);
+      expect(notifier.state.last.status, TaskStatus.queued);
+    });
+
     test('设置目标格式（全部与单个）', () {
       final notifier = QueueNotifier();
       final a = MediaFile(path: '/media/a.mp4');

@@ -17,12 +17,16 @@ class ForegroundService {
   static DateTime? _lastProgressUpdate;
 
   /// 通知按钮（取消）回传的事件流。
-  static Stream<ForegroundAction> get actions =>
-      _actionController?.stream ?? const Stream<ForegroundAction>.empty();
+  ///
+  /// 控制器惰性创建而非等到 [initialize]：引擎在 Provider 创建时就会订阅，
+  /// 若此时服务尚未初始化，订阅会绑定到空流，通知栏取消按钮将永远失效。
+  static Stream<ForegroundAction> get actions => _controller.stream;
+
+  static StreamController<ForegroundAction> get _controller =>
+      _actionController ??= StreamController<ForegroundAction>.broadcast();
 
   static void initialize() {
     if (!isAndroid || _initialized) return;
-    _actionController = StreamController<ForegroundAction>.broadcast();
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: 'teigi_conversion',
@@ -104,7 +108,7 @@ class ForegroundService {
 
   static void _onTaskData(Object data) {
     if (data is Map && data['action'] == _cancelActionId) {
-      _actionController?.add(ForegroundAction.cancel);
+      _controller.add(ForegroundAction.cancel);
     }
   }
 }

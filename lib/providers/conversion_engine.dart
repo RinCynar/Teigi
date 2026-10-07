@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:teigi/core/domain/conversion_error.dart';
 import 'package:teigi/core/ffmpeg/engine/ffmpeg_engine.dart';
+import 'package:teigi/core/ffmpeg/ffmpeg_command.dart';
 import 'package:teigi/core/ffmpeg/ffmpeg_command_builder.dart';
 import 'package:teigi/core/ffmpeg/progress_parser.dart';
 import 'package:teigi/core/models/conversion_task.dart';
@@ -30,6 +31,10 @@ class ConversionEngine {
 
   /// 运行中的任务 id -> 对应引擎任务句柄。
   final Map<String, FfmpegTaskHandle> _running = {};
+
+  /// 已被 [_runTask] 领取、尚未注册进 [_running] 的任务。
+  /// 登记是同步的：调度器据此跳过这些任务，避免 await 窗口期内重复启动。
+  final Set<String> _starting = {};
   final TaskScheduler _scheduler = const TaskScheduler();
   StreamSubscription<ForegroundAction>? _foregroundSubscription;
   bool _disposed = false;
@@ -97,16 +102,20 @@ class ConversionEngine {
     final ffmpegStatus = ref.read(ffmpegStatusProvider);
     if (!ffmpegStatus.hasValue || !ffmpegStatus.value!.isReady) return;
 
-    final capacity = settings.concurrency - _running.length;
+    final runningCount = _running.length + _starting.length;
+    final capacity = settings.concurrency - runningCount;
     if (capacity <= 0) return;
 
     final picked = _scheduler.selectNext(
       tasks: ref.read(queueProvider),
-      runningCount: _running.length,
+      runningCount: runningCount,
       concurrency: settings.concurrency,
     );
     for (final task in picked) {
       if (task.targetFormat == null || task.targetFormat!.isEmpty) {
+        continue;
+      }
+      if (_starting.contains(task.id) || _running.containsKey(task.id)) {
         continue;
       }
       unawaited(_runTask(task));
@@ -114,7 +123,9 @@ class ConversionEngine {
 
     // 队列耗尽且无运行中任务时自动复位，避免按钮停留在「转换中…」。
     // Android：同时停止前台服务，释放通知栏。
-    if (_running.isEmpty && _scheduler.isExhausted(ref.read(queueProvider))) {
+    if (_running.isEmpty &&
+        _starting.isEmpty &&
+        _scheduler.isExhausted(ref.read(queueProvider))) {
       _setRunning(false);
       unawaited(ForegroundService.stop());
       MemoryTrimmer.trimIdleMemory(delay: const Duration(milliseconds: 500));
@@ -122,15 +133,21 @@ class ConversionEngine {
   }
 
   Future<void> _runTask(ConversionTask task) async {
+    // 同步登记，确保 await 窗口期内重入的 _schedule 不会再次领取该任务。
+    _starting.add(task.id);
     final settings = ref.read(settingsProvider);
     final engine = ref.read(ffmpegEngineProvider);
     final notifier = ref.read(queueProvider.notifier);
-    final speedSamples = _SpeedEstimator();
 
     // 输出目录：若未指定且为 Android，自动使用公共存储 Download/Teigi
     var outDir = task.options.outputDirectory;
     if ((outDir == null || outDir.isEmpty) && isAndroid) {
       outDir = await PlatformStorage.getDefaultOutputDirectory();
+    }
+    // await 期间可能已被 stop()/dispose()：放弃启动，任务保持 queued 等待下次调度。
+    if (_disposed || !_started) {
+      _starting.remove(task.id);
+      return;
     }
 
     // 硬件加速为全局设置：调度时统一应用到任务选项。
@@ -141,74 +158,55 @@ class ConversionEngine {
       ),
     );
 
-    StreamSubscription<ProgressUpdate>? progressSubscription;
-    StreamSubscription<String>? outputSubscription;
-    StreamSubscription<FfmpegTaskState>? stateSubscription;
+    const builder = FfmpegCommandBuilder();
+    final command = builder.build(effectiveTask);
+    // 桌面端硬件编码器依赖 GPU 厂商驱动，失败时回退软件编码重试一次；
+    // 命令未因硬件加速发生变化（如格式无对应硬编）时无需重试。
+    final fallbackCommand =
+        effectiveTask.options.hardwareAccel && !isAndroid
+        ? builder.build(
+            effectiveTask.copyWith(
+              options: effectiveTask.options.copyWith(hardwareAccel: false),
+            ),
+            outputPath: command.outputPath,
+          )
+        : null;
+
+    notifier.updateTask(
+      effectiveTask.copyWith(
+        status: TaskStatus.running,
+        outputPath: command.outputPath,
+        startedAt: DateTime.now(),
+      ),
+    );
+
+    // Android：启动前台服务，常驻通知显示文件名与取消按钮。
+    unawaited(ForegroundService.start(fileName: task.source.name));
+    var speedSamples = _SpeedEstimator();
     try {
-      final command = const FfmpegCommandBuilder().build(effectiveTask);
+      var result = await _execute(engine, notifier, task, command, speedSamples);
 
-      notifier.updateTask(
-        effectiveTask.copyWith(
-          status: TaskStatus.running,
-          outputPath: command.outputPath,
-          startedAt: DateTime.now(),
-        ),
-      );
-
-      final handle = engine.run(command);
-      _running[task.id] = handle;
-      // Android：启动前台服务，常驻通知显示文件名与取消按钮。
-      unawaited(ForegroundService.start(fileName: task.source.name));
-      progressSubscription = handle.progress.listen((update) {
-        if (_disposed) return;
-        final current = notifier.taskById(task.id);
-        if (current == null) return;
-        final progress = update.progress ?? current.progress;
-        notifier.updateTask(
-          current.copyWith(
-            progress: progress,
-            speedX: update.speed ?? current.speedX,
-            remaining: speedSamples.update(progress),
-          ),
-        );
-        final percent = (progress * 100).round();
-        unawaited(
-          ForegroundService.updateProgress(
-            progress > 0
-                ? '${task.source.name} $percent%'
-                : '${task.source.name} 转换中',
-          ),
-        );
-      });
-      outputSubscription = handle.outputPaths.listen((outputPath) {
-        if (_disposed) return;
-        final current = notifier.taskById(task.id);
-        if (current == null) return;
-        // 命令构造时已知的输出路径优先；stderr 解析只作为兜底。
-        if (current.outputPath != null) return;
-        notifier.updateTask(current.copyWith(outputPath: outputPath));
-      });
-      stateSubscription = handle.states.listen((state) {
-        if (_disposed) return;
-        final current = notifier.taskById(task.id);
-        if (current == null) return;
-        switch (state) {
-          case FfmpegTaskState.running:
-            if (current.status != TaskStatus.running) {
-              notifier.updateTask(current.copyWith(status: TaskStatus.running));
-            }
-            break;
-          case FfmpegTaskState.cancelled:
-            notifier.updateTask(current.copyWith(status: TaskStatus.canceled));
-            break;
-          case FfmpegTaskState.starting:
-          case FfmpegTaskState.completed:
-          case FfmpegTaskState.failed:
-            break;
+      if (fallbackCommand != null &&
+          !_sameArgs(fallbackCommand.args, command.args) &&
+          !result.isSuccess &&
+          !result.isCancelled) {
+        _logger.w('硬件加速失败，回退软件编码重试: ${task.source.path}');
+        speedSamples = _SpeedEstimator();
+        final retried = notifier.taskById(task.id);
+        if (retried != null) {
+          notifier.updateTask(
+            retried.copyWith(status: TaskStatus.running, progress: 0),
+          );
         }
-      });
+        result = await _execute(
+          engine,
+          notifier,
+          task,
+          fallbackCommand,
+          speedSamples,
+        );
+      }
 
-      final result = await handle.result;
       final current = notifier.taskById(task.id) ?? effectiveTask;
 
       if (result.isSuccess) {
@@ -264,12 +262,89 @@ class ConversionEngine {
       );
       _logger.e('转换异常: ${task.source.path}', error: e, stackTrace: stackTrace);
     } finally {
+      _starting.remove(task.id);
+      _schedule();
+    }
+  }
+
+  /// 运行单个命令：注册句柄、订阅进度/状态流并等待结果。
+  Future<FfmpegResult> _execute(
+    FfmpegEngine engine,
+    QueueNotifier notifier,
+    ConversionTask task,
+    FfmpegCommand command,
+    _SpeedEstimator speedSamples,
+  ) async {
+    final handle = engine.run(command);
+    _running[task.id] = handle;
+    StreamSubscription<ProgressUpdate>? progressSubscription;
+    StreamSubscription<String>? outputSubscription;
+    StreamSubscription<FfmpegTaskState>? stateSubscription;
+    try {
+      progressSubscription = handle.progress.listen((update) {
+        if (_disposed) return;
+        final current = notifier.taskById(task.id);
+        if (current == null) return;
+        final progress = update.progress ?? current.progress;
+        notifier.updateTask(
+          current.copyWith(
+            progress: progress,
+            speedX: update.speed ?? current.speedX,
+            remaining: speedSamples.update(progress),
+          ),
+        );
+        final percent = (progress * 100).round();
+        unawaited(
+          ForegroundService.updateProgress(
+            progress > 0
+                ? '${task.source.name} $percent%'
+                : '${task.source.name} 转换中',
+          ),
+        );
+      });
+      outputSubscription = handle.outputPaths.listen((outputPath) {
+        if (_disposed) return;
+        final current = notifier.taskById(task.id);
+        if (current == null) return;
+        // 命令构造时已知的输出路径优先；stderr 解析只作为兜底。
+        if (current.outputPath != null) return;
+        notifier.updateTask(current.copyWith(outputPath: outputPath));
+      });
+      stateSubscription = handle.states.listen((state) {
+        if (_disposed) return;
+        final current = notifier.taskById(task.id);
+        if (current == null) return;
+        switch (state) {
+          case FfmpegTaskState.running:
+            if (current.status != TaskStatus.running) {
+              notifier.updateTask(current.copyWith(status: TaskStatus.running));
+            }
+            break;
+          case FfmpegTaskState.cancelled:
+            notifier.updateTask(current.copyWith(status: TaskStatus.canceled));
+            break;
+          case FfmpegTaskState.starting:
+          case FfmpegTaskState.completed:
+          case FfmpegTaskState.failed:
+            break;
+        }
+      });
+
+      return await handle.result;
+    } finally {
       await progressSubscription?.cancel();
       await outputSubscription?.cancel();
       await stateSubscription?.cancel();
       _running.remove(task.id);
-      _schedule();
     }
+  }
+
+  static bool _sameArgs(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 }
 

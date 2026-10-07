@@ -27,7 +27,11 @@ class QueueNotifier extends StateNotifier<List<ConversionTask>> {
     ConversionOptions? options,
     FormatPreset? preset,
   }) {
-    final existingPaths = state.map((t) => t.source.path).toSet();
+    // 已取消的任务不参与去重，重新添加同一文件应生成新任务。
+    final existingPaths = <String>{
+      for (final t in state)
+        if (t.status != TaskStatus.canceled) t.source.path,
+    };
     final newTasks = <ConversionTask>[];
     for (final f in files) {
       if (existingPaths.contains(f.path)) continue;

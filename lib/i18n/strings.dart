@@ -1,6 +1,5 @@
 import 'dart:ui' show Locale, PlatformDispatcher;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teigi/core/utils/platform_info.dart';
 import 'package:teigi/providers/settings_provider.dart';
 
 /// 轻量级本地化：支持 跟随系统(system) / 简体中文(zh) / 日本語(ja) / English(en)。
@@ -15,7 +14,7 @@ class L10n {
 
   /// 将设置中的语言偏好解析为实际生效的代码（'zh' / 'ja' / 'en'）。
   static String resolveLanguage(String preference, [Locale? systemLocale]) {
-    if (!isAndroid && preference != 'system' && preference.isNotEmpty) {
+    if (preference != 'system' && preference.isNotEmpty) {
       if (preference == 'zh' || preference == 'ja' || preference == 'en') {
         return preference;
       }

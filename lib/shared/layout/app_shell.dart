@@ -4,9 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:teigi/core/services/sharing_intent_service.dart';
+import 'package:teigi/features/convert/convert_page.dart';
 import 'package:teigi/features/convert/media_import.dart';
 import 'package:teigi/i18n/strings.dart';
-import 'package:teigi/providers/conversion_engine.dart';
 import 'package:teigi/providers/queue_provider.dart';
 import 'package:teigi/providers/recent_presets_provider.dart';
 import 'package:teigi/shared/widgets/teigi_mark.dart';
@@ -78,7 +78,8 @@ class _AppShellState extends ConsumerState<AppShell> {
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyO, control: true): _pickFiles,
         const SingleActivator(LogicalKeyboardKey.enter, control: true): () {
-          ref.read(conversionEngineProvider).start();
+          // 与转换页按钮共用守卫：任务未指定格式时先弹窗确认。
+          ConvertPage.startConversion(context, ref);
         },
         const SingleActivator(LogicalKeyboardKey.comma, control: true): () {
           context.go('/settings');

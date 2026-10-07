@@ -109,6 +109,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                           TaskStatus.completed,
                         ),
                         ..._group(l10n.failed, visible, TaskStatus.failed),
+                        ..._group(l10n.canceled, visible, TaskStatus.canceled),
                       ] else
                         for (final t in visible) _JobTile(task: t),
                     ],
@@ -183,8 +184,7 @@ class _JobTile extends ConsumerWidget {
                   ),
                   if (task.status == TaskStatus.failed)
                     TextButton(
-                      onPressed: () =>
-                          ref.read(queueProvider.notifier).retryTask(task.id),
+                      onPressed: () => _retry(ref),
                       child: Text(l10n.retry),
                     ),
                   IconButton(
@@ -234,12 +234,26 @@ class _JobTile extends ConsumerWidget {
                     context,
                   ).textTheme.bodySmall?.copyWith(color: scheme.primary),
                 ),
+              if (task.status == TaskStatus.canceled)
+                Text(
+                  l10n.canceled,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                ),
             ],
           ),
         ),
       ),
     ),
   );
+  }
+
+  /// 重试失败任务；队列空闲（引擎已复位）时需显式重启调度。
+  void _retry(WidgetRef ref) {
+    ref.read(queueProvider.notifier).retryTask(task.id);
+    final engine = ref.read(conversionEngineProvider);
+    if (!engine.isStarted) engine.start();
   }
 
   Future<void> _menu(BuildContext context, WidgetRef ref, Offset global) async {
@@ -268,7 +282,7 @@ class _JobTile extends ConsumerWidget {
     if (!context.mounted || action == null) return;
     switch (action) {
       case 'retry':
-        ref.read(queueProvider.notifier).retryTask(task.id);
+        _retry(ref);
       case 'open':
         await PlatformStorage.openFile(task.outputPath ?? task.source.path);
       case 'share':

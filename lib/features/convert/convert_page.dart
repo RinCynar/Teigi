@@ -40,6 +40,43 @@ class ConvertPage extends ConsumerStatefulWidget {
       ref.read(pendingPresetProvider.notifier).state = null;
     }
   }
+
+  /// 启动转换：存在未指定目标格式的任务时先弹窗确认。
+  ///
+  /// 供转换页按钮与全局 Ctrl+Enter 快捷键共用，保证两条路径行为一致。
+  static Future<void> startConversion(BuildContext context, WidgetRef ref) async {
+    final l10n = ref.read(l10nProvider);
+    final missing = [
+      for (final t in ref.read(queueProvider))
+        if (t.status == TaskStatus.queued &&
+            (t.targetFormat == null || t.targetFormat!.isEmpty))
+          t,
+    ].length;
+    if (missing == 0) {
+      ref.read(conversionEngineProvider).start();
+      return;
+    }
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.startConversion),
+        content: Text(l10n.missingOutput(missing)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'review'),
+            child: Text(l10n.reviewMissing),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, 'ready'),
+            child: Text(l10n.startReady),
+          ),
+        ],
+      ),
+    );
+    if (choice == 'ready') {
+      ref.read(conversionEngineProvider).start();
+    }
+  }
 }
 
 class _ConvertPageState extends ConsumerState<ConvertPage> {
@@ -86,7 +123,7 @@ class _ConvertPageState extends ConsumerState<ConvertPage> {
               configuringId: _configuringId,
               onAddFiles: () => _addFromPicker(),
               onConfigure: (task) => _openConfig(task, size),
-              onStart: () => _start(workspace),
+              onStart: () => ConvertPage.startConversion(context, ref),
               onClick: (task, ctrl, shift) => _click(task, workspace, ctrl, shift),
               onContext: (task, pos) => _contextMenu(task, pos, size),
             ),
@@ -237,37 +274,6 @@ class _ConvertPageState extends ConsumerState<ConvertPage> {
       return;
     }
     await ConvertConfigSheet.open(context, task: task, asOverlay: false);
-  }
-
-  Future<void> _start(List<ConversionTask> workspace) async {
-    final l10n = ref.read(l10nProvider);
-    final missing = workspace
-        .where((t) => t.targetFormat == null || t.targetFormat!.isEmpty)
-        .length;
-    if (missing == 0) {
-      ref.read(conversionEngineProvider).start();
-      return;
-    }
-    final choice = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.startConversion),
-        content: Text(l10n.missingOutput(missing)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, 'review'),
-            child: Text(l10n.reviewMissing),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, 'ready'),
-            child: Text(l10n.startReady),
-          ),
-        ],
-      ),
-    );
-    if (choice == 'ready') {
-      ref.read(conversionEngineProvider).start();
-    }
   }
 }
 
