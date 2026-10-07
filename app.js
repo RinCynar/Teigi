@@ -305,7 +305,7 @@ const elements = {
 
 const themeStorageKey = "teigi-pages-theme";
 const languageStorageKey = "teigi-pages-language";
-let currentLocale = "zh";
+let currentLocale = "en";
 let currentMirror = "proxy";
 let latestRelease = null;
 let latestError = null;
@@ -337,7 +337,8 @@ function updateMirrorUI() {
     elements.mirrorAnchorText.textContent = isProxy ? t("mirror.proxyTitle") : t("mirror.directTitle");
   }
   if (elements.mirrorAnchorIcon) {
-    elements.mirrorAnchorIcon.setAttribute("data-lucide", isProxy ? "zap" : "globe");
+    const use = elements.mirrorAnchorIcon.querySelector("use");
+    if (use) use.setAttribute("href", isProxy ? "#i-zap" : "#i-globe");
   }
   if (elements.mirrorMenuItems) {
     elements.mirrorMenuItems.forEach((item) => {
@@ -347,34 +348,32 @@ function updateMirrorUI() {
     });
   }
   updateFactMirror();
-  initializeIcons();
 }
 
 function t(key, values = {}) {
-  const entry = translations[currentLocale]?.[key] ?? translations.zh[key] ?? translations.en[key];
+  const entry = translations[currentLocale]?.[key] ?? translations.en[key] ?? translations.zh[key];
   if (typeof entry === "function") return entry(values);
   if (typeof entry !== "string") return key;
   return entry.replace(/\{\{(\w+)\}\}/g, (_, name) => values[name] ?? "");
 }
 
-function initializeIcons() {
-  if (window.lucide) {
-    window.lucide.createIcons({ attrs: { "stroke-width": 2 } });
-  }
+function createIcon(name) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("aria-hidden", "true");
+  const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+  use.setAttribute("href", `#i-${name}`);
+  svg.append(use);
+  return svg;
 }
 
 function setSyncStatus(state, messageKey, icon) {
   syncState = { state, messageKey, icon };
   if (!elements.syncStatus) return;
   elements.syncStatus.dataset.state = state;
-  elements.syncStatus.replaceChildren();
-  const iconElement = document.createElement("i");
-  iconElement.dataset.lucide = icon;
-  iconElement.setAttribute("aria-hidden", "true");
+  elements.syncStatus.replaceChildren(createIcon(icon));
   const messageElement = document.createElement("span");
   messageElement.textContent = t(messageKey);
-  elements.syncStatus.append(iconElement, messageElement);
-  initializeIcons();
+  elements.syncStatus.append(messageElement);
 }
 
 function formatDate(value) {
@@ -493,13 +492,6 @@ function getAssetInfo(asset) {
   };
 }
 
-function createIcon(name) {
-  const icon = document.createElement("i");
-  icon.dataset.lucide = name;
-  icon.setAttribute("aria-hidden", "true");
-  return icon;
-}
-
 function makeTag(label, accent = false) {
   const tag = document.createElement("span");
   tag.className = accent ? "asset-tag accent" : "asset-tag";
@@ -563,7 +555,6 @@ function renderAssets(assets) {
     copy.textContent = t("errors.emptyCopy");
     empty.append(title, copy);
     elements.downloadList.append(empty);
-    initializeIcons();
     return;
   }
 
@@ -614,8 +605,6 @@ function renderAssets(assets) {
     }
     elements.downloadList.append(group);
   }
-
-  initializeIcons();
 }
 
 function excerptReleaseNotes(body) {
@@ -691,7 +680,6 @@ function renderLoadError(error) {
   retry.addEventListener("click", loadLatestRelease);
   state.append(stateTitle, stateCopy, retry);
   elements.downloadList.append(state);
-  initializeIcons();
 }
 
 async function loadLatestRelease() {
@@ -769,6 +757,8 @@ function applyTranslations() {
     elements.languageSelect.value = currentLocale;
   }
   updateMirrorUI();
+  // Translations applied: reveal the page (see the inline head script).
+  document.documentElement.removeAttribute("data-i18n-pending");
 }
 
 function normalizeLocale(value) {
@@ -779,7 +769,7 @@ function normalizeLocale(value) {
 }
 
 function applyLocale(locale) {
-  currentLocale = supportedLocales.includes(locale) ? locale : "zh";
+  currentLocale = supportedLocales.includes(locale) ? locale : "en";
   applyTranslations();
   updateFactMirror();
   if (latestRelease) renderRelease(latestRelease);
@@ -848,6 +838,8 @@ function setupMirrorMenu() {
 
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", theme === "dark" ? "#0e1514" : "#f4fbf9");
   const isDark = theme === "dark";
   if (elements.themeToggle) {
     elements.themeToggle.replaceChildren(createIcon(isDark ? "sun" : "moon"));
@@ -855,7 +847,6 @@ function applyTheme(theme) {
     elements.themeToggle.setAttribute("aria-label", label);
     elements.themeToggle.title = label;
   }
-  initializeIcons();
 }
 
 function initializeTheme() {
@@ -872,7 +863,7 @@ if (elements.refreshButton) {
 }
 if (elements.languageSelect) {
   elements.languageSelect.addEventListener("change", (event) => {
-    const nextLocale = supportedLocales.includes(event.target.value) ? event.target.value : "zh";
+    const nextLocale = supportedLocales.includes(event.target.value) ? event.target.value : "en";
     localStorage.setItem(languageStorageKey, nextLocale);
     applyLocale(nextLocale);
   });
@@ -889,5 +880,4 @@ setupMirrorMenu();
 initializeMirror();
 initializeLocale();
 initializeTheme();
-initializeIcons();
 loadLatestRelease();

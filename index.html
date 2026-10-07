@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f8f7fc" />
+    <meta name="theme-color" content="#f4fbf9" />
     <meta
       name="description"
       data-i18n-content="meta.description"
-      content="Teigi 是一个基于 Flutter 和 FFmpeg 的开源跨平台媒体转换工具（支持 Android / Windows / macOS / Linux）"
+      content="Teigi is an open-source cross-platform media converter built with Flutter and FFmpeg (Android / Windows / macOS / Linux)"
     />
     <title>Teigi</title>
     <link
@@ -15,10 +15,73 @@
       href="assets/icon/app_icon.png"
     />
     <link rel="stylesheet" href="styles.css" />
-    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script>
+      // Apply the saved theme and language before the first paint.
+      // The document below is authored in English (the default/fallback
+      // locale); any other locale stays hidden until app.js translates it,
+      // so no wrong-language or white flash is visible while loading.
+      (function () {
+        try {
+          var theme = localStorage.getItem("teigi-pages-theme");
+          if (theme !== "light" && theme !== "dark") {
+            theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          document.documentElement.dataset.theme = theme;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", theme === "dark" ? "#0e1514" : "#f4fbf9");
+        } catch (e) {}
+        try {
+          var saved = localStorage.getItem("teigi-pages-language") || "";
+          var nav = (navigator.languages && navigator.languages[0]) || navigator.language || "en";
+          var locale = /^zh/i.test(saved) ? "zh" : /^ja/i.test(saved) ? "ja"
+            : /^zh/i.test(nav) ? "zh" : /^ja/i.test(nav) ? "ja" : "en";
+          document.documentElement.lang = locale === "zh" ? "zh-CN" : locale === "ja" ? "ja-JP" : "en";
+          if (locale !== "en") document.documentElement.dataset.i18nPending = "1";
+        } catch (e) {}
+        // Safety net: never keep the page hidden if app.js fails to run.
+        setTimeout(function () {
+          document.documentElement.removeAttribute("data-i18n-pending");
+        }, 3000);
+      })();
+    </script>
     <script defer src="app.js"></script>
   </head>
   <body>
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none" aria-hidden="true">
+      <!-- Icons: Lucide v0.468.0, ISC License - https://lucide.dev -->
+      <symbol id="i-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></symbol>
+      <symbol id="i-app-window" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="M10 4v4" /><path d="M2 8h20" /><path d="M6 4v4" /></symbol>
+      <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /></symbol>
+      <symbol id="i-calendar-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 4.2A2 2 0 0 0 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 1.82-1.18" /><path d="M21 15.5V6a2 2 0 0 0-2-2H9.5" /><path d="M16 2v4" /><path d="M3 10h7" /><path d="M21 10h-5.5" /><path d="m2 2 20 20" /></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></symbol>
+      <symbol id="i-check-circle-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335" /><path d="m9 11 3 3L22 4" /></symbol>
+      <symbol id="i-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></symbol>
+      <symbol id="i-circle-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></symbol>
+      <symbol id="i-cloud-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 2 20 20" /><path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193" /><path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07" /></symbol>
+      <symbol id="i-disc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="2" /></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></symbol>
+      <symbol id="i-external-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /></symbol>
+      <symbol id="i-file-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12v-1" /><path d="M10 18v-2" /><path d="M10 7V6" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="M15.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v16a2 2 0 0 0 .274 1.01" /><circle cx="10" cy="20" r="2" /></symbol>
+      <symbol id="i-github" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" /><path d="M9 18c-4.51 2-5-2-7-2" /></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" /></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></symbol>
+      <symbol id="i-languages" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6" /><path d="m4 14 6-6 2-3" /><path d="M2 5h12" /><path d="M7 2h1" /><path d="m22 22-5-10-5 10" /><path d="M14 18h6" /></symbol>
+      <symbol id="i-laptop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16" /></symbol>
+      <symbol id="i-layers-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" /></symbol>
+      <symbol id="i-loader-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></symbol>
+      <symbol id="i-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2" /><line x1="8" x2="16" y1="21" y2="21" /><line x1="12" x2="12" y1="17" y2="21" /></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></symbol>
+      <symbol id="i-package" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" /><path d="M12 22V12" /><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7" /><path d="m7.5 4.27 9 5.15" /></symbol>
+      <symbol id="i-package-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 2 2 4-4" /><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14" /><path d="m7.5 4.27 9 5.15" /><polyline points="3.29 7 12 12 20.71 7" /><line x1="12" x2="12" y1="22" y2="12" /></symbol>
+      <symbol id="i-package-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-9" /><path d="M15.17 2.21a1.67 1.67 0 0 1 1.63 0L21 4.57a1.93 1.93 0 0 1 0 3.36L8.82 14.79a1.655 1.655 0 0 1-1.64 0L3 12.43a1.93 1.93 0 0 1 0-3.36z" /><path d="M20 13v3.87a2.06 2.06 0 0 1-1.11 1.83l-6 3.08a1.93 1.93 0 0 1-1.78 0l-6-3.08A2.06 2.06 0 0 1 4 16.87V13" /><path d="M21 12.43a1.93 1.93 0 0 0 0-3.36L8.83 2.2a1.64 1.64 0 0 0-1.63 0L3 4.57a1.93 1.93 0 0 0 0 3.36l12.18 6.86a1.636 1.636 0 0 0 1.63 0z" /></symbol>
+      <symbol id="i-refresh-cw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></symbol>
+      <symbol id="i-smartphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2" /><path d="M12 18h.01" /></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></symbol>
+      <symbol id="i-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5" /><line x1="12" x2="20" y1="19" y2="19" /></symbol>
+      <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></symbol>
+    </svg>
+
     <div class="site-shell">
       <header class="topbar">
         <a class="brand" href="./" aria-label="Teigi">
@@ -32,8 +95,8 @@
           <span class="brand-context"></span>
         </a>
 
-        <nav class="topnav" data-i18n-aria-label="nav.label" aria-label="主导航">
-          <a class="topnav-link active" href="#downloads" data-i18n="nav.downloads">下载</a>
+        <nav class="topnav" data-i18n-aria-label="nav.label" aria-label="Main navigation">
+          <a class="topnav-link active" href="#downloads" data-i18n="nav.downloads">Downloads</a>
           <a
             class="icon-button"
             href="https://github.com/RinCynar/Teigi"
@@ -41,15 +104,15 @@
             rel="noreferrer"
             data-i18n-aria-label="nav.github"
             data-i18n-title="nav.github"
-            aria-label="打开 GitHub 仓库"
-            title="GitHub 仓库"
+            aria-label="Open GitHub repository"
+            title="Open GitHub repository"
           >
-            <i data-lucide="github" aria-hidden="true"></i>
+            <svg class="icon" aria-hidden="true"><use href="#i-github" /></svg>
           </a>
           <label class="language-control">
-            <i data-lucide="languages" aria-hidden="true"></i>
-            <span class="visually-hidden" data-i18n="language.label">语言</span>
-            <select id="language-select" data-i18n-aria-label="language.label" aria-label="语言">
+            <svg class="icon" aria-hidden="true"><use href="#i-languages" /></svg>
+            <span class="visually-hidden" data-i18n="language.label">Language</span>
+            <select id="language-select" data-i18n-aria-label="language.label" aria-label="Language">
               <option value="zh">中文</option>
               <option value="en">English</option>
               <option value="ja">日本語</option>
@@ -61,10 +124,10 @@
             type="button"
             data-i18n-aria-label="theme.toggle"
             data-i18n-title="theme.toggle"
-            aria-label="切换主题"
-            title="切换主题"
+            aria-label="Toggle theme"
+            title="Toggle theme"
           >
-            <i data-lucide="moon" aria-hidden="true"></i>
+            <svg class="icon" aria-hidden="true"><use href="#i-moon" /></svg>
           </button>
         </nav>
       </header>
@@ -72,15 +135,15 @@
       <main>
         <section class="workspace-heading" aria-labelledby="page-title">
           <div>
-            <p class="eyebrow"><span class="status-dot"></span><span data-i18n="hero.eyebrow">开源跨平台媒体工具</span></p>
+            <p class="eyebrow"><span class="status-dot"></span><span data-i18n="hero.eyebrow">Open-source Cross-platform Tool</span></p>
             <h1 id="page-title">Teigi</h1>
             <p class="heading-copy" data-i18n="hero.copy">
-              在桌面端与移动端上，安静、清晰地处理你的音视频与图片文件。
+              Process your audio, video, and image files on desktop and mobile with ease.
             </p>
           </div>
           <div class="sync-status" id="sync-status" data-state="loading" aria-live="polite">
-            <i data-lucide="loader-circle" aria-hidden="true"></i>
-            <span data-i18n="status.loadingManifest">正在读取版本清单</span>
+            <svg class="icon" aria-hidden="true"><use href="#i-loader-circle" /></svg>
+            <span data-i18n="status.loadingManifest">Reading release manifest</span>
           </div>
         </section>
 
@@ -88,14 +151,14 @@
           <div class="release-header">
             <div>
               <div class="section-label">
-                <i data-lucide="package-check" aria-hidden="true"></i>
-                <span data-i18n="release.latest">最新发布</span>
+                <svg class="icon" aria-hidden="true"><use href="#i-package-check" /></svg>
+                <span data-i18n="release.latest">Latest release</span>
               </div>
               <div class="release-title-line">
-                <h2 id="release-heading" data-i18n="release.connecting">正在连接 GitHub</h2>
-                <span class="version-chip" id="release-tag" data-i18n="common.loading">读取中</span>
+                <h2 id="release-heading" data-i18n="release.connecting">Connecting to GitHub</h2>
+                <span class="version-chip" id="release-tag" data-i18n="common.loading">Loading</span>
               </div>
-              <p class="release-meta" id="release-meta" data-i18n="release.syncing">稍等片刻，正在同步版本信息。</p>
+              <p class="release-meta" id="release-meta" data-i18n="release.syncing">Please wait while version information is synchronized.</p>
               <p class="release-notes" id="release-notes"></p>
             </div>
             <a
@@ -106,8 +169,8 @@
               rel="noreferrer"
               aria-disabled="true"
             >
-              <i data-lucide="external-link" aria-hidden="true"></i>
-              <span data-i18n="release.view">查看 Release</span>
+              <svg class="icon" aria-hidden="true"><use href="#i-external-link" /></svg>
+              <span data-i18n="release.view">View Release</span>
             </a>
           </div>
         </section>
@@ -117,8 +180,8 @@
             <div class="section-heading">
               <div>
                 <p class="eyebrow" data-i18n="downloads.eyebrow">Release assets</p>
-                <h2 id="files-heading" data-i18n="downloads.title">下载文件</h2>
-                <p class="section-copy" id="assets-summary" data-i18n="downloads.syncing">文件将从版本清单自动同步。</p>
+                <h2 id="files-heading" data-i18n="downloads.title">Download files</h2>
+                <p class="section-copy" id="assets-summary" data-i18n="downloads.syncing">Files will be synchronized from the release manifest.</p>
               </div>
               <div class="section-actions">
                 <div class="md3-menu-wrap" id="mirror-menu-wrap">
@@ -130,12 +193,12 @@
                     aria-expanded="false"
                     data-i18n-aria-label="mirror.label"
                   >
-                    <i data-lucide="zap" class="anchor-icon" id="mirror-anchor-icon" aria-hidden="true"></i>
-                    <span class="anchor-label" id="mirror-anchor-text">镜像加速</span>
-                    <i data-lucide="chevron-down" class="anchor-chevron" aria-hidden="true"></i>
+                    <svg class="anchor-icon" id="mirror-anchor-icon" aria-hidden="true"><use href="#i-zap" /></svg>
+                    <span class="anchor-label" id="mirror-anchor-text">Fast Mirror</span>
+                    <svg class="anchor-chevron" aria-hidden="true"><use href="#i-chevron-down" /></svg>
                   </button>
 
-                  <div class="md3-menu" id="mirror-menu" role="menu" aria-label="下载线路">
+                  <div class="md3-menu" id="mirror-menu" role="menu" aria-label="Download Source">
                     <button
                       type="button"
                       class="md3-menu-item active"
@@ -143,12 +206,12 @@
                       aria-checked="true"
                       data-value="proxy"
                     >
-                      <i data-lucide="zap" class="item-icon" aria-hidden="true"></i>
+                      <svg class="item-icon" aria-hidden="true"><use href="#i-zap" /></svg>
                       <div class="item-text">
-                        <span class="item-title" data-i18n="mirror.proxyTitle">镜像加速</span>
+                        <span class="item-title" data-i18n="mirror.proxyTitle">Fast Mirror</span>
                         <span class="item-desc">git.rincynar.top</span>
                       </div>
-                      <i data-lucide="check" class="item-check" aria-hidden="true"></i>
+                      <svg class="item-check" aria-hidden="true"><use href="#i-check" /></svg>
                     </button>
 
                     <button
@@ -158,69 +221,69 @@
                       aria-checked="false"
                       data-value="direct"
                     >
-                      <i data-lucide="globe" class="item-icon" aria-hidden="true"></i>
+                      <svg class="item-icon" aria-hidden="true"><use href="#i-globe" /></svg>
                       <div class="item-text">
-                        <span class="item-title" data-i18n="mirror.directTitle">官方直连</span>
+                        <span class="item-title" data-i18n="mirror.directTitle">Direct</span>
                         <span class="item-desc">github.com</span>
                       </div>
-                      <i data-lucide="check" class="item-check" aria-hidden="true"></i>
+                      <svg class="item-check" aria-hidden="true"><use href="#i-check" /></svg>
                     </button>
                   </div>
                 </div>
 
                 <button class="outlined-button" id="refresh-button" type="button" data-i18n-aria-label="downloads.refresh">
-                  <i data-lucide="refresh-cw" aria-hidden="true"></i>
-                  <span data-i18n="downloads.refresh">刷新</span>
+                  <svg class="icon" aria-hidden="true"><use href="#i-refresh-cw" /></svg>
+                  <span data-i18n="downloads.refresh">Refresh</span>
                 </button>
               </div>
             </div>
 
             <div class="download-list" id="download-list" aria-live="polite">
-              <div class="loading-list" data-i18n-aria-label="downloads.loading" aria-label="正在加载下载文件">
+              <div class="loading-list" data-i18n-aria-label="downloads.loading" aria-label="Loading download files">
                 <div class="loading-row"></div>
                 <div class="loading-row"></div>
               </div>
             </div>
           </div>
 
-          <aside class="release-aside" data-i18n-aria-label="aside.releaseInfo" aria-label="版本信息">
+          <aside class="release-aside" data-i18n-aria-label="aside.releaseInfo" aria-label="Release information">
             <div class="aside-block">
               <div class="section-label">
-                <i data-lucide="info" aria-hidden="true"></i>
-                <span data-i18n="aside.releaseInfo">版本信息</span>
+                <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg>
+                <span data-i18n="aside.releaseInfo">Release information</span>
               </div>
               <dl class="release-facts">
                 <div>
-                  <dt data-i18n="facts.version">发布版本</dt>
-                  <dd id="fact-version" data-i18n="common.loading">读取中</dd>
+                  <dt data-i18n="facts.version">Release version</dt>
+                  <dd id="fact-version" data-i18n="common.loading">Loading</dd>
                 </div>
                 <div>
-                  <dt data-i18n="facts.date">发布日期</dt>
-                  <dd id="fact-date" data-i18n="common.loading">读取中</dd>
+                  <dt data-i18n="facts.date">Release date</dt>
+                  <dd id="fact-date" data-i18n="common.loading">Loading</dd>
                 </div>
                 <div>
-                  <dt data-i18n="facts.assets">可用文件</dt>
-                  <dd id="fact-assets" data-i18n="common.loading">读取中</dd>
+                  <dt data-i18n="facts.assets">Available files</dt>
+                  <dd id="fact-assets" data-i18n="common.loading">Loading</dd>
                 </div>
                 <div>
-                  <dt data-i18n="facts.mirror">下载线路</dt>
-                  <dd id="fact-mirror">读取中</dd>
+                  <dt data-i18n="facts.mirror">Download Source</dt>
+                  <dd id="fact-mirror">Fast Mirror</dd>
                 </div>
               </dl>
             </div>
 
             <div class="aside-block aside-links">
               <div class="section-label">
-                <i data-lucide="layers-3" aria-hidden="true"></i>
-                <span data-i18n="project.title">项目</span>
+                <svg class="icon" aria-hidden="true"><use href="#i-layers-3" /></svg>
+                <span data-i18n="project.title">Project</span>
               </div>
               <a href="https://github.com/RinCynar/Teigi" target="_blank" rel="noreferrer">
-                <span data-i18n="project.repository">GitHub 仓库</span>
-                <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+                <span data-i18n="project.repository">GitHub repository</span>
+                <svg class="icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg>
               </a>
               <a href="https://github.com/RinCynar/Teigi/releases" target="_blank" rel="noreferrer">
-                <span data-i18n="project.releases">全部 Releases</span>
-                <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+                <span data-i18n="project.releases">All Releases</span>
+                <svg class="icon" aria-hidden="true"><use href="#i-arrow-up-right" /></svg>
               </a>
             </div>
           </aside>
@@ -228,8 +291,8 @@
       </main>
 
       <footer class="site-footer">
-        <span data-i18n="footer.product">Teigi · 开源跨平台媒体转换工具</span>
-        <span data-i18n="footer.manifest">Release 清单由仓库工作流自动同步</span>
+        <span data-i18n="footer.product">Teigi · Open-source cross-platform media converter</span>
+        <span data-i18n="footer.manifest">Release manifest synchronized by the repository workflow</span>
       </footer>
     </div>
 
