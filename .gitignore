@@ -44,10 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Personal working notes (keep out of version control)
-/todo
-/todo.md
-/log
-/log.md
-/AGENTS
+# Collaboration documents (keep out of version control)
+/TODOS.md
+/LOGS.md
 /AGENTS.md
