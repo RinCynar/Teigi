@@ -91,10 +91,11 @@ class _TeigiFileCardState extends State<TeigiFileCard> {
       borderColor = scheme.borderSubtle;
     }
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
+    return RepaintBoundary(
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
         onTap: widget.onTap,
         onDoubleTap: widget.onDoubleTap,
         onSecondaryTapDown: widget.onSecondaryTapDown,
@@ -231,7 +232,8 @@ class _TeigiFileCardState extends State<TeigiFileCard> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

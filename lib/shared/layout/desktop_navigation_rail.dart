@@ -171,39 +171,41 @@ class _SidebarToggleButtonState extends State<_SidebarToggleButton> {
       bg = Colors.transparent;
     }
 
-    return Tooltip(
-      message: widget.isCollapsed ? 'Expand sidebar' : 'Collapse sidebar',
-      waitDuration: const Duration(milliseconds: 500),
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          key: const Key('sidebar-toggle-btn'),
-          onTapDown: (_) => setState(() => _isPressed = true),
-          onTapUp: (_) => setState(() => _isPressed = false),
-          onTapCancel: () => setState(() => _isPressed = false),
-          onTap: widget.onToggle,
-          child: AnimatedScale(
-            duration: const Duration(milliseconds: 120),
-            scale: _isPressed ? 0.92 : 1.0,
-            child: AnimatedContainer(
+    return RepaintBoundary(
+      child: Tooltip(
+        message: widget.isCollapsed ? 'Expand sidebar' : 'Collapse sidebar',
+        waitDuration: const Duration(milliseconds: 500),
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            key: const Key('sidebar-toggle-btn'),
+            onTapDown: (_) => setState(() => _isPressed = true),
+            onTapUp: (_) => setState(() => _isPressed = false),
+            onTapCancel: () => setState(() => _isPressed = false),
+            onTap: widget.onToggle,
+            child: AnimatedScale(
               duration: const Duration(milliseconds: 100),
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: bg,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: AnimatedRotation(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  turns: widget.isCollapsed ? 0.5 : 0.0,
-                  child: Icon(
-                    Icons.chevron_left_rounded,
-                    size: 16,
-                    color: _isHovered ? scheme.primary : scheme.onSurfaceVariant,
+              scale: _isPressed ? 0.92 : 1.0,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 100),
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: bg,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: AnimatedRotation(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    turns: widget.isCollapsed ? 0.5 : 0.0,
+                    child: Icon(
+                      Icons.chevron_left_rounded,
+                      size: 16,
+                      color: _isHovered ? scheme.primary : scheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
@@ -263,36 +265,35 @@ class _NavItemState extends State<_NavItem> {
     final indicatorHeight = widget.isCollapsed ? 32.0 : 40.0;
     final indicatorRadius = widget.isCollapsed ? 16.0 : 20.0;
 
-    return Tooltip(
-      message: widget.isCollapsed ? widget.dest.label : '',
-      waitDuration: const Duration(milliseconds: 400),
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (_) => setState(() => _isPressed = true),
-          onTapUp: (_) => setState(() => _isPressed = false),
-          onTapCancel: () => setState(() => _isPressed = false),
-          onTap: widget.onTap,
-          child: Container(
-            height: 48,
-            alignment: Alignment.center,
-            child: AnimatedScale(
-              duration: const Duration(milliseconds: 120),
-              scale: _isPressed ? 0.96 : 1.0,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeOutCubic,
-                width: indicatorWidth,
-                height: indicatorHeight,
-                decoration: BoxDecoration(
-                  color: indicatorColor,
-                  borderRadius: BorderRadius.circular(indicatorRadius),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(indicatorRadius),
+    return RepaintBoundary(
+      child: Tooltip(
+        message: widget.isCollapsed ? widget.dest.label : '',
+        waitDuration: const Duration(milliseconds: 400),
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (_) => setState(() => _isPressed = true),
+            onTapUp: (_) => setState(() => _isPressed = false),
+            onTapCancel: () => setState(() => _isPressed = false),
+            onTap: widget.onTap,
+            child: Container(
+              height: 48,
+              alignment: Alignment.center,
+              child: AnimatedScale(
+                duration: const Duration(milliseconds: 100),
+                scale: _isPressed ? 0.96 : 1.0,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 140),
+                  curve: Curves.easeOutCubic,
+                  width: indicatorWidth,
+                  height: indicatorHeight,
+                  decoration: BoxDecoration(
+                    color: indicatorColor,
+                    borderRadius: BorderRadius.circular(indicatorRadius),
+                  ),
                   child: widget.isCollapsed
                       ? Center(
                           child: Icon(
@@ -312,7 +313,7 @@ class _NavItemState extends State<_NavItem> {
                             const SizedBox(width: 14),
                             Expanded(
                               child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 150),
+                                duration: const Duration(milliseconds: 140),
                                 opacity: widget.isCollapsed ? 0.0 : 1.0,
                                 child: Text(
                                   widget.dest.label,

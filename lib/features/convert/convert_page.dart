@@ -426,124 +426,149 @@ class _HeroWorkbenchState extends State<_HeroWorkbench> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final l10n = widget.l10n;
 
     final bg = _isHovered ? scheme.surfaceContainer : scheme.surfaceContainerLow;
     final borderColor = _isHovered
         ? scheme.primary.withValues(alpha: 0.35)
         : scheme.borderSubtle;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onAddFiles,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          width: double.infinity,
+    return RepaintBoundary(
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: widget.onAddFiles,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeOutCubic,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: borderColor,
+                width: 1.5,
+              ),
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: widget.isMobile ? 20 : 40,
+              vertical: widget.isMobile ? 28 : 40,
+            ),
+            child: _HeroWorkbenchContent(
+              isMobile: widget.isMobile,
+              l10n: widget.l10n,
+              onAddFiles: widget.onAddFiles,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroWorkbenchContent extends StatelessWidget {
+  final bool isMobile;
+  final L10n l10n;
+  final VoidCallback onAddFiles;
+
+  const _HeroWorkbenchContent({
+    required this.isMobile,
+    required this.l10n,
+    required this.onAddFiles,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: isMobile ? 54 : 68,
+          height: isMobile ? 54 : 68,
           decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(24),
+            color: scheme.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: borderColor,
+              color: scheme.primary.withValues(alpha: 0.25),
               width: 1.5,
             ),
           ),
-          padding: EdgeInsets.symmetric(
-            horizontal: widget.isMobile ? 20 : 40,
-            vertical: widget.isMobile ? 28 : 40,
+          child: Icon(
+            Icons.file_upload_outlined,
+            size: isMobile ? 28 : 36,
+            color: scheme.primary,
           ),
-          child: Column(
+        ),
+        SizedBox(height: isMobile ? 14 : 18),
+        Text(
+          l10n.convertSubtitle,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: isMobile ? 18 : 22,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          isMobile ? l10n.selectToStart : l10n.dropToStart,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontSize: isMobile ? 13 : 14,
+              ),
+        ),
+        SizedBox(height: isMobile ? 18 : 22),
+        FilledButton.icon(
+          style: FilledButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 22 : 28,
+              vertical: isMobile ? 10 : 13,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          onPressed: onAddFiles,
+          icon: const Icon(Icons.add_rounded, size: 20),
+          label: Text(
+            l10n.addFiles,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 5,
+          ),
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: scheme.borderSubtle, width: 0.8),
+          ),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: widget.isMobile ? 54 : 68,
-                height: widget.isMobile ? 54 : 68,
-                decoration: BoxDecoration(
-                  color: scheme.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: scheme.primary.withValues(alpha: 0.25),
-                    width: 1.5,
-                  ),
-                ),
-                child: Icon(
-                  Icons.file_upload_outlined,
-                  size: widget.isMobile ? 28 : 36,
-                  color: scheme.primary,
-                ),
+              Icon(
+                Icons.info_outline_rounded,
+                size: 13,
+                color: scheme.onSurfaceVariant,
               ),
-              SizedBox(height: widget.isMobile ? 14 : 18),
+              const SizedBox(width: 6),
               Text(
-                l10n.convertSubtitle,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: widget.isMobile ? 18 : 22,
-                    ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                widget.isMobile ? l10n.selectToStart : l10n.dropToStart,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                isMobile ? l10n.mobileImportHint : l10n.dropHint,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
-                      fontSize: widget.isMobile ? 13 : 14,
+                      fontSize: 12,
                     ),
-              ),
-              SizedBox(height: widget.isMobile ? 18 : 22),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: widget.isMobile ? 22 : 28,
-                    vertical: widget.isMobile ? 10 : 13,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                onPressed: widget.onAddFiles,
-                icon: const Icon(Icons.add_rounded, size: 20),
-                label: Text(
-                  l10n.addFiles,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: scheme.borderSubtle, width: 0.8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      size: 13,
-                      color: scheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      widget.isMobile ? l10n.mobileImportHint : l10n.dropHint,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                            fontSize: 12,
-                          ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -597,24 +622,26 @@ class _PresetGridCardState extends State<_PresetGridCard> {
       borderColor = scheme.borderSubtle;
     }
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          height: 68,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: borderColor,
-              width: widget.selected ? 1.5 : 1.0,
+    return RepaintBoundary(
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeOutCubic,
+            height: 68,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: borderColor,
+                width: widget.selected ? 1.5 : 1.0,
+              ),
             ),
-          ),
           child: Row(
             children: [
               Container(
@@ -678,7 +705,8 @@ class _PresetGridCardState extends State<_PresetGridCard> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 
