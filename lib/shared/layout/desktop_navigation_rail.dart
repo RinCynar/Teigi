@@ -71,7 +71,7 @@ class DesktopNavigationRail extends StatelessWidget {
         children: [
           // 1. Top Section: Header (展开态仅标题+折叠按钮，严禁添加左侧Logo)
           Padding(
-            padding: EdgeInsets.only(top: topPadding > 0 ? topPadding + 12 : 36.0),
+            padding: EdgeInsets.only(top: topPadding > 0 ? topPadding + 8 : 16.0),
             child: SizedBox(
               height: 44,
               child: Stack(
@@ -86,10 +86,10 @@ class DesktopNavigationRail extends StatelessWidget {
                       child: Text(
                         'Teigi',
                         style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
                           color: scheme.primary,
-                          letterSpacing: 0.2,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),

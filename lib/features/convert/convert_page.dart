@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:teigi/core/domain/media_type.dart';
 import 'package:teigi/core/models/conversion_task.dart';
 import 'package:teigi/core/models/format_preset.dart';
 import 'package:teigi/core/models/media_file.dart';
 import 'package:teigi/core/utils/file_identity.dart';
 import 'package:teigi/core/utils/open_path.dart';
-import 'package:teigi/core/utils/platform_info.dart';
 import 'package:teigi/features/convert/batch_config_sheet.dart';
 import 'package:teigi/features/convert/config_sheet.dart';
 import 'package:teigi/features/convert/media_import.dart';
@@ -19,7 +19,6 @@ import 'package:teigi/providers/recent_presets_provider.dart';
 import 'package:teigi/providers/selection_provider.dart';
 import 'package:teigi/shared/layout/content_constraint.dart';
 import 'package:teigi/shared/widgets/teigi_file_card.dart';
-import 'package:teigi/shared/widgets/teigi_mark.dart';
 import 'package:teigi/theme/tokens.dart';
 import 'package:teigi/shared/widgets/ffmpeg_status_banner.dart';
 
@@ -289,6 +288,8 @@ class _EmptyWorkspace extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final pending = ref.watch(pendingPresetProvider);
     final recentIds = ref.watch(recentPresetsProvider);
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     final recent = [
       for (final id in recentIds)
         if (FormatPreset.byId(id) != null) FormatPreset.byId(id)!,
@@ -308,142 +309,374 @@ class _EmptyWorkspace extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const FfmpegStatusBanner(),
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerLow,
-                  borderRadius: TeigiRadii.cardLarge,
-                  border: Border.all(
-                    color: scheme.borderSubtle,
-                    width: 1.5,
+
+          // 1. Hero Workbench: Wide interactive drop zone (大面积、大圆角、视觉聚焦明确的主工作台容器)
+          _HeroWorkbench(
+            isMobile: isMobile,
+            l10n: l10n,
+            onAddFiles: onAddFiles,
+          ),
+
+          SizedBox(height: isMobile ? 24 : 32),
+
+          // 2. Section Header: Recent Presets
+          Row(
+            children: [
+              Icon(
+                Icons.auto_awesome_rounded,
+                size: 18,
+                color: scheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                l10n.recentPresets,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: scheme.onSurface,
+                    ),
+              ),
+              if (pending != null) ...[
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        pending.name,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: scheme.onPrimaryContainer,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      GestureDetector(
+                        onTap: () =>
+                            ref.read(pendingPresetProvider.notifier).state = null,
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 14,
+                          color: scheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? TeigiSpacing.lg : TeigiSpacing.xxl,
-                  vertical: isMobile ? TeigiSpacing.xl : TeigiSpacing.xxl,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: isMobile ? 54 : 68,
-                      height: isMobile ? 54 : 68,
-                      decoration: BoxDecoration(
-                        color: scheme.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: scheme.primary.withValues(alpha: 0.25),
-                          width: 1,
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.upload_file_rounded,
-                        size: isMobile ? 28 : 36,
-                        color: scheme.primary,
-                      ),
-                    ),
-                    const SizedBox(height: TeigiSpacing.md),
-                    Text(
-                      l10n.convertSubtitle,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: TeigiSpacing.xs),
-                    Text(
-                      isMobile ? l10n.selectToStart : l10n.dropToStart,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                    ),
-                    const SizedBox(height: TeigiSpacing.lg),
-                    FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: TeigiSpacing.xl,
-                          vertical: TeigiSpacing.sm + 2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: onAddFiles,
-                      icon: const Icon(Icons.add_rounded, size: 20),
-                      label: Text(l10n.addFiles),
-                    ),
-                    const SizedBox(height: TeigiSpacing.md),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: TeigiSpacing.md,
-                        vertical: TeigiSpacing.xxs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: scheme.borderSubtle, width: 0.8),
-                      ),
-                      child: Text(
-                        isMobile ? l10n.mobileImportHint : l10n.dropHint,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+              ],
+            ],
           ),
-          const SizedBox(height: TeigiSpacing.md),
-          Container(
-            padding: const EdgeInsets.all(TeigiSpacing.md),
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerLow,
-              borderRadius: TeigiRadii.card,
-              border: Border.all(color: scheme.borderSubtle, width: 1),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 16,
-                      color: scheme.primary,
-                    ),
-                    const SizedBox(width: TeigiSpacing.xs),
-                    Text(
-                      l10n.recentPresets,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: TeigiSpacing.sm),
-                Wrap(
-                  spacing: TeigiSpacing.sm,
-                  runSpacing: TeigiSpacing.sm,
-                  children: [
-                    for (final preset in cards)
-                      TeigiPresetCard(
-                        title: preset.name,
+
+          const SizedBox(height: 14),
+
+          // 3. Responsive Preset Grid (规整的网格卡片流，消除孤岛空洞)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final w = constraints.maxWidth;
+              final int cols = w >= 860 ? 4 : (w >= 540 ? 3 : 2);
+              const double spacing = 12.0;
+              final double itemWidth = (w - (cols - 1) * spacing) / cols;
+
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  for (final preset in cards)
+                    SizedBox(
+                      width: itemWidth,
+                      child: _PresetGridCard(
+                        preset: preset,
                         subtitle: _presetSubtitle(preset),
                         selected: pending?.id == preset.id,
                         onTap: () => onPreset(preset),
                       ),
-                  ],
-                ),
-              ],
-            ),
+                    ),
+                ],
+              );
+            },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HeroWorkbench extends StatefulWidget {
+  final bool isMobile;
+  final L10n l10n;
+  final VoidCallback onAddFiles;
+
+  const _HeroWorkbench({
+    required this.isMobile,
+    required this.l10n,
+    required this.onAddFiles,
+  });
+
+  @override
+  State<_HeroWorkbench> createState() => _HeroWorkbenchState();
+}
+
+class _HeroWorkbenchState extends State<_HeroWorkbench> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final l10n = widget.l10n;
+
+    final bg = _isHovered ? scheme.surfaceContainer : scheme.surfaceContainerLow;
+    final borderColor = _isHovered
+        ? scheme.primary.withValues(alpha: 0.35)
+        : scheme.borderSubtle;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onAddFiles,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: borderColor,
+              width: 1.5,
+            ),
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: widget.isMobile ? 20 : 40,
+            vertical: widget.isMobile ? 28 : 40,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: widget.isMobile ? 54 : 68,
+                height: widget.isMobile ? 54 : 68,
+                decoration: BoxDecoration(
+                  color: scheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: scheme.primary.withValues(alpha: 0.25),
+                    width: 1.5,
+                  ),
+                ),
+                child: Icon(
+                  Icons.file_upload_outlined,
+                  size: widget.isMobile ? 28 : 36,
+                  color: scheme.primary,
+                ),
+              ),
+              SizedBox(height: widget.isMobile ? 14 : 18),
+              Text(
+                l10n.convertSubtitle,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: widget.isMobile ? 18 : 22,
+                    ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                widget.isMobile ? l10n.selectToStart : l10n.dropToStart,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontSize: widget.isMobile ? 13 : 14,
+                    ),
+              ),
+              SizedBox(height: widget.isMobile ? 18 : 22),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: widget.isMobile ? 22 : 28,
+                    vertical: widget.isMobile ? 10 : 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: widget.onAddFiles,
+                icon: const Icon(Icons.add_rounded, size: 20),
+                label: Text(
+                  l10n.addFiles,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: scheme.borderSubtle, width: 0.8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 13,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.isMobile ? l10n.mobileImportHint : l10n.dropHint,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            fontSize: 12,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PresetGridCard extends StatefulWidget {
+  final FormatPreset preset;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _PresetGridCard({
+    required this.preset,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  State<_PresetGridCard> createState() => _PresetGridCardState();
+}
+
+class _PresetGridCardState extends State<_PresetGridCard> {
+  bool _isHovered = false;
+
+  IconData _categoryIcon(MediaType category) => switch (category) {
+    MediaType.video => Icons.movie_outlined,
+    MediaType.audio => Icons.music_note_outlined,
+    MediaType.image => Icons.image_outlined,
+    _ => Icons.insert_drive_file_outlined,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    Color bg;
+    if (widget.selected) {
+      bg = scheme.primary.withValues(alpha: 0.14);
+    } else if (_isHovered) {
+      bg = scheme.surfaceContainerHigh;
+    } else {
+      bg = scheme.surfaceContainerLow;
+    }
+
+    Color borderColor;
+    if (widget.selected) {
+      borderColor = scheme.primary;
+    } else if (_isHovered) {
+      borderColor = scheme.primary.withValues(alpha: 0.35);
+    } else {
+      borderColor = scheme.borderSubtle;
+    }
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          height: 68,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: borderColor,
+              width: widget.selected ? 1.5 : 1.0,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: widget.selected
+                      ? scheme.primary.withValues(alpha: 0.22)
+                      : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Center(
+                  child: Icon(
+                    _categoryIcon(widget.preset.category),
+                    size: 20,
+                    color: widget.selected
+                        ? scheme.primary
+                        : scheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      widget.preset.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: widget.selected
+                                ? scheme.primary
+                                : scheme.onSurface,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            fontSize: 11,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              if (widget.selected) ...[
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.check_circle_rounded,
+                  size: 18,
+                  color: scheme.primary,
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -484,37 +717,44 @@ class _FilesWorkspace extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const FfmpegStatusBanner(),
-        Text(
-          l10n.appTitle,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-        ),
         if (selected.isEmpty)
           Row(
             children: [
               Expanded(
-                child: Text(
-                  l10n.convertTitle,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.convertTitle,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.readySummary(tasks.length, ready, missing),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
                 ),
               ),
-              TextButton.icon(
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 onPressed: onAddFiles,
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add_rounded, size: 18),
                 label: Text(l10n.addFiles),
               ),
             ],
           )
         else
           _SelectionBar(selected: selected, size: size),
-        const SizedBox(height: TeigiSpacing.xxs),
-        Text(
-          l10n.readySummary(tasks.length, ready, missing),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-        ),
         const SizedBox(height: TeigiSpacing.lg),
         Expanded(
           child: ListView.separated(
