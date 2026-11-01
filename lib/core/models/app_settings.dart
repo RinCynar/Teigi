@@ -30,6 +30,9 @@ class AppSettings {
   /// 语言代码：system / zh / ja / en。
   final String language;
 
+  /// 侧边栏是否展开（桌面端）。
+  final bool sidebarExpanded;
+
   const AppSettings({
     this.ffmpegPath = '',
     this.outputDirectory = '',
@@ -40,6 +43,7 @@ class AppSettings {
     this.overwritePolicy = OverwritePolicy.keepBoth,
     this.logLevel = 'info',
     this.language = 'system',
+    this.sidebarExpanded = true,
   });
 
   AppSettings copyWith({
@@ -52,6 +56,7 @@ class AppSettings {
     OverwritePolicy? overwritePolicy,
     String? logLevel,
     String? language,
+    bool? sidebarExpanded,
   }) {
     return AppSettings(
       ffmpegPath: ffmpegPath ?? this.ffmpegPath,
@@ -63,6 +68,7 @@ class AppSettings {
       overwritePolicy: overwritePolicy ?? this.overwritePolicy,
       logLevel: logLevel ?? this.logLevel,
       language: language ?? this.language,
+      sidebarExpanded: sidebarExpanded ?? this.sidebarExpanded,
     );
   }
 
@@ -79,6 +85,7 @@ class AppSettings {
           prefs.getInt('overwrite_policy') ?? OverwritePolicy.keepBoth.index],
       logLevel: prefs.getString('log_level') ?? 'info',
       language: prefs.getString('language') ?? 'system',
+      sidebarExpanded: prefs.getBool('sidebar_expanded') ?? true,
     );
   }
 
@@ -93,5 +100,6 @@ class AppSettings {
     await prefs.setInt('overwrite_policy', overwritePolicy.index);
     await prefs.setString('log_level', logLevel);
     await prefs.setString('language', language);
+    await prefs.setBool('sidebar_expanded', sidebarExpanded);
   }
 }

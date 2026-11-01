@@ -302,71 +302,149 @@ class _EmptyWorkspace extends ConsumerWidget {
           ]
         : recent;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const FfmpegStatusBanner(),
-        Text(
-          l10n.appTitle,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-        ),
-        Expanded(
-          child: Center(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: TeigiSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const FfmpegStatusBanner(),
+          Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n.convertSubtitle,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineMedium,
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerLow,
+                  borderRadius: TeigiRadii.cardLarge,
+                  border: Border.all(
+                    color: scheme.borderSubtle,
+                    width: 1.5,
                   ),
-                  const SizedBox(height: TeigiSpacing.sm),
-                  Text(
-                    isMobile ? l10n.selectToStart : l10n.dropToStart,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: scheme.onSurfaceVariant,
+                ),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? TeigiSpacing.lg : TeigiSpacing.xxl,
+                  vertical: isMobile ? TeigiSpacing.xl : TeigiSpacing.xxl,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: isMobile ? 54 : 68,
+                      height: isMobile ? 54 : 68,
+                      decoration: BoxDecoration(
+                        color: scheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: scheme.primary.withValues(alpha: 0.25),
+                          width: 1,
                         ),
-                  ),
-                  const SizedBox(height: TeigiSpacing.xl),
-                  FilledButton.icon(
-                    onPressed: onAddFiles,
-                    icon: const Icon(Icons.add),
-                    label: Text(l10n.addFiles),
-                  ),
-                  const SizedBox(height: TeigiSpacing.md),
-                  Text(
-                    isMobile ? l10n.mobileImportHint : l10n.dropHint,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
+                      ),
+                      child: Icon(
+                        Icons.upload_file_rounded,
+                        size: isMobile ? 28 : 36,
+                        color: scheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: TeigiSpacing.md),
+                    Text(
+                      l10n.convertSubtitle,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: TeigiSpacing.xs),
+                    Text(
+                      isMobile ? l10n.selectToStart : l10n.dropToStart,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(height: TeigiSpacing.lg),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: TeigiSpacing.xl,
+                          vertical: TeigiSpacing.sm + 2,
                         ),
-                  ),
-                ],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: onAddFiles,
+                      icon: const Icon(Icons.add_rounded, size: 20),
+                      label: Text(l10n.addFiles),
+                    ),
+                    const SizedBox(height: TeigiSpacing.md),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: TeigiSpacing.md,
+                        vertical: TeigiSpacing.xxs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: scheme.borderSubtle, width: 0.8),
+                      ),
+                      child: Text(
+                        isMobile ? l10n.mobileImportHint : l10n.dropHint,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        Text(l10n.recentPresets, style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: TeigiSpacing.sm),
-        Wrap(
-          spacing: TeigiSpacing.sm,
-          runSpacing: TeigiSpacing.sm,
-          children: [
-            for (final preset in cards)
-              TeigiPresetCard(
-                title: preset.name,
-                subtitle: _presetSubtitle(preset),
-                selected: pending?.id == preset.id,
-                onTap: () => onPreset(preset),
-              ),
-          ],
-        ),
-      ],
+          const SizedBox(height: TeigiSpacing.md),
+          Container(
+            padding: const EdgeInsets.all(TeigiSpacing.md),
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerLow,
+              borderRadius: TeigiRadii.card,
+              border: Border.all(color: scheme.borderSubtle, width: 1),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 16,
+                      color: scheme.primary,
+                    ),
+                    const SizedBox(width: TeigiSpacing.xs),
+                    Text(
+                      l10n.recentPresets,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: TeigiSpacing.sm),
+                Wrap(
+                  spacing: TeigiSpacing.sm,
+                  runSpacing: TeigiSpacing.sm,
+                  children: [
+                    for (final preset in cards)
+                      TeigiPresetCard(
+                        title: preset.name,
+                        subtitle: _presetSubtitle(preset),
+                        selected: pending?.id == preset.id,
+                        onTap: () => onPreset(preset),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -400,11 +478,18 @@ class _FilesWorkspace extends ConsumerWidget {
     final ready = tasks.where((t) => t.targetFormat?.isNotEmpty == true).length;
     final missing = tasks.length - ready;
     final size = TeigiBreakpoints.sizeOf(MediaQuery.sizeOf(context).width);
+    final scheme = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const FfmpegStatusBanner(),
+        Text(
+          l10n.appTitle,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+        ),
         if (selected.isEmpty)
           Row(
             children: [
@@ -469,12 +554,57 @@ class _FilesWorkspace extends ConsumerWidget {
             },
           ),
         ),
-        const SizedBox(height: TeigiSpacing.xl),
-        Align(
-          alignment: Alignment.centerRight,
-          child: FilledButton(
-            onPressed: running ? null : onStart,
-            child: Text(running ? l10n.converting : l10n.startConversion),
+        const SizedBox(height: TeigiSpacing.md),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TeigiSpacing.md,
+            vertical: TeigiSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
+            borderRadius: TeigiRadii.card,
+            border: Border.all(
+              color: Theme.of(context).colorScheme.borderSubtle,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.check_circle_outline_rounded,
+                size: 18,
+                color: ready == tasks.length
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: TeigiSpacing.xs),
+              Expanded(
+                child: Text(
+                  l10n.readySummary(tasks.length, ready, missing),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
+              const SizedBox(width: TeigiSpacing.sm),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: TeigiSpacing.lg,
+                    vertical: TeigiSpacing.sm,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: running ? null : onStart,
+                icon: Icon(
+                  running ? Icons.hourglass_top_rounded : Icons.play_arrow_rounded,
+                  size: 20,
+                ),
+                label: Text(running ? l10n.converting : l10n.startConversion),
+              ),
+            ],
           ),
         ),
       ],

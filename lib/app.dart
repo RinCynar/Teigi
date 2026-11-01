@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:teigi/features/convert/convert_page.dart';
 import 'package:teigi/features/presets/presets_page.dart';
 import 'package:teigi/features/queue/queue_panel.dart';
-import 'package:teigi/features/settings/about_page.dart';
 import 'package:teigi/features/settings/settings_page.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/settings_provider.dart';
@@ -42,7 +41,7 @@ final router = GoRouter(
             GoRoute(
               path: 'about',
               name: 'about',
-              builder: (context, state) => const AboutPage(),
+              redirect: (_, _) => '/settings',
             ),
           ],
         ),

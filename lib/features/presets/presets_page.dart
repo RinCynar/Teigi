@@ -20,7 +20,6 @@ class PresetsPage extends ConsumerWidget {
     final quick = ref.watch(quickFormatsProvider);
 
     return ContentConstraint(
-      padding: const EdgeInsets.all(TeigiSpacing.page),
       child: ListView(
         children: [
           Text(l10n.navPresets, style: Theme.of(context).textTheme.headlineSmall),

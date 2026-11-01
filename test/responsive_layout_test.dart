@@ -13,6 +13,10 @@ import 'package:teigi/providers/settings_provider.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  setUp(() {
+    router.go('/convert');
+  });
+
   Future<void> pumpApp(WidgetTester tester, Size size) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
@@ -64,6 +68,53 @@ void main() {
     expect(find.byType(NavigationRail), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('移动端竖屏（360x780）各页面自适应渲染且无溢出', (tester) async {
+    await pumpApp(tester, const Size(360, 780));
+
+    // 转换主页在手机竖屏上正常渲染无溢出
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    // 切换至队列页
+    await tester.tap(find.text('队列'));
+    await tester.pumpAndSettle();
+    expect(find.text('队列'), findsWidgets);
+    expect(tester.takeException(), isNull);
+
+    // 切换至预设页
+    await tester.tap(find.text('预设'));
+    await tester.pumpAndSettle();
+    expect(find.text('预设'), findsWidgets);
+    expect(tester.takeException(), isNull);
+
+    // 切换至设置页
+    await tester.tap(find.text('设置'));
+    await tester.pumpAndSettle();
+    expect(find.text('主题模式'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('侧边栏支持展开与折叠切换', (tester) async {
+    await pumpApp(tester, const Size(1200, 800));
+
+    expect(find.byKey(const Key('sidebar-toggle-btn')), findsOneWidget);
+    expect(find.text('Teigi'), findsWidgets);
+
+    // 点击折叠按钮
+    await tester.tap(find.byKey(const Key('sidebar-toggle-btn')));
+    await tester.pumpAndSettle();
+
+    final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+    expect(rail.extended, isFalse);
+
+    // 再次点击展开按钮
+    await tester.tap(find.byKey(const Key('sidebar-toggle-btn')));
+    await tester.pumpAndSettle();
+
+    final railExpanded = tester.widget<NavigationRail>(find.byType(NavigationRail));
+    expect(railExpanded.extended, isTrue);
   });
 }
 

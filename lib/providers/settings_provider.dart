@@ -48,4 +48,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   Future<void> setLanguage(String code) =>
       update(state.copyWith(language: code));
+
+  Future<void> toggleSidebar() =>
+      update(state.copyWith(sidebarExpanded: !state.sidebarExpanded));
+
+  Future<void> setSidebarExpanded(bool value) =>
+      update(state.copyWith(sidebarExpanded: value));
 }

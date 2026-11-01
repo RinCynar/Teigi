@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
@@ -9,8 +10,10 @@ import 'package:teigi/core/ffmpeg/ffmpeg_command.dart';
 import 'package:teigi/core/ffmpeg/ffmpeg_command_builder.dart';
 import 'package:teigi/core/ffmpeg/progress_parser.dart';
 import 'package:teigi/core/models/conversion_task.dart';
+import 'package:teigi/core/models/media_file.dart';
 import 'package:teigi/core/services/foreground_service.dart';
 import 'package:teigi/core/services/platform_storage.dart';
+import 'package:teigi/core/services/svg_rasterizer.dart';
 import 'package:teigi/core/services/task_scheduler.dart';
 import 'package:teigi/core/utils/memory_trimmer.dart';
 import 'package:teigi/core/utils/platform_info.dart';
@@ -184,6 +187,60 @@ class ConversionEngine {
     unawaited(ForegroundService.start(fileName: task.source.name));
     var speedSamples = _SpeedEstimator();
     try {
+      if (SvgRasterizer.isSvg(effectiveTask.source.path)) {
+        final targetExt = (task.targetFormat ?? '').toLowerCase();
+        if (targetExt == 'png') {
+          notifier.updateTask(
+            effectiveTask.copyWith(
+              status: TaskStatus.running,
+              outputPath: command.outputPath,
+              startedAt: DateTime.now(),
+              progress: 0.5,
+            ),
+          );
+          await SvgRasterizer.rasterizeFile(
+            sourcePath: task.source.path,
+            outputPath: command.outputPath,
+            options: effectiveTask.options,
+          );
+        } else {
+          final tempPng = '${command.outputPath}.tmp_svg.png';
+          try {
+            await SvgRasterizer.rasterizeFile(
+              sourcePath: task.source.path,
+              outputPath: tempPng,
+              options: effectiveTask.options,
+            );
+            final tempTask = effectiveTask.copyWith(
+              source: MediaFile(path: tempPng),
+            );
+            final tempCommand = builder.build(tempTask, outputPath: command.outputPath);
+            final result = await _execute(engine, notifier, task, tempCommand, speedSamples);
+            if (!result.isSuccess) {
+              throw Exception(result.error ?? 'SVG transcoding failed');
+            }
+          } finally {
+            final tmpFile = File(tempPng);
+            if (await tmpFile.exists()) {
+              await tmpFile.delete();
+            }
+          }
+        }
+
+        final current = notifier.taskById(task.id) ?? effectiveTask;
+        notifier.updateTask(
+          current.copyWith(
+            status: TaskStatus.completed,
+            progress: 1.0,
+            outputPath: command.outputPath,
+            completedAt: DateTime.now(),
+          ),
+        );
+        unawaited(PlatformStorage.scanMediaFile(command.outputPath));
+        _logger.i('SVG 转换完成: ${task.source.path} → ${command.outputPath}');
+        return;
+      }
+
       var result = await _execute(engine, notifier, task, command, speedSamples);
 
       if (fallbackCommand != null &&

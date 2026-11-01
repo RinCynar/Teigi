@@ -59,7 +59,7 @@ class _TeigiMarkPainter extends CustomPainter {
   }
 }
 
-/// Compact action card for a destination preset — an action, not a tag.
+/// Compact action card for a destination preset — an entity card with subtle border & state layer.
 class TeigiPresetCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -78,32 +78,56 @@ class TeigiPresetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: selected ? scheme.secondaryContainer : scheme.surfaceContainerLow,
-      borderRadius: TeigiRadii.medium,
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: TeigiRadii.medium,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 108, minHeight: 64),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: TeigiSpacing.md,
-              vertical: TeigiSpacing.sm,
+        borderRadius: TeigiRadii.card,
+        child: AnimatedContainer(
+          duration: TeigiMotion.fast,
+          constraints: const BoxConstraints(minWidth: 116, minHeight: 68),
+          decoration: BoxDecoration(
+            color: selected
+                ? scheme.primary.withValues(alpha: 0.14)
+                : scheme.surfaceContainerLow,
+            borderRadius: TeigiRadii.card,
+            border: Border.all(
+              color: selected ? scheme.primary : scheme.borderSubtle,
+              width: selected ? 1.5 : 1.0,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.titleSmall),
-                const SizedBox(height: TeigiSpacing.xxs),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                ),
-              ],
-            ),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: TeigiSpacing.md,
+            vertical: TeigiSpacing.sm + 2,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: selected ? scheme.primary : scheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  if (selected) ...[
+                    const SizedBox(width: TeigiSpacing.xxs),
+                    Icon(Icons.check_circle_rounded, size: 14, color: scheme.primary),
+                  ],
+                ],
+              ),
+              const SizedBox(height: TeigiSpacing.xxs),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontSize: 11,
+                    ),
+              ),
+            ],
           ),
         ),
       ),

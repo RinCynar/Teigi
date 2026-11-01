@@ -76,6 +76,7 @@ class ConversionTask {
   static const _unset = Object();
 
   ConversionTask copyWith({
+    MediaFile? source,
     String? targetFormat,
     ConversionOptions? options,
     TaskStatus? status,
@@ -91,7 +92,7 @@ class ConversionTask {
   }) {
     return ConversionTask(
       id: id,
-      source: source,
+      source: source ?? this.source,
       targetFormat: targetFormat ?? this.targetFormat,
       options: options ?? this.options,
       status: status ?? this.status,

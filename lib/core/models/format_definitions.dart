@@ -127,38 +127,43 @@ const List<FormatDefinition> builtinFormats = [
   FormatDefinition(
     extension: 'jpg',
     type: MediaType.image,
-    defaultAudioEncoder: 'mjpeg',
+    defaultVideoEncoder: 'mjpeg',
     description: 'JPEG 有损压缩',
   ),
   FormatDefinition(
     extension: 'png',
     type: MediaType.image,
-    defaultAudioEncoder: 'png',
+    defaultVideoEncoder: 'png',
     description: 'PNG 无损',
   ),
   FormatDefinition(
     extension: 'webp',
     type: MediaType.image,
-    defaultAudioEncoder: 'libwebp',
+    defaultVideoEncoder: 'libwebp',
     description: 'WebP 现代压缩',
   ),
   FormatDefinition(
     extension: 'avif',
     type: MediaType.image,
-    defaultAudioEncoder: 'libaom-av1',
+    defaultVideoEncoder: 'libaom-av1',
     description: 'AV1 图像格式',
   ),
   FormatDefinition(
     extension: 'bmp',
     type: MediaType.image,
-    defaultAudioEncoder: 'bmp',
+    defaultVideoEncoder: 'bmp',
     description: 'BMP 位图',
   ),
   FormatDefinition(
     extension: 'tiff',
     type: MediaType.image,
-    defaultAudioEncoder: 'tiff',
+    defaultVideoEncoder: 'tiff',
     description: 'TIFF 位图',
+  ),
+  FormatDefinition(
+    extension: 'svg',
+    type: MediaType.image,
+    description: 'SVG 矢量图形',
   ),
 ];
 

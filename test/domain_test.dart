@@ -22,6 +22,8 @@ void main() {
       expect(inferMediaType('mkv'), MediaType.video);
       expect(inferMediaType('flac'), MediaType.audio);
       expect(inferMediaType('png'), MediaType.image);
+      expect(inferMediaType('svg'), MediaType.image);
+      expect(inferMediaType('.SVG'), MediaType.image);
       expect(inferMediaType('srt'), MediaType.subtitle);
       expect(inferMediaType('pdf'), MediaType.document);
       expect(inferMediaType('xyz'), MediaType.unknown);

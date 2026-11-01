@@ -39,7 +39,9 @@ abstract final class TeigiRadii {
   static BorderRadius get card => BorderRadius.circular(lg);
   static BorderRadius get dialog => extraLarge;
   static BorderRadius get field => BorderRadius.circular(md);
+  static BorderRadius get cardLarge => BorderRadius.circular(xl);
   static BorderRadius get fileItem => BorderRadius.circular(lg);
+  static BorderRadius get badge => BorderRadius.circular(999);
 }
 
 /// Adaptive breakpoints. Content should not stretch past [maxContent].
@@ -67,4 +69,19 @@ abstract final class TeigiMotion {
 /// Default brand seed: Miku teal fallback.
 abstract final class TeigiColors {
   static const Color seed = Color(0xFF39C5BB);
+}
+
+/// Extension on [ColorScheme] for hierarchical surface containers and subtle borders
+/// calibrated directly from desktop reference client 0rhxPlayer-Desktop.
+extension TeigiColorSchemeExtension on ColorScheme {
+  /// Subtle border color for cards and containers
+  Color get borderSubtle => brightness == Brightness.dark
+      ? const Color(0xFF222524)
+      : const Color(0xFFE0E6E5);
+
+  /// Subtle glow / highlight for active, hovered, or selected borders
+  Color get borderGlow => primary.withValues(alpha: 0.35);
+
+  /// High-tier border for emphasis and active states
+  Color get borderHighlight => outlineVariant.withValues(alpha: 0.65);
 }

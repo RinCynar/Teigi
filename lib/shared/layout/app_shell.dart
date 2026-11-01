@@ -10,6 +10,7 @@ import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/queue_provider.dart';
 import 'package:teigi/providers/recent_presets_provider.dart';
 import 'package:teigi/shared/widgets/teigi_mark.dart';
+import 'package:teigi/providers/settings_provider.dart';
 import 'package:teigi/theme/tokens.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -67,6 +68,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     final size = TeigiBreakpoints.sizeOf(width);
     final scheme = Theme.of(context).colorScheme;
 
+    final settings = ref.watch(settingsProvider);
+    final extended = settings.sidebarExpanded && size != TeigiWindowSize.compact;
+
     final destinations = [
       _Dest(Icons.sync_alt, Icons.sync_alt, l10n.navConvert),
       _Dest(Icons.queue_outlined, Icons.queue, l10n.navQueue),
@@ -114,16 +118,14 @@ class _AppShellState extends ConsumerState<AppShell> {
                         RepaintBoundary(
                           child: NavigationRail(
                             selectedIndex: selected,
-                            extended: false,
-                            labelType: size == TeigiWindowSize.expanded
-                                ? NavigationRailLabelType.all
-                                : NavigationRailLabelType.selected,
+                            extended: extended,
+                            minWidth: 72,
+                            minExtendedWidth: 220,
+                            labelType: extended ? null : NavigationRailLabelType.none,
                             onDestinationSelected: (i) => context.go(AppShell.locations[i]),
-                            leading: const Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: TeigiSpacing.md,
-                              ),
-                              child: TeigiMark(size: 32),
+                            leading: _SidebarHeader(
+                              extended: extended,
+                              onToggle: () => ref.read(settingsProvider.notifier).toggleSidebar(),
                             ),
                             destinations: [
                               for (final d in destinations)
@@ -136,7 +138,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                           ),
                         ),
                       if (size != TeigiWindowSize.compact)
-                        const VerticalDivider(width: 1),
+                        VerticalDivider(width: 1, thickness: 1, color: scheme.borderSubtle),
                       Expanded(
                         child: RepaintBoundary(child: widget.child),
                       ),
@@ -223,4 +225,68 @@ class _Dest {
   final String label;
 
   const _Dest(this.icon, this.selectedIcon, this.label);
+}
+
+class _SidebarHeader extends StatelessWidget {
+  final bool extended;
+  final VoidCallback onToggle;
+
+  const _SidebarHeader({
+    required this.extended,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    if (!extended) {
+      return SizedBox(
+        width: 72,
+        height: 52,
+        child: Center(
+          child: IconButton(
+            key: const Key('sidebar-toggle-btn'),
+            icon: const Icon(Icons.menu_rounded, size: 22),
+            tooltip: 'Expand sidebar',
+            splashRadius: 20,
+            onPressed: onToggle,
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: 220,
+      height: 52,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16, right: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const TeigiMark(size: 24),
+            const SizedBox(width: 8),
+            Text(
+              'Teigi',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+            ),
+            const SizedBox(width: 16),
+            IconButton(
+              key: const Key('sidebar-toggle-btn'),
+              icon: const Icon(Icons.chevron_left_rounded, size: 20),
+              tooltip: 'Collapse sidebar',
+              splashRadius: 18,
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              onPressed: onToggle,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

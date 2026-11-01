@@ -220,6 +220,12 @@ class L10n {
   String get projectUrl =>
       _t({'zh': '项目地址', 'ja': 'プロジェクト', 'en': 'Repository'});
   String get website => _t({'zh': '项目网站', 'ja': 'ウェブサイト', 'en': 'Website'});
+  String get license => _t({'zh': '开源协议', 'ja': 'ライセンス', 'en': 'License'});
+  String get linkCopied => _t({
+        'zh': '链接已复制到剪贴板',
+        'ja': 'リンクをクリップボードにコピーしました',
+        'en': 'Link copied to clipboard',
+      });
   String get openSource =>
       _t({'zh': '开源声明', 'ja': 'オープンソース', 'en': 'Open source'});
   String get openSourceDesc => _t({

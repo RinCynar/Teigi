@@ -27,6 +27,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
+    final scheme = Theme.of(context).colorScheme;
     final tasks = ref.watch(queueProvider);
     final engine = ref.watch(conversionEngineProvider);
     final running = ref.watch(conversionRunningProvider);
@@ -42,59 +43,75 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
               Expanded(
                 child: Text(
                   l10n.navQueue,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ),
               if (running)
-                IconButton(
-                  tooltip: l10n.stop,
+                FilledButton.tonalIcon(
+                  style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   onPressed: engine.stop,
-                  icon: const Icon(Icons.stop_circle_outlined),
+                  icon: const Icon(Icons.stop_circle_outlined, size: 18),
+                  label: Text(l10n.stop),
                 ),
-              TextButton(
+              const SizedBox(width: TeigiSpacing.xs),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  side: BorderSide(color: scheme.borderSubtle, width: 1),
+                ),
                 onPressed: () =>
                     ref.read(queueProvider.notifier).clearCompleted(),
                 child: Text(l10n.clearCompleted),
               ),
             ],
           ),
-          const SizedBox(height: TeigiSpacing.sm),
+          const SizedBox(height: TeigiSpacing.md),
           Wrap(
             spacing: TeigiSpacing.xs,
             children: [
-              ChoiceChip(
-                label: Text(l10n.filterAll),
-                selected: _filter == _QueueFilter.all,
-                onSelected: (_) => setState(() => _filter = _QueueFilter.all),
-              ),
-              ChoiceChip(
-                label: Text(l10n.filterActive),
-                selected: _filter == _QueueFilter.active,
-                onSelected: (_) =>
-                    setState(() => _filter = _QueueFilter.active),
-              ),
-              ChoiceChip(
-                label: Text(l10n.completed),
-                selected: _filter == _QueueFilter.completed,
-                onSelected: (_) =>
-                    setState(() => _filter = _QueueFilter.completed),
-              ),
-              ChoiceChip(
-                label: Text(l10n.failed),
-                selected: _filter == _QueueFilter.failed,
-                onSelected: (_) =>
-                    setState(() => _filter = _QueueFilter.failed),
-              ),
+              _buildFilterChip(l10n.filterAll, _QueueFilter.all, scheme),
+              _buildFilterChip(l10n.filterActive, _QueueFilter.active, scheme),
+              _buildFilterChip(l10n.completed, _QueueFilter.completed, scheme),
+              _buildFilterChip(l10n.failed, _QueueFilter.failed, scheme),
             ],
           ),
           const SizedBox(height: TeigiSpacing.md),
           Expanded(
             child: visible.isEmpty
                 ? Center(
-                    child: Text(
-                      l10n.queueIdleHint,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      padding: const EdgeInsets.all(TeigiSpacing.xxl),
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerLow,
+                        borderRadius: TeigiRadii.cardLarge,
+                        border: Border.all(color: scheme.borderSubtle, width: 1.5),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.inbox_outlined,
+                            size: 44,
+                            color: scheme.primary.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(height: TeigiSpacing.md),
+                          Text(
+                            l10n.queueIdleHint,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
                       ),
                     ),
                   )
@@ -120,6 +137,22 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
     );
   }
 
+  Widget _buildFilterChip(String label, _QueueFilter filter, ColorScheme scheme) {
+    final isSelected = _filter == filter;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      selectedColor: scheme.primary.withValues(alpha: 0.16),
+      backgroundColor: scheme.surfaceContainerLow,
+      side: BorderSide(
+        color: isSelected ? scheme.primary : scheme.borderSubtle,
+        width: isSelected ? 1.5 : 1.0,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+      onSelected: (_) => setState(() => _filter = filter),
+    );
+  }
+
   bool _matches(ConversionTask t) {
     return switch (_filter) {
       _QueueFilter.all => true,
@@ -137,13 +170,39 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
   ) {
     final items = all.where((t) => t.status == status).toList();
     if (items.isEmpty) return const [];
+    final scheme = Theme.of(context).colorScheme;
     return [
       Padding(
         padding: const EdgeInsets.only(
-          top: TeigiSpacing.sm,
+          top: TeigiSpacing.md,
           bottom: TeigiSpacing.xs,
         ),
-        child: Text(title, style: Theme.of(context).textTheme.labelLarge),
+        child: Row(
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: scheme.onSurface,
+                  ),
+            ),
+            const SizedBox(width: TeigiSpacing.xs),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '${items.length}',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontSize: 10,
+                    ),
+              ),
+            ),
+          ],
+        ),
       ),
       for (final t in items) _JobTile(task: t),
     ];
@@ -163,90 +222,148 @@ class _JobTile extends ConsumerWidget {
         ? task.source.name
         : '${task.source.name} → ${task.targetFormat!.toUpperCase()}';
 
+    final Color statusColor;
+    final IconData statusIcon;
+    switch (task.status) {
+      case TaskStatus.running:
+        statusColor = scheme.primary;
+        statusIcon = Icons.sync_rounded;
+      case TaskStatus.completed:
+        statusColor = scheme.primary;
+        statusIcon = Icons.check_circle_rounded;
+      case TaskStatus.failed:
+        statusColor = scheme.error;
+        statusIcon = Icons.error_outline_rounded;
+      case TaskStatus.queued:
+        statusColor = scheme.outlineVariant;
+        statusIcon = Icons.schedule_rounded;
+      case TaskStatus.canceled:
+        statusColor = scheme.onSurfaceVariant.withValues(alpha: 0.5);
+        statusIcon = Icons.cancel_outlined;
+      default:
+        statusColor = scheme.outlineVariant;
+        statusIcon = Icons.help_outline_rounded;
+    }
+
     return RepaintBoundary(
-      child: Material(
-        color: scheme.surface,
-        child: InkWell(
-        onSecondaryTapDown: (d) => _menu(context, ref, d.globalPosition),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: TeigiSpacing.sm),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      pair,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: TeigiSpacing.sm),
+        child: Container(
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerLow,
+            borderRadius: TeigiRadii.card,
+            border: Border.all(
+              color: task.isRunning
+                  ? scheme.primary.withValues(alpha: 0.5)
+                  : task.status == TaskStatus.failed
+                      ? scheme.error.withValues(alpha: 0.5)
+                      : scheme.borderSubtle,
+              width: task.isRunning ? 1.5 : 1.0,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: TeigiRadii.card,
+            child: InkWell(
+              borderRadius: TeigiRadii.card,
+              onSecondaryTapDown: (d) => _menu(context, ref, d.globalPosition),
+              child: Padding(
+                padding: const EdgeInsets.all(TeigiSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: statusColor.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Icon(statusIcon, size: 18, color: statusColor),
+                        ),
+                        const SizedBox(width: TeigiSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                pair,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                              if (task.status == TaskStatus.failed && task.error != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  task.error!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: scheme.error,
+                                      ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        if (task.status == TaskStatus.failed)
+                          TextButton(
+                            onPressed: () => _retry(ref),
+                            child: Text(l10n.retry),
+                          ),
+                        IconButton(
+                          tooltip: l10n.menu,
+                          icon: const Icon(Icons.more_vert_rounded),
+                          onPressed: () => _menu(
+                            context,
+                            ref,
+                            Offset(MediaQuery.sizeOf(context).width - 40, 80),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  if (task.status == TaskStatus.failed)
-                    TextButton(
-                      onPressed: () => _retry(ref),
-                      child: Text(l10n.retry),
-                    ),
-                  IconButton(
-                    tooltip: l10n.menu,
-                    icon: const Icon(Icons.more_vert),
-                    onPressed: () => _menu(
-                      context,
-                      ref,
-                      Offset(MediaQuery.sizeOf(context).width - 40, 80),
-                    ),
-                  ),
-                ],
+                    if (task.isRunning) ...[
+                      const SizedBox(height: TeigiSpacing.sm),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: task.progress > 0 ? task.progress : null,
+                          minHeight: 4,
+                          backgroundColor: scheme.surfaceContainerHighest,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        (task.progress > 0
+                                ? '${(task.progress * 100).toStringAsFixed(0)}%'
+                                : l10n.converting) +
+                            (task.speedX > 0
+                                ? ' · ${task.speedX.toStringAsFixed(1)}x'
+                                : '') +
+                            (task.remaining != null
+                                ? ' · ETA ${l10n.formatDuration(task.remaining!)}'
+                                : ''),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-              if (task.isRunning) ...[
-                const SizedBox(height: TeigiSpacing.xs),
-                LinearProgressIndicator(
-                  value: task.progress > 0 ? task.progress : null,
-                  minHeight: 4,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  (task.progress > 0
-                          ? '${(task.progress * 100).toStringAsFixed(0)}%'
-                          : l10n.converting) +
-                      (task.speedX > 0
-                          ? ' · ${task.speedX.toStringAsFixed(1)}x'
-                          : '') +
-                      (task.remaining != null
-                          ? ' · ETA ${l10n.formatDuration(task.remaining!)}'
-                          : ''),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-              if (task.status == TaskStatus.failed && task.error != null)
-                Text(
-                  task.error!,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: scheme.error),
-                ),
-              if (task.status == TaskStatus.completed)
-                Text(
-                  l10n.completed,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: scheme.primary),
-                ),
-              if (task.status == TaskStatus.canceled)
-                Text(
-                  l10n.canceled,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-                ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   /// 重试失败任务；队列空闲（引擎已复位）时需显式重启调度。

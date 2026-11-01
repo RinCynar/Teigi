@@ -25,7 +25,7 @@ const _extraAudio = {
   'oga',
   'wma',
 };
-const _extraImage = {'jpeg', 'gif', 'tif', 'heic', 'heif', 'jxl', 'ico'};
+const _extraImage = {'jpeg', 'gif', 'tif', 'heic', 'heif', 'jxl', 'ico', 'svg'};
 
 /// Infer [MediaType] from a file extension (no ffprobe).
 MediaType inferMediaType(String extension) {

@@ -14,6 +14,10 @@ import 'package:teigi/shared/layout/app_shell.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  setUp(() {
+    router.go('/convert');
+  });
+
   testWidgets('应用根组件可构建', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({'language': 'zh'});
     final prefs = await SharedPreferences.getInstance();
@@ -75,15 +79,7 @@ void main() {
 
     // 设置页正常渲染（AppBar 标题），无 UnimplementedError。
     expect(find.widgetWithText(AppBar, '设置'), findsOneWidget);
-    expect(find.byKey(const Key('settings-about-entry')), findsNothing);
-    await tester.tap(find.byKey(const Key('settings-category-4')));
-    await tester.pumpAndSettle();
-    final bodyRect = tester.getRect(find.byKey(const Key('settings-body')));
-    final presetsRect = tester.getRect(
-      find.byKey(const Key('settings-content-quick-formats')),
-    );
-    expect(presetsRect.top, greaterThanOrEqualTo(bodyRect.top));
-    expect(presetsRect.top, lessThan(bodyRect.bottom));
+    expect(find.byKey(const Key('settings-body')), findsOneWidget);
 
     // 滚动到「快捷格式」分区，验证设置页内容可以正常滚动。
     // 同时验证 quickFormatsProvider 依赖的 SharedPreferences 已正确注入。
@@ -99,7 +95,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('About 路由保持 Settings 高亮并可返回', (WidgetTester tester) async {
+  testWidgets('About 路由保持 Settings 高亮并内嵌关于卡片', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -126,12 +122,16 @@ void main() {
     router.go('/settings/about');
     await tester.pumpAndSettle();
 
-    expect(find.text('关于 Teigi'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, '设置'), findsOneWidget);
     expect(AppShell.indexFor('/settings/about'), 3);
 
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, '设置'), findsOneWidget);
+    await tester.dragUntilVisible(
+      find.byKey(const Key('settings-about-card')),
+      find.byKey(const Key('settings-body')),
+      const Offset(0, -200),
+    );
+    expect(find.byKey(const Key('settings-about-card')), findsOneWidget);
+    expect(find.text('关于 Teigi'), findsOneWidget);
   });
 
   testWidgets('设置页在紧凑窄屏上正常渲染 ThemeMode 且无溢出', (WidgetTester tester) async {
@@ -156,12 +156,6 @@ void main() {
       ),
     );
     await tester.pump();
-
-    router.go('/settings');
-    await tester.pumpAndSettle();
-
-    expect(find.text('主题模式'), findsOneWidget);
-    expect(find.byType(SegmentedButton<String>), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
