@@ -9,6 +9,8 @@ import 'package:teigi/core/ffmpeg/engine/ffmpeg_engine.dart';
 import 'package:teigi/core/models/app_settings.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
 import 'package:teigi/providers/settings_provider.dart';
+import 'package:teigi/shared/layout/desktop_navigation_rail.dart';
+import 'package:teigi/shared/widgets/teigi_mark.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -50,14 +52,14 @@ void main() {
     await pumpApp(tester, const Size(400, 800));
 
     expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.byType(NavigationRail), findsNothing);
+    expect(find.byType(DesktopNavigationRail), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('平板断点（medium）使用侧边导航栏', (tester) async {
     await pumpApp(tester, const Size(800, 900));
 
-    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(DesktopNavigationRail), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -65,7 +67,7 @@ void main() {
   testWidgets('宽屏断点（expanded）使用侧边导航栏', (tester) async {
     await pumpApp(tester, const Size(1400, 900));
 
-    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(DesktopNavigationRail), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -101,19 +103,20 @@ void main() {
 
     expect(find.byKey(const Key('sidebar-toggle-btn')), findsOneWidget);
     expect(find.text('Teigi'), findsWidgets);
+    expect(find.byType(TeigiMark), findsNothing);
 
     // 点击折叠按钮
     await tester.tap(find.byKey(const Key('sidebar-toggle-btn')));
     await tester.pumpAndSettle();
 
-    final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+    final rail = tester.widget<DesktopNavigationRail>(find.byType(DesktopNavigationRail));
     expect(rail.extended, isFalse);
 
     // 再次点击展开按钮
     await tester.tap(find.byKey(const Key('sidebar-toggle-btn')));
     await tester.pumpAndSettle();
 
-    final railExpanded = tester.widget<NavigationRail>(find.byType(NavigationRail));
+    final railExpanded = tester.widget<DesktopNavigationRail>(find.byType(DesktopNavigationRail));
     expect(railExpanded.extended, isTrue);
   });
 }
