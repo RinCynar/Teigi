@@ -3,12 +3,36 @@
   "release": {
     "tagName": "v1.0.5",
     "name": "v1.0.5",
-    "body": "**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5",
+    "body": "**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5\n\n**Full Changelog**: https://github.com/RinCynar/Teigi/compare/v1.0.4...v1.0.5",
     "createdAt": "2026-11-14T20:20:28Z",
     "publishedAt": "2026-11-14T19:48:05Z",
     "htmlUrl": "https://github.com/RinCynar/Teigi/releases/tag/v1.0.5",
     "prerelease": false,
     "assets": [
+      {
+        "name": "teigi-android-arm64-v8a.apk",
+        "size": 75172781,
+        "contentType": "application/vnd.android.package-archive",
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/teigi-android-arm64-v8a.apk"
+      },
+      {
+        "name": "teigi-android-armeabi-v7a.apk",
+        "size": 96054223,
+        "contentType": "application/vnd.android.package-archive",
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/teigi-android-armeabi-v7a.apk"
+      },
+      {
+        "name": "teigi-android-universal.apk",
+        "size": 193385899,
+        "contentType": "application/vnd.android.package-archive",
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/teigi-android-universal.apk"
+      },
+      {
+        "name": "teigi-android-x86_64.apk",
+        "size": 79203011,
+        "contentType": "application/vnd.android.package-archive",
+        "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/teigi-android-x86_64.apk"
+      },
       {
         "name": "teigi-linux-x64.AppImage",
         "size": 46299640,
@@ -17,55 +41,55 @@
       },
       {
         "name": "teigi-linux-x64.tar.gz",
-        "size": 47449112,
+        "size": 47448996,
         "contentType": "application/gzip",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/teigi-linux-x64.tar.gz"
       },
       {
         "name": "teigi-macos-universal.dmg",
-        "size": 85480217,
+        "size": 85487385,
         "contentType": "application/x-apple-diskimage",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/teigi-macos-universal.dmg"
       },
       {
         "name": "teigi-macos-universal.zip",
-        "size": 79564917,
+        "size": 79564915,
         "contentType": "application/zip",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/teigi-macos-universal.zip"
       },
       {
         "name": "windows-arm64-ffmpeg-release.zip",
-        "size": 78271495,
+        "size": 78271499,
         "contentType": "application/zip",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/windows-arm64-ffmpeg-release.zip"
       },
       {
         "name": "windows-arm64-installer.exe",
-        "size": 60996976,
+        "size": 60994346,
         "contentType": "application/x-msdos-program",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/windows-arm64-installer.exe"
       },
       {
         "name": "windows-arm64-release.zip",
-        "size": 78246300,
+        "size": 78246304,
         "contentType": "application/zip",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/windows-arm64-release.zip"
       },
       {
         "name": "windows-x64-ffmpeg-release.zip",
-        "size": 78271507,
+        "size": 78271476,
         "contentType": "application/zip",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/windows-x64-ffmpeg-release.zip"
       },
       {
         "name": "windows-x64-installer.exe",
-        "size": 60991097,
+        "size": 60992658,
         "contentType": "application/x-msdos-program",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/windows-x64-installer.exe"
       },
       {
         "name": "windows-x64-release.zip",
-        "size": 78246312,
+        "size": 78246280,
         "contentType": "application/zip",
         "browserDownloadUrl": "https://github.com/RinCynar/Teigi/releases/download/v1.0.5/windows-x64-release.zip"
       }
