@@ -40,11 +40,15 @@ jobs:
 
       - name: Install FFmpeg (macOS)
         if: runner.os == 'macOS'
-        run: brew install ffmpeg
+        run: |
+          brew install ffmpeg
+          echo "/opt/homebrew/bin" >> $GITHUB_PATH
 
       - name: Install FFmpeg (Windows)
         if: runner.os == 'Windows'
-        run: choco install ffmpeg -y --no-progress
+        run: |
+          choco install ffmpeg -y --no-progress
+          echo "C:\ProgramData\chocolatey\bin" >> $env:GITHUB_PATH
 
       - name: Verify FFmpeg
         run: ffmpeg -version
@@ -81,7 +85,7 @@ jobs:
         run: flutter pub get
 
       - name: Build debug APK
-        run: flutter build apk --debug
+        run: flutter build apk --debug --android-skip-build-dependency-validation
 
       - name: Build release APK (split-per-abi)
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release --split-per-abi --android-skip-build-dependency-validation

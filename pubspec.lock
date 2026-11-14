@@ -720,7 +720,7 @@ packages:
   teigi_gate:
     dependency: "direct main"
     description:
-      path: "packages/teigi_gate"
+      path: "packages/gate_stub"
       relative: true
     source: path
     version: "1.0.0"

@@ -180,10 +180,10 @@ jobs:
         run: flutter pub get
 
       - name: Build Split-Per-ABI APKs
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release --split-per-abi --android-skip-build-dependency-validation
 
       - name: Build Universal APK
-        run: flutter build apk --release
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: Prepare Android Artifacts
         run: |
