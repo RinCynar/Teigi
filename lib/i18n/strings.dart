@@ -45,9 +45,48 @@ class L10n {
   // ---- 应用/导航 ----
   String get appTitle => _t({'zh': 'Teigi', 'ja': 'Teigi', 'en': 'Teigi'});
   String get navConvert => _t({'zh': '转换', 'ja': '変換', 'en': 'Convert'});
+  String get navTools => _t({'zh': '工具箱', 'ja': 'ツール', 'en': 'Tools'});
   String get navQueue => _t({'zh': '队列', 'ja': 'キュー', 'en': 'Queue'});
   String get navPresets => _t({'zh': '预设', 'ja': 'プリセット', 'en': 'Presets'});
   String get navSettings => _t({'zh': '设置', 'ja': '設定', 'en': 'Settings'});
+  String get tabWorkspace => _t({'zh': '工作台', 'ja': 'ワークスペース', 'en': 'Workspace'});
+  String get applyPreset => _t({'zh': '应用预设', 'ja': 'プリセット適用', 'en': 'Apply Preset'});
+  String get allPresets => _t({'zh': '全部预设', 'ja': 'すべてのプリセット', 'en': 'All Presets'});
+  String get toolsTitle => _t({'zh': '工具箱', 'ja': 'ツール', 'en': 'Tools'});
+  String get toolNcmTitle => _t({'zh': 'NCM 解密', 'ja': 'NCM 復号', 'en': 'NCM Decryptor'});
+  String get toolNcmDesc => _t({
+    'zh': '解密网易云音乐加密音频，还原为标准 MP3 / FLAC',
+    'ja': 'NetEase 音楽の暗号化を解除し、標準 MP3 / FLAC に復元',
+    'en': 'Decrypt NetEase encrypted audio to standard MP3 / FLAC',
+  });
+  String get audioTool => _t({'zh': '音频工具', 'ja': 'オーディオ', 'en': 'Audio Tool'});
+  String get addNcmFiles => _t({'zh': '添加 NCM 文件', 'ja': 'NCM ファイルを追加', 'en': 'Add NCM Files'});
+  String get dropNcmHint => _t({
+    'zh': '将 .ncm 文件拖拽至此，或点击选取',
+    'ja': '.ncm ファイルをここにドラッグ、または選択',
+    'en': 'Drop .ncm files here, or click to browse',
+  });
+  String get startDecrypt => _t({'zh': '开始解密', 'ja': '復号開始', 'en': 'Start Decrypt'});
+  String get decrypting => _t({'zh': '正在解密', 'ja': '復号中', 'en': 'Decrypting'});
+  String get decryptCompleted => _t({'zh': '解密完成', 'ja': '復号完了', 'en': 'Decrypted'});
+  String get decryptFailed => _t({'zh': '解密失败', 'ja': '復号失敗', 'en': 'Failed'});
+  String get sourceDir => _t({
+    'zh': '与源文件同目录',
+    'ja': '元のフォルダーと同じ',
+    'en': 'Same as source directory',
+  });
+  String get changeDir => _t({'zh': '更改目录', 'ja': '変更', 'en': 'Change'});
+  String get ncmEmptyHint => _t({
+    'zh': '暂无待处理文件，可直接拖入 .ncm 音频',
+    'ja': 'ファイルがありません。.ncm をドラッグしてください',
+    'en': 'No files pending. Drag and drop .ncm files to begin',
+  });
+  String get viewQueue => _t({'zh': '查看队列', 'ja': 'キューを表示', 'en': 'View Queue'});
+  String get convertingBackground => _t({
+    'zh': '正在后台转换任务',
+    'ja': 'バックグラウンドで変換中',
+    'en': 'Converting in background',
+  });
   String get menu => _t({'zh': '菜单', 'ja': 'メニュー', 'en': 'Menu'});
   String get convertTitle => _t({'zh': '转换', 'ja': '変換', 'en': 'Convert'});
   String get convertSubtitle =>

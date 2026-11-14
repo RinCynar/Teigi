@@ -79,16 +79,10 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    // 切换至队列页
-    await tester.tap(find.text('队列'));
+    // 切换至工具箱页
+    await tester.tap(find.text('工具箱'));
     await tester.pumpAndSettle();
-    expect(find.text('队列'), findsWidgets);
-    expect(tester.takeException(), isNull);
-
-    // 切换至预设页
-    await tester.tap(find.text('预设'));
-    await tester.pumpAndSettle();
-    expect(find.text('预设'), findsWidgets);
+    expect(find.text('工具箱'), findsWidgets);
     expect(tester.takeException(), isNull);
 
     // 切换至设置页

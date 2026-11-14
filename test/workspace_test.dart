@@ -12,11 +12,10 @@ import 'package:teigi/shared/layout/app_shell.dart';
 void main() {
   group('AppShell.indexFor', () {
     test('About is a Settings child', () {
-      expect(AppShell.indexFor('/settings'), 3);
-      expect(AppShell.indexFor('/settings/about'), 3);
+      expect(AppShell.indexFor('/settings'), 2);
+      expect(AppShell.indexFor('/settings/about'), 2);
       expect(AppShell.indexFor('/convert'), 0);
-      expect(AppShell.indexFor('/queue'), 1);
-      expect(AppShell.indexFor('/presets'), 2);
+      expect(AppShell.indexFor('/tools'), 1);
     });
   });
 

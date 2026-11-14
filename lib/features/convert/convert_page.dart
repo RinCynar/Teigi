@@ -11,6 +11,8 @@ import 'package:teigi/features/convert/batch_config_sheet.dart';
 import 'package:teigi/features/convert/config_sheet.dart';
 import 'package:teigi/features/convert/media_import.dart';
 import 'package:teigi/features/format_config/format_picker.dart';
+import 'package:teigi/features/presets/presets_sheet.dart';
+import 'package:teigi/features/queue/queue_panel.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/conversion_engine.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
@@ -43,7 +45,7 @@ class ConvertPage extends ConsumerStatefulWidget {
   /// 启动转换：存在未指定目标格式的任务时先弹窗确认。
   ///
   /// 供转换页按钮与全局 Ctrl+Enter 快捷键共用，保证两条路径行为一致。
-  static Future<void> startConversion(BuildContext context, WidgetRef ref) async {
+  static Future<bool> startConversion(BuildContext context, WidgetRef ref) async {
     final l10n = ref.read(l10nProvider);
     final missing = [
       for (final t in ref.read(queueProvider))
@@ -53,7 +55,7 @@ class ConvertPage extends ConsumerStatefulWidget {
     ].length;
     if (missing == 0) {
       ref.read(conversionEngineProvider).start();
-      return;
+      return true;
     }
     final choice = await showDialog<String>(
       context: context,
@@ -74,16 +76,22 @@ class ConvertPage extends ConsumerStatefulWidget {
     );
     if (choice == 'ready') {
       ref.read(conversionEngineProvider).start();
+      return true;
     }
+    return false;
   }
 }
 
+enum _ConvertTab { workspace, queue }
+
 class _ConvertPageState extends ConsumerState<ConvertPage> {
+  _ConvertTab _currentTab = _ConvertTab.workspace;
   String? _configuringId;
   String? _anchorId;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final tasks = ref.watch(queueProvider);
     final workspace = [
       for (final t in tasks)
@@ -94,6 +102,7 @@ class _ConvertPageState extends ConsumerState<ConvertPage> {
     final width = MediaQuery.sizeOf(context).width;
     final size = TeigiBreakpoints.sizeOf(width);
     ref.watch(ffmpegStatusProvider);
+    final queueCount = tasks.length - workspace.length;
 
     ConversionTask? configuring;
     if (_configuringId != null) {
@@ -110,22 +119,107 @@ class _ConvertPageState extends ConsumerState<ConvertPage> {
           size == TeigiWindowSize.compact ? TeigiSpacing.md : TeigiSpacing.page,
           TeigiSpacing.page,
         ),
-      child: workspace.isEmpty
-          ? _EmptyWorkspace(
-              onAddFiles: () => _addFromPicker(),
-              onPreset: _onEmptyPreset,
-            )
-          : _FilesWorkspace(
-              tasks: workspace,
-              running: running,
-              selected: selected,
-              configuringId: _configuringId,
-              onAddFiles: () => _addFromPicker(),
-              onConfigure: (task) => _openConfig(task, size),
-              onStart: () => ConvertPage.startConversion(context, ref),
-              onClick: (task, ctrl, shift) => _click(task, workspace, ctrl, shift),
-              onContext: (task, pos) => _contextMenu(task, pos, size),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                SegmentedButton<_ConvertTab>(
+                  segments: [
+                    ButtonSegment<_ConvertTab>(
+                      value: _ConvertTab.workspace,
+                      icon: const Icon(Icons.tune_rounded, size: 18),
+                      label: Text(
+                        workspace.isEmpty
+                            ? l10n.tabWorkspace
+                            : '${l10n.tabWorkspace} (${workspace.length})',
+                      ),
+                    ),
+                    ButtonSegment<_ConvertTab>(
+                      value: _ConvertTab.queue,
+                      icon: Icon(
+                        running
+                            ? Icons.hourglass_top_rounded
+                            : Icons.queue_outlined,
+                        size: 18,
+                      ),
+                      label: Text(
+                        queueCount == 0
+                            ? l10n.navQueue
+                            : '${l10n.navQueue} ($queueCount)',
+                      ),
+                    ),
+                  ],
+                  selected: {_currentTab},
+                  onSelectionChanged: (set) =>
+                      setState(() => _currentTab = set.first),
+                ),
+                const Spacer(),
+                if (_currentTab == _ConvertTab.workspace)
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.borderSubtle,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                    ),
+                    onPressed: () => PresetsSheet.show(
+                      context,
+                      targetTaskIds: selected.isNotEmpty ? selected : null,
+                    ),
+                    icon: const Icon(Icons.bookmark_outline_rounded, size: 16),
+                    label: Text(l10n.allPresets),
+                  ),
+              ],
             ),
+            const SizedBox(height: TeigiSpacing.md),
+            if (running && _currentTab == _ConvertTab.workspace) ...[
+              _RunningIndicatorBanner(
+                onOpenQueue: () =>
+                    setState(() => _currentTab = _ConvertTab.queue),
+              ),
+              const SizedBox(height: TeigiSpacing.sm),
+            ],
+            Expanded(
+              child: _currentTab == _ConvertTab.queue
+                  ? QueuePanel(
+                      embedded: true,
+                      onSwitchToWorkspace: () =>
+                          setState(() => _currentTab = _ConvertTab.workspace),
+                    )
+                  : (workspace.isEmpty
+                      ? _EmptyWorkspace(
+                          onAddFiles: () => _addFromPicker(),
+                          onPreset: _onEmptyPreset,
+                        )
+                      : _FilesWorkspace(
+                          tasks: workspace,
+                          running: running,
+                          selected: selected,
+                          configuringId: _configuringId,
+                          onAddFiles: () => _addFromPicker(),
+                          onConfigure: (task) => _openConfig(task, size),
+                          onStart: () async {
+                            final started =
+                                await ConvertPage.startConversion(context, ref);
+                            if (started && mounted) {
+                              setState(() => _currentTab = _ConvertTab.queue);
+                            }
+                          },
+                          onClick: (task, ctrl, shift) =>
+                              _click(task, workspace, ctrl, shift),
+                          onContext: (task, pos) =>
+                              _contextMenu(task, pos, size),
+                        )),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -368,6 +462,12 @@ class _EmptyWorkspace extends ConsumerWidget {
                   ),
                 ),
               ],
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () => PresetsSheet.show(context),
+                icon: const Icon(Icons.bookmark_outline_rounded, size: 16),
+                label: Text(l10n.allPresets),
+              ),
             ],
           ),
 
@@ -906,6 +1006,10 @@ class _SelectionBar extends ConsumerWidget {
         child: Text(l10n.selectAll),
       ),
       TextButton(
+        onPressed: () => PresetsSheet.show(context, targetTaskIds: selected),
+        child: Text(l10n.applyPreset),
+      ),
+      TextButton(
         onPressed: () async {
           final fmt = await FormatPicker.show(
             context,
@@ -991,4 +1095,55 @@ String _metaFor(ConversionTask task) {
     task.source.extension.toUpperCase(),
   ];
   return parts.join(' · ');
+}
+
+class _RunningIndicatorBanner extends ConsumerWidget {
+  final VoidCallback onOpenQueue;
+
+  const _RunningIndicatorBanner({required this.onOpenQueue});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scheme.primary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: scheme.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              l10n.convertingBackground,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: scheme.onPrimaryContainer,
+                  ),
+            ),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+            onPressed: onOpenQueue,
+            child: Text(l10n.viewQueue),
+          ),
+        ],
+      ),
+    );
+  }
 }

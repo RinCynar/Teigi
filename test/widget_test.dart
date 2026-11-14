@@ -123,7 +123,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(AppBar, '设置'), findsOneWidget);
-    expect(AppShell.indexFor('/settings/about'), 3);
+    expect(AppShell.indexFor('/settings/about'), 2);
 
     await tester.dragUntilVisible(
       find.byKey(const Key('settings-about-card')),

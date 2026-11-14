@@ -18,13 +18,12 @@ class AppShell extends ConsumerStatefulWidget {
 
   const AppShell({super.key, required this.child});
 
-  static const locations = ['/convert', '/queue', '/presets', '/settings'];
+  static const locations = ['/convert', '/tools', '/settings'];
 
   /// Public so tests can assert About stays on Settings.
   static int indexFor(String path) {
-    if (path.startsWith('/settings')) return 3;
-    if (path.startsWith('/queue')) return 1;
-    if (path.startsWith('/presets')) return 2;
+    if (path.startsWith('/settings')) return 2;
+    if (path.startsWith('/tools')) return 1;
     if (path.startsWith('/convert')) return 0;
     return 0;
   }
@@ -73,8 +72,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final destinations = [
       _Dest(Icons.sync_alt, Icons.sync_alt, l10n.navConvert),
-      _Dest(Icons.queue_outlined, Icons.queue, l10n.navQueue),
-      _Dest(Icons.bookmark_outline, Icons.bookmark, l10n.navPresets),
+      _Dest(Icons.grid_view_outlined, Icons.grid_view, l10n.navTools),
       _Dest(Icons.settings_outlined, Icons.settings, l10n.navSettings),
     ];
 

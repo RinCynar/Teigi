@@ -15,7 +15,14 @@ enum _QueueFilter { all, active, completed, failed }
 
 /// Job manager: status and history. Not a second Convert workspace.
 class QueuePanel extends ConsumerStatefulWidget {
-  const QueuePanel({super.key});
+  final VoidCallback? onSwitchToWorkspace;
+  final bool embedded;
+
+  const QueuePanel({
+    super.key,
+    this.onSwitchToWorkspace,
+    this.embedded = false,
+  });
 
   @override
   ConsumerState<QueuePanel> createState() => _QueuePanelState();
@@ -33,107 +40,121 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
     final running = ref.watch(conversionRunningProvider);
     final visible = tasks.where(_matches).toList();
 
-    return ContentConstraint(
-      padding: const EdgeInsets.all(TeigiSpacing.page),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.navQueue,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ),
-              if (running)
-                FilledButton.tonalIcon(
-                  style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+    final body = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.navQueue,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                  ),
-                  onPressed: engine.stop,
-                  icon: const Icon(Icons.stop_circle_outlined, size: 18),
-                  label: Text(l10n.stop),
-                ),
-              const SizedBox(width: TeigiSpacing.xs),
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
+              ),
+            ),
+            if (running)
+              FilledButton.tonalIcon(
+                style: FilledButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  side: BorderSide(color: scheme.borderSubtle, width: 1),
                 ),
-                onPressed: () =>
-                    ref.read(queueProvider.notifier).clearCompleted(),
-                child: Text(l10n.clearCompleted),
+                onPressed: engine.stop,
+                icon: const Icon(Icons.stop_circle_outlined, size: 18),
+                label: Text(l10n.stop),
               ),
-            ],
-          ),
-          const SizedBox(height: TeigiSpacing.md),
-          Wrap(
-            spacing: TeigiSpacing.xs,
-            children: [
-              _buildFilterChip(l10n.filterAll, _QueueFilter.all, scheme),
-              _buildFilterChip(l10n.filterActive, _QueueFilter.active, scheme),
-              _buildFilterChip(l10n.completed, _QueueFilter.completed, scheme),
-              _buildFilterChip(l10n.failed, _QueueFilter.failed, scheme),
-            ],
-          ),
-          const SizedBox(height: TeigiSpacing.md),
-          Expanded(
-            child: visible.isEmpty
-                ? Center(
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 400),
-                      padding: const EdgeInsets.all(TeigiSpacing.xxl),
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerLow,
-                        borderRadius: TeigiRadii.cardLarge,
-                        border: Border.all(color: scheme.borderSubtle, width: 1.5),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.inbox_outlined,
-                            size: 44,
-                            color: scheme.primary.withValues(alpha: 0.5),
-                          ),
+            const SizedBox(width: TeigiSpacing.xs),
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                side: BorderSide(color: scheme.borderSubtle, width: 1),
+              ),
+              onPressed: () =>
+                  ref.read(queueProvider.notifier).clearCompleted(),
+              child: Text(l10n.clearCompleted),
+            ),
+          ],
+        ),
+        const SizedBox(height: TeigiSpacing.md),
+        Wrap(
+          spacing: TeigiSpacing.xs,
+          children: [
+            _buildFilterChip(l10n.filterAll, _QueueFilter.all, scheme),
+            _buildFilterChip(l10n.filterActive, _QueueFilter.active, scheme),
+            _buildFilterChip(l10n.completed, _QueueFilter.completed, scheme),
+            _buildFilterChip(l10n.failed, _QueueFilter.failed, scheme),
+          ],
+        ),
+        const SizedBox(height: TeigiSpacing.md),
+        Expanded(
+          child: visible.isEmpty
+              ? Center(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    padding: const EdgeInsets.all(TeigiSpacing.xxl),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerLow,
+                      borderRadius: TeigiRadii.cardLarge,
+                      border: Border.all(color: scheme.borderSubtle, width: 1.5),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.inbox_outlined,
+                          size: 44,
+                          color: scheme.primary.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: TeigiSpacing.md),
+                        Text(
+                          l10n.queueIdleHint,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                        ),
+                        if (widget.onSwitchToWorkspace != null) ...[
                           const SizedBox(height: TeigiSpacing.md),
-                          Text(
-                            l10n.queueIdleHint,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                ),
+                          FilledButton.tonalIcon(
+                            onPressed: widget.onSwitchToWorkspace,
+                            icon: const Icon(Icons.add_rounded, size: 18),
+                            label: Text(l10n.addFiles),
                           ),
                         ],
-                      ),
+                      ],
                     ),
-                  )
-                : ListView(
-                    children: [
-                      if (_filter == _QueueFilter.all) ...[
-                        ..._group(l10n.converting, visible, TaskStatus.running),
-                        ..._group(l10n.queued, visible, TaskStatus.queued),
-                        ..._group(
-                          l10n.completed,
-                          visible,
-                          TaskStatus.completed,
-                        ),
-                        ..._group(l10n.failed, visible, TaskStatus.failed),
-                        ..._group(l10n.canceled, visible, TaskStatus.canceled),
-                      ] else
-                        for (final t in visible) _JobTile(task: t),
-                    ],
                   ),
-          ),
-        ],
-      ),
+                )
+              : ListView(
+                  children: [
+                    if (_filter == _QueueFilter.all) ...[
+                      ..._group(l10n.converting, visible, TaskStatus.running),
+                      ..._group(l10n.queued, visible, TaskStatus.queued),
+                      ..._group(
+                        l10n.completed,
+                        visible,
+                        TaskStatus.completed,
+                      ),
+                      ..._group(l10n.failed, visible, TaskStatus.failed),
+                      ..._group(l10n.canceled, visible, TaskStatus.canceled),
+                    ] else
+                      for (final t in visible) _JobTile(task: t),
+                  ],
+                ),
+        ),
+      ],
+    );
+
+    if (widget.embedded) {
+      return body;
+    }
+
+    return ContentConstraint(
+      padding: const EdgeInsets.all(TeigiSpacing.page),
+      child: body,
     );
   }
 

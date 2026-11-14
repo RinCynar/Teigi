@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:teigi/features/convert/convert_page.dart';
-import 'package:teigi/features/presets/presets_page.dart';
-import 'package:teigi/features/queue/queue_panel.dart';
 import 'package:teigi/features/settings/settings_page.dart';
+import 'package:teigi/features/tools/ncm_decrypt_view.dart';
+import 'package:teigi/features/tools/tools_page.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/settings_provider.dart';
 import 'package:teigi/shared/layout/app_shell.dart';
@@ -24,14 +24,24 @@ final router = GoRouter(
           builder: (context, state) => const ConvertPage(),
         ),
         GoRoute(
+          path: '/tools',
+          name: 'tools',
+          builder: (context, state) => const ToolsPage(),
+          routes: [
+            GoRoute(
+              path: 'ncm',
+              name: 'tools_ncm',
+              builder: (context, state) => const NcmDecryptView(),
+            ),
+          ],
+        ),
+        GoRoute(
           path: '/queue',
-          name: 'queue',
-          builder: (context, state) => const QueuePanel(),
+          redirect: (_, _) => '/convert',
         ),
         GoRoute(
           path: '/presets',
-          name: 'presets',
-          builder: (context, state) => const PresetsPage(),
+          redirect: (_, _) => '/convert',
         ),
         GoRoute(
           path: '/settings',
