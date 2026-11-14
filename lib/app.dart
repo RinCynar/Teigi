@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:teigi/features/convert/convert_page.dart';
-import 'package:teigi/features/gate/gate_blocked_page.dart';
 import 'package:teigi/features/presets/presets_page.dart';
 import 'package:teigi/features/queue/queue_panel.dart';
 import 'package:teigi/features/settings/settings_page.dart';
@@ -11,41 +10,11 @@ import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/settings_provider.dart';
 import 'package:teigi/shared/layout/app_shell.dart';
 import 'package:teigi/theme/teigi_theme.dart';
-import 'package:teigi_gate/teigi_gate.dart';
-
-/// Active gatekeeper result. Defaults to passed.
-GateResult activeGateResult = const GateResult.passed();
-
-/// Provider for listening to current gate result.
-final gateResultProvider = StateProvider<GateResult>((ref) => activeGateResult);
-
-/// Sets active gate result and triggers router redirection.
-void setActiveGateResult(GateResult result) {
-  activeGateResult = result;
-  router.refresh();
-}
 
 final router = GoRouter(
   initialLocation: '/convert',
-  redirect: (context, state) {
-    if (activeGateResult.isBlocked) {
-      if (state.matchedLocation != '/blocked') {
-        return '/blocked';
-      }
-      return null;
-    }
-    if (state.matchedLocation == '/blocked') {
-      return '/convert';
-    }
-    return null;
-  },
   routes: [
     GoRoute(path: '/', redirect: (_, _) => '/convert'),
-    GoRoute(
-      path: '/blocked',
-      name: 'blocked',
-      builder: (context, state) => GateBlockedPage(result: activeGateResult),
-    ),
     ShellRoute(
       builder: (context, state, child) => AppShell(child: child),
       routes: [

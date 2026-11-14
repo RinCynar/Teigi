@@ -65,3 +65,13 @@ powershell -ExecutionPolicy Bypass -File tools/build_dist.ps1 -Arch x64
 安装包需要本机安装 [Inno Setup](https://jrsoftware.org/isinfo.php)。
 
 当前 Flutter 的 `flutter build windows` **没有** `--target-platform`，只编译本机 CPU：在 x64 电脑上得到 x64 产物，在 ARM64 电脑上得到 arm64 产物。要出另一套架构，请在对应架构的 Windows（或 CI runner）上再跑一遍脚本。
+
+## 官方构建不支持的设备
+
+Android：官方构建仅支持通过 Google 安全认证的设备。
+
+Windows：本软件的官方构建不支持华为设备。如果你需要在华为设备上使用，请自行编译源代码。
+
+Linux：本软件的官方构建不支持部分发行版。如果你需要使用，请自行编译源代码。
+
+不符合以上要求的设备运行官方构建会直接退出，应用内不作任何说明。源代码不含任何校验，自行编译的版本无此限制。

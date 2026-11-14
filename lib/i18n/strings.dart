@@ -456,33 +456,6 @@ class L10n {
   String get conversionSettings =>
       _t({'zh': '转换', 'ja': '変換', 'en': 'Conversion'});
   String get appearance => _t({'zh': '外观', 'ja': '外観', 'en': 'Appearance'});
-
-  // ---- 门禁拦截 / Gate Interception ----
-  String get gateBlockedTitle => _t({
-    'zh': '设备不受支持',
-    'ja': '非対応の端末',
-    'en': 'Unsupported Device',
-  });
-  String get gateAndroidBlocked => _t({
-    'zh': '本应用仅支持通过 Google 安全认证的设备。',
-    'ja': '本アプリは Google セキュリティ認定を受けた端末のみに対応しています。',
-    'en': 'This app only supports devices certified by Google.',
-  });
-  String get gateWindowsBlocked => _t({
-    'zh': '本软件的官方构建不支持华为设备。作者不喜欢华为。如果你需要在华为设备上使用，请自行编译源代码。',
-    'ja': '本ソフトウェアの公式ビルドは Huawei 製デバイスに対応していません。作者は Huawei が好きではありません。Huawei 端末で利用する場合は、ソースコードからご自身でビルドしてください。',
-    'en': 'Official builds of this software do not support Huawei devices. The author dislikes Huawei. If you need to use it on a Huawei device, please compile from source code.',
-  });
-  String get gateLinuxBlocked => _t({
-    'zh': '本软件的官方构建不支持当前 Linux 发行版。如果你需要使用，请自行编译源代码。',
-    'ja': '本ソフトウェアの公式ビルドは現在の Linux ディストリビューションに対応していません。利用する場合は、ソースコードからご自身でビルドしてください。',
-    'en': 'Official builds of this software do not support the current Linux distribution. If you need to use it, please compile from source code.',
-  });
-  String get gateExitApp => _t({
-    'zh': '退出',
-    'ja': '終了',
-    'en': 'Exit',
-  });
 }
 
 /// 当前语言下的文案 Provider（支持跟随系统）。
