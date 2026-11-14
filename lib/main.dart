@@ -1,4 +1,6 @@
+import 'dart:io' show exit;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemNavigator;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,7 +16,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 校验官方设备门禁（公开桩实现默认放行，官方构建通过私有包注入校验）。
+  // 门禁判定未通过时直接闪退退出，杜绝任何绕过或交互可能。
   final gateResult = await Gatekeeper.instance.check();
+  if (gateResult.isBlocked) {
+    if (isAndroid) {
+      await SystemNavigator.pop();
+    }
+    exit(0);
+  }
   setActiveGateResult(gateResult);
 
   // 限制图片缓存占用（默认 100MB / 1000 张，对媒体转换工具过大）。
