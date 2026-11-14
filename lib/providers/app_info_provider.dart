@@ -9,8 +9,8 @@ final packageInfoProvider = FutureProvider<PackageInfo>((ref) async {
     return PackageInfo(
       appName: 'Teigi',
       packageName: 'top.rincynar.teigi',
-      version: const String.fromEnvironment('BUILD_VERSION', defaultValue: '1.0.4'),
-      buildNumber: '5',
+      version: const String.fromEnvironment('BUILD_VERSION', defaultValue: '1.0.5'),
+      buildNumber: '6',
     );
   }
 });
@@ -21,5 +21,5 @@ final appVersionProvider = Provider<String>((ref) {
   if (info != null && info.version.isNotEmpty) {
     return info.version;
   }
-  return const String.fromEnvironment('BUILD_VERSION', defaultValue: '1.0.4');
+  return const String.fromEnvironment('BUILD_VERSION', defaultValue: '1.0.5');
 });
