@@ -48,3 +48,9 @@ app.*.map.json
 /TODOS.md
 /LOGS.md
 /AGENTS.md
+
+# Private gatekeeper package and build overrides (official release only)
+/pubspec_overrides.yaml
+/teigi_gate/
+/packages/teigi_gate/
+
