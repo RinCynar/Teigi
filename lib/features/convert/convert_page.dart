@@ -462,12 +462,6 @@ class _EmptyWorkspace extends ConsumerWidget {
                   ),
                 ),
               ],
-              const Spacer(),
-              TextButton.icon(
-                onPressed: () => PresetsSheet.show(context),
-                icon: const Icon(Icons.bookmark_outline_rounded, size: 16),
-                label: Text(l10n.allPresets),
-              ),
             ],
           ),
 
