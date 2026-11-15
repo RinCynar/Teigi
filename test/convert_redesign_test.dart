@@ -1,3 +1,4 @@
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -74,6 +75,19 @@ void main() {
 
       // 右下角常驻 Start 主操作按钮
       expect(find.text('开始转换'), findsOneWidget);
+
+      // 右侧队列空状态纯粹克制：仅显示空闲图标与说明文案，绝无重复的添加文件按钮
+      expect(find.byIcon(Icons.inbox_outlined), findsOneWidget);
+      expect(find.text('任务会在开始转换后出现在这里'), findsOneWidget);
+      // 整个页面仅有左侧顶部卡片的一个主添加文件按钮
+      expect(find.widgetWithText(FilledButton, '添加文件'), findsOneWidget);
+    });
+
+    testWidgets('页面级文件拖拽支持：窗口具备全局 DropTarget 覆盖', (tester) async {
+      await pumpApp(tester, size: const Size(1280, 800));
+
+      // 验证外层存在接收拖放的 DropTarget
+      expect(find.byType(DropTarget), findsOneWidget);
     });
 
     testWidgets('左侧面板向下滚动时平滑浮现 + 添加悬浮按钮', (tester) async {

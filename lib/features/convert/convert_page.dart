@@ -305,7 +305,6 @@ class _DesktopConvertLayout extends StatelessWidget {
         Expanded(
           flex: 2,
           child: _DesktopRightPanel(
-            onAddFiles: onAddFiles,
             onStart: onStart,
           ),
         ),
@@ -380,11 +379,9 @@ class _DesktopLeftPanel extends ConsumerWidget {
 }
 
 class _DesktopRightPanel extends ConsumerWidget {
-  final VoidCallback onAddFiles;
   final VoidCallback onStart;
 
   const _DesktopRightPanel({
-    required this.onAddFiles,
     required this.onStart,
   });
 
@@ -397,8 +394,8 @@ class _DesktopRightPanel extends ConsumerWidget {
 
     return Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
+        const Padding(
+          padding: EdgeInsets.fromLTRB(
             TeigiSpacing.md,
             TeigiSpacing.lg,
             TeigiSpacing.lg,
@@ -406,7 +403,6 @@ class _DesktopRightPanel extends ConsumerWidget {
           ),
           child: QueuePanel(
             embedded: true,
-            onAddFiles: onAddFiles,
             bottomPadding: 88,
           ),
         ),

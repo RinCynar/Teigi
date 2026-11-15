@@ -45,6 +45,8 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
     final engine = ref.watch(conversionEngineProvider);
     final running = ref.watch(conversionRunningProvider);
     final visible = tasks.where(_matches).toList();
+    final isCompact = TeigiBreakpoints.sizeOf(MediaQuery.sizeOf(context).width) ==
+        TeigiWindowSize.compact;
 
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -122,14 +124,8 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                                 color: scheme.onSurfaceVariant,
                               ),
                         ),
-                        if (widget.onSwitchToWorkspace != null) ...[
-                          const SizedBox(height: TeigiSpacing.md),
-                          FilledButton.tonalIcon(
-                            onPressed: widget.onSwitchToWorkspace,
-                            icon: const Icon(Icons.add_rounded, size: 18),
-                            label: Text(l10n.addFiles),
-                          ),
-                        ] else if (widget.onAddFiles != null) ...[
+                        // 仅在窄屏移动端且提供了回调时展示空状态添加按钮；宽屏双栏下彻底移除，保持纯粹
+                        if (isCompact && widget.onAddFiles != null) ...[
                           const SizedBox(height: TeigiSpacing.md),
                           FilledButton.tonalIcon(
                             onPressed: widget.onAddFiles,
