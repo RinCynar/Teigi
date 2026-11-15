@@ -82,6 +82,12 @@ class L10n {
     'en': 'No files pending. Drag and drop .ncm files to begin',
   });
   String get viewQueue => _t({'zh': '查看队列', 'ja': 'キューを表示', 'en': 'View Queue'});
+  String get clearRecent => _t({'zh': '清空最近', 'ja': '履歴を消去', 'en': 'Clear Recent'});
+  String get noRecentPresets => _t({
+    'zh': '暂无最近预设',
+    'ja': '最近のプリセットはありません',
+    'en': 'No recent presets',
+  });
   String get convertingBackground => _t({
     'zh': '正在后台转换任务',
     'ja': 'バックグラウンドで変換中',

@@ -21,6 +21,11 @@ class RecentPresetsNotifier extends StateNotifier<List<String>> {
     await _prefs.setStringList(_key, next);
   }
 
+  Future<void> clear() async {
+    state = const [];
+    await _prefs.remove(_key);
+  }
+
   List<FormatPreset> get presets {
     return [
       for (final id in state)

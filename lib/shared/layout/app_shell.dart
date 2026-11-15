@@ -136,18 +136,61 @@ class _AppShellState extends ConsumerState<AppShell> {
                   ),
                 ),
                 bottomNavigationBar: size == TeigiWindowSize.compact
-                    ? NavigationBar(
-                        selectedIndex:
-                            selected.clamp(0, destinations.length - 1),
-                        destinations: [
-                          for (final d in destinations)
-                            NavigationDestination(
-                              icon: Icon(d.icon),
-                              selectedIcon: Icon(d.selectedIcon),
-                              label: d.label,
+                    ? SafeArea(
+                        top: false,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          child: Material(
+                            elevation: 3,
+                            shadowColor: scheme.shadow.withValues(alpha: 0.28),
+                            color: scheme.surfaceContainerHigh,
+                            shape: StadiumBorder(
+                              side: BorderSide(
+                                color: scheme.borderSubtle,
+                                width: 0.8,
+                              ),
                             ),
-                        ],
-                        onDestinationSelected: (i) => context.go(AppShell.locations[i]),
+                            clipBehavior: Clip.antiAlias,
+                            child: NavigationBarTheme(
+                              data: NavigationBarThemeData(
+                                backgroundColor: Colors.transparent,
+                                elevation: 0,
+                                indicatorColor: scheme.secondaryContainer,
+                                height: 64,
+                                labelTextStyle:
+                                    WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.selected)) {
+                                    return TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: scheme.onSurface,
+                                    );
+                                  }
+                                  return TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: scheme.onSurfaceVariant,
+                                  );
+                                }),
+                              ),
+                              child: NavigationBar(
+                                height: 64,
+                                selectedIndex:
+                                    selected.clamp(0, destinations.length - 1),
+                                destinations: [
+                                  for (final d in destinations)
+                                    NavigationDestination(
+                                      icon: Icon(d.icon),
+                                      selectedIcon: Icon(d.selectedIcon),
+                                      label: d.label,
+                                    ),
+                                ],
+                                onDestinationSelected: (i) =>
+                                    context.go(AppShell.locations[i]),
+                              ),
+                            ),
+                          ),
+                        ),
                       )
                     : null,
               ),

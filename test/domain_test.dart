@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teigi/core/domain/conversion_error.dart';
 import 'package:teigi/core/domain/media_type.dart';
 import 'package:teigi/core/domain/media_type_infer.dart';
@@ -12,6 +13,7 @@ import 'package:teigi/core/models/media_file.dart';
 import 'package:teigi/core/services/task_scheduler.dart';
 import 'package:teigi/core/utils/file_naming.dart';
 import 'package:teigi/i18n/strings.dart';
+import 'package:teigi/providers/recent_presets_provider.dart';
 import 'package:teigi/providers/selection_provider.dart';
 import 'package:teigi/theme/teigi_theme.dart';
 import 'package:teigi/theme/tokens.dart';
@@ -228,6 +230,27 @@ void main() {
       );
       final dynamicLight = TeigiTheme.light(colorScheme: customScheme);
       expect(dynamicLight.colorScheme.primary, customScheme.primary);
+    });
+  });
+
+  group('RecentPresetsNotifier', () {
+    test('records, retrieves, clears and persists recent presets', () async {
+      SharedPreferences.setMockInitialValues({'recent_preset_ids': ['video_mp4']});
+      final prefs = await SharedPreferences.getInstance();
+
+      final notifier = RecentPresetsNotifier(RecentPresetsNotifier.load(prefs), prefs);
+      expect(notifier.state, ['video_mp4']);
+
+      await notifier.record('audio_mp3');
+      expect(notifier.state, ['audio_mp3', 'video_mp4']);
+      expect(prefs.getStringList('recent_preset_ids'), ['audio_mp3', 'video_mp4']);
+
+      await notifier.clear();
+      expect(notifier.state, isEmpty);
+      expect(prefs.getStringList('recent_preset_ids'), isNull);
+
+      final reloaded = RecentPresetsNotifier.load(prefs);
+      expect(reloaded, isEmpty);
     });
   });
 }

@@ -5,6 +5,8 @@ import 'package:teigi/core/models/conversion_task.dart';
 import 'package:teigi/core/services/platform_storage.dart';
 import 'package:teigi/core/utils/open_path.dart';
 import 'package:teigi/core/utils/platform_info.dart';
+import 'package:teigi/features/convert/config_sheet.dart';
+import 'package:teigi/features/format_config/format_picker.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/conversion_engine.dart';
 import 'package:teigi/providers/queue_provider.dart';
@@ -16,12 +18,16 @@ enum _QueueFilter { all, active, completed, failed }
 /// Job manager: status and history. Not a second Convert workspace.
 class QueuePanel extends ConsumerStatefulWidget {
   final VoidCallback? onSwitchToWorkspace;
+  final VoidCallback? onAddFiles;
   final bool embedded;
+  final double? bottomPadding;
 
   const QueuePanel({
     super.key,
     this.onSwitchToWorkspace,
+    this.onAddFiles,
     this.embedded = false,
+    this.bottomPadding,
   });
 
   @override
@@ -123,12 +129,23 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                             icon: const Icon(Icons.add_rounded, size: 18),
                             label: Text(l10n.addFiles),
                           ),
+                        ] else if (widget.onAddFiles != null) ...[
+                          const SizedBox(height: TeigiSpacing.md),
+                          FilledButton.tonalIcon(
+                            onPressed: widget.onAddFiles,
+                            icon: const Icon(Icons.add_rounded, size: 18),
+                            label: Text(l10n.addFiles),
+                          ),
                         ],
                       ],
                     ),
                   ),
                 )
               : ListView(
+                  padding: EdgeInsets.only(
+                    bottom: widget.bottomPadding ??
+                        (widget.embedded ? 88.0 : 0.0),
+                  ),
                   children: [
                     if (_filter == _QueueFilter.all) ...[
                       ..._group(l10n.converting, visible, TaskStatus.running),
@@ -287,6 +304,13 @@ class _JobTile extends ConsumerWidget {
             borderRadius: TeigiRadii.card,
             child: InkWell(
               borderRadius: TeigiRadii.card,
+              onDoubleTap: task.status == TaskStatus.queued
+                  ? () => ConvertConfigSheet.open(
+                        context,
+                        task: task,
+                        asOverlay: false,
+                      )
+                  : null,
               onSecondaryTapDown: (d) => _menu(context, ref, d.globalPosition),
               child: Padding(
                 padding: const EdgeInsets.all(TeigiSpacing.md),
@@ -405,6 +429,10 @@ class _JobTile extends ConsumerWidget {
         global.dy,
       ),
       items: [
+        if (task.status == TaskStatus.queued) ...[
+          PopupMenuItem(value: 'configure', child: Text(l10n.configure)),
+          PopupMenuItem(value: 'format', child: Text(l10n.targetFormat)),
+        ],
         if (task.status == TaskStatus.failed)
           PopupMenuItem(value: 'retry', child: Text(l10n.retry)),
         PopupMenuItem(value: 'open', child: Text(l10n.openFile)),
@@ -419,6 +447,17 @@ class _JobTile extends ConsumerWidget {
     );
     if (!context.mounted || action == null) return;
     switch (action) {
+      case 'configure':
+        await ConvertConfigSheet.open(context, task: task, asOverlay: false);
+      case 'format':
+        final fmt = await FormatPicker.show(
+          context,
+          current: task.targetFormat,
+          size: TeigiBreakpoints.sizeOf(MediaQuery.sizeOf(context).width),
+        );
+        if (fmt != null) {
+          ref.read(queueProvider.notifier).setTargetFormatFor([task.id], fmt);
+        }
       case 'retry':
         _retry(ref);
       case 'open':

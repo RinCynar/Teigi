@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teigi/core/domain/media_type.dart';
 import 'package:teigi/core/models/conversion_task.dart';
 import 'package:teigi/core/models/format_preset.dart';
 import 'package:teigi/core/models/media_file.dart';
-import 'package:teigi/core/utils/file_identity.dart';
-import 'package:teigi/core/utils/open_path.dart';
-import 'package:teigi/features/convert/batch_config_sheet.dart';
-import 'package:teigi/features/convert/config_sheet.dart';
 import 'package:teigi/features/convert/media_import.dart';
-import 'package:teigi/features/format_config/format_picker.dart';
-import 'package:teigi/features/presets/presets_sheet.dart';
+import 'package:teigi/features/presets/presets_browser.dart';
 import 'package:teigi/features/queue/queue_panel.dart';
 import 'package:teigi/i18n/strings.dart';
 import 'package:teigi/providers/conversion_engine.dart';
@@ -19,12 +13,10 @@ import 'package:teigi/providers/ffmpeg_provider.dart';
 import 'package:teigi/providers/queue_provider.dart';
 import 'package:teigi/providers/recent_presets_provider.dart';
 import 'package:teigi/providers/selection_provider.dart';
-import 'package:teigi/shared/layout/content_constraint.dart';
-import 'package:teigi/shared/widgets/teigi_file_card.dart';
-import 'package:teigi/theme/tokens.dart';
 import 'package:teigi/shared/widgets/ffmpeg_status_banner.dart';
+import 'package:teigi/theme/tokens.dart';
 
-/// Single-column conversion workspace. Queue is not this page.
+/// 转换工作台页面：桌面端左右分栏同屏呈现，移动端队列主体配合悬浮操作三键组。
 class ConvertPage extends ConsumerStatefulWidget {
   const ConvertPage({super.key});
 
@@ -82,267 +74,29 @@ class ConvertPage extends ConsumerStatefulWidget {
   }
 }
 
-enum _ConvertTab { workspace, queue }
-
 class _ConvertPageState extends ConsumerState<ConvertPage> {
-  _ConvertTab _currentTab = _ConvertTab.workspace;
-  String? _configuringId;
-  String? _anchorId;
+  final ScrollController _leftScrollController = ScrollController();
+  bool _showLeftAddFab = false;
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = ref.watch(l10nProvider);
-    final tasks = ref.watch(queueProvider);
-    final workspace = [
-      for (final t in tasks)
-        if (t.status == TaskStatus.queued) t,
-    ];
-    final running = ref.watch(conversionRunningProvider);
-    final selected = ref.watch(selectionProvider);
-    final width = MediaQuery.sizeOf(context).width;
-    final size = TeigiBreakpoints.sizeOf(width);
-    ref.watch(ffmpegStatusProvider);
-    final queueCount = tasks.length - workspace.length;
-
-    ConversionTask? configuring;
-    if (_configuringId != null) {
-      for (final t in workspace) {
-        if (t.id == _configuringId) configuring = t;
-      }
-    }
-
-    final page = RepaintBoundary(
-      child: ContentConstraint(
-        padding: EdgeInsets.fromLTRB(
-          size == TeigiWindowSize.compact ? TeigiSpacing.md : TeigiSpacing.page,
-          TeigiSpacing.lg,
-          size == TeigiWindowSize.compact ? TeigiSpacing.md : TeigiSpacing.page,
-          TeigiSpacing.page,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                SegmentedButton<_ConvertTab>(
-                  segments: [
-                    ButtonSegment<_ConvertTab>(
-                      value: _ConvertTab.workspace,
-                      icon: const Icon(Icons.tune_rounded, size: 18),
-                      label: Text(
-                        workspace.isEmpty
-                            ? l10n.tabWorkspace
-                            : '${l10n.tabWorkspace} (${workspace.length})',
-                      ),
-                    ),
-                    ButtonSegment<_ConvertTab>(
-                      value: _ConvertTab.queue,
-                      icon: Icon(
-                        running
-                            ? Icons.hourglass_top_rounded
-                            : Icons.queue_outlined,
-                        size: 18,
-                      ),
-                      label: Text(
-                        queueCount == 0
-                            ? l10n.navQueue
-                            : '${l10n.navQueue} ($queueCount)',
-                      ),
-                    ),
-                  ],
-                  selected: {_currentTab},
-                  onSelectionChanged: (set) =>
-                      setState(() => _currentTab = set.first),
-                ),
-                const Spacer(),
-                if (_currentTab == _ConvertTab.workspace)
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      side: BorderSide(
-                        color: Theme.of(context).colorScheme.borderSubtle,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                    ),
-                    onPressed: () => PresetsSheet.show(
-                      context,
-                      targetTaskIds: selected.isNotEmpty ? selected : null,
-                    ),
-                    icon: const Icon(Icons.bookmark_outline_rounded, size: 16),
-                    label: Text(l10n.allPresets),
-                  ),
-              ],
-            ),
-            const SizedBox(height: TeigiSpacing.md),
-            if (running && _currentTab == _ConvertTab.workspace) ...[
-              _RunningIndicatorBanner(
-                onOpenQueue: () =>
-                    setState(() => _currentTab = _ConvertTab.queue),
-              ),
-              const SizedBox(height: TeigiSpacing.sm),
-            ],
-            Expanded(
-              child: _currentTab == _ConvertTab.queue
-                  ? QueuePanel(
-                      embedded: true,
-                      onSwitchToWorkspace: () =>
-                          setState(() => _currentTab = _ConvertTab.workspace),
-                    )
-                  : (workspace.isEmpty
-                      ? _EmptyWorkspace(
-                          onAddFiles: () => _addFromPicker(),
-                          onPreset: _onEmptyPreset,
-                        )
-                      : _FilesWorkspace(
-                          tasks: workspace,
-                          running: running,
-                          selected: selected,
-                          configuringId: _configuringId,
-                          onAddFiles: () => _addFromPicker(),
-                          onConfigure: (task) => _openConfig(task, size),
-                          onStart: () async {
-                            final started =
-                                await ConvertPage.startConversion(context, ref);
-                            if (started && mounted) {
-                              setState(() => _currentTab = _ConvertTab.queue);
-                            }
-                          },
-                          onClick: (task, ctrl, shift) =>
-                              _click(task, workspace, ctrl, shift),
-                          onContext: (task, pos) =>
-                              _contextMenu(task, pos, size),
-                        )),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    return PopScope(
-      canPop: selected.isEmpty,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          ref.read(selectionProvider.notifier).clear();
-          setState(() => _configuringId = null);
-        }
-      },
-      child: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.keyA, control: true): () {
-            ref.read(selectionProvider.notifier).selectAll(workspace.map((t) => t.id));
-          },
-          const SingleActivator(LogicalKeyboardKey.escape): () {
-            ref.read(selectionProvider.notifier).clear();
-            setState(() => _configuringId = null);
-          },
-          const SingleActivator(LogicalKeyboardKey.delete): () {
-            ref.read(queueProvider.notifier).removeTasks(ref.read(selectionProvider));
-            ref.read(selectionProvider.notifier).clear();
-          },
-          const SingleActivator(LogicalKeyboardKey.enter): () {
-            final ids = ref.read(selectionProvider);
-            if (ids.length == 1) {
-              ConversionTask? task;
-              for (final t in workspace) {
-                if (t.id == ids.first) task = t;
-              }
-              if (task != null) _openConfig(task, size);
-            } else if (ids.length > 1) {
-              BatchConfigSheet.open(context, ids: ids);
-            }
-          },
-        },
-        child: Focus(
-          autofocus: true,
-          child: Stack(
-            children: [
-              page,
-              if (configuring != null && size == TeigiWindowSize.expanded)
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  bottom: 0,
-                  width: TeigiBreakpoints.configSheet,
-                  child: Material(
-                    elevation: 1,
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
-                    child: ConvertConfigSheet(
-                      task: configuring,
-                      onClose: () => setState(() => _configuringId = null),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void initState() {
+    super.initState();
+    _leftScrollController.addListener(_onLeftScroll);
   }
 
-  void _click(
-    ConversionTask task,
-    List<ConversionTask> workspace,
-    bool ctrl,
-    bool shift,
-  ) {
-    final ids = workspace.map((t) => t.id).toList();
-    ref.read(selectionProvider.notifier).handleClick(
-          task.id,
-          orderedIds: ids,
-          ctrl: ctrl,
-          shift: shift,
-          anchorId: _anchorId,
-        );
-    if (!shift) _anchorId = task.id;
+  @override
+  void dispose() {
+    _leftScrollController.removeListener(_onLeftScroll);
+    _leftScrollController.dispose();
+    super.dispose();
   }
 
-  Future<void> _contextMenu(
-    ConversionTask task,
-    Offset global,
-    TeigiWindowSize size,
-  ) async {
-    final selected = ref.read(selectionProvider);
-    if (!selected.contains(task.id)) {
-      ref.read(selectionProvider.notifier).selectOnly(task.id);
-    }
-    final l10n = ref.read(l10nProvider);
-    final action = await showMenu<String>(
-      context: context,
-      position: RelativeRect.fromLTRB(global.dx, global.dy, global.dx, global.dy),
-      items: [
-        PopupMenuItem(value: 'configure', child: Text(l10n.configure)),
-        PopupMenuItem(value: 'format', child: Text(l10n.targetFormat)),
-        PopupMenuItem(value: 'open', child: Text(l10n.openFile)),
-        PopupMenuItem(value: 'folder', child: Text(l10n.openFolder)),
-        PopupMenuItem(value: 'remove', child: Text(l10n.remove)),
-      ],
-    );
-    if (!mounted || action == null) return;
-    final ids = ref.read(selectionProvider);
-    switch (action) {
-      case 'configure':
-        if (ids.length > 1) {
-          await BatchConfigSheet.open(context, ids: ids);
-        } else {
-          await _openConfig(task, size);
-        }
-      case 'format':
-        final fmt = await FormatPicker.show(context, current: task.targetFormat, size: size);
-        if (fmt != null) {
-          ref.read(queueProvider.notifier).setTargetFormatFor(ids, fmt);
-        }
-      case 'open':
-        await openLocalPath(task.source.path);
-      case 'folder':
-        await openParentFolder(task.source.path);
-      case 'remove':
-        ref.read(queueProvider.notifier).removeTasks(ids);
-        ref.read(selectionProvider.notifier).clear();
+  void _onLeftScroll() {
+    if (!_leftScrollController.hasClients) return;
+    // 当左栏向下滚动使顶部的 Add Files 卡片移出视口时，浮现快捷添加按钮
+    final show = _leftScrollController.offset > 180;
+    if (show != _showLeftAddFab) {
+      setState(() => _showLeftAddFab = show);
     }
   }
 
@@ -352,149 +106,412 @@ class _ConvertPageState extends ConsumerState<ConvertPage> {
     ConvertPage.addFiles(ref, files);
   }
 
-  void _onEmptyPreset(FormatPreset preset) {
+  void _onSelectPreset(FormatPreset preset) {
+    final selected = ref.read(selectionProvider);
+    final queuedTasks = ref
+        .read(queueProvider)
+        .where((t) => t.status == TaskStatus.queued)
+        .map((t) => t.id)
+        .toSet();
+
+    if (selected.isNotEmpty) {
+      ref.read(queueProvider.notifier).applyPresetTo(selected, preset);
+    } else if (queuedTasks.isNotEmpty) {
+      ref.read(queueProvider.notifier).applyPreset(preset);
+    }
+
     ref.read(pendingPresetProvider.notifier).state = preset;
     ref.read(recentPresetsProvider.notifier).record(preset.id);
+
     final l10n = ref.read(l10nProvider);
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.presetWillApply(preset.name))),
+      SnackBar(
+        content: Text(l10n.presetWillApply(preset.name)),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
-  Future<void> _openConfig(ConversionTask task, TeigiWindowSize size) async {
-    if (size == TeigiWindowSize.expanded) {
-      setState(() => _configuringId = task.id);
-      return;
-    }
-    await ConvertConfigSheet.open(context, task: task, asOverlay: false);
+  void _showMobilePresetsSheet() {
+    final l10n = ref.read(l10nProvider);
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.45,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (ctx, scrollController) => Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.history_rounded,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    l10n.allPresets,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: TeigiSpacing.lg,
+                  vertical: TeigiSpacing.md,
+                ),
+                children: [
+                  PresetsBrowser(
+                    scrollable: false,
+                    onSelectPreset: (preset) {
+                      _onSelectPreset(preset);
+                      Navigator.of(ctx).pop();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.watch(ffmpegStatusProvider);
+    final width = MediaQuery.sizeOf(context).width;
+    final size = TeigiBreakpoints.sizeOf(width);
+    final isCompact = size == TeigiWindowSize.compact;
+    final selected = ref.watch(selectionProvider);
+    final tasks = ref.watch(queueProvider);
+    final queuedTasks = tasks.where((t) => t.status == TaskStatus.queued).toList();
+
+    return PopScope(
+      canPop: selected.isEmpty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          ref.read(selectionProvider.notifier).clear();
+        }
+      },
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.keyA, control: true): () {
+            ref.read(selectionProvider.notifier).selectAll(queuedTasks.map((t) => t.id));
+          },
+          const SingleActivator(LogicalKeyboardKey.escape): () {
+            ref.read(selectionProvider.notifier).clear();
+          },
+          const SingleActivator(LogicalKeyboardKey.delete): () {
+            ref.read(queueProvider.notifier).removeTasks(ref.read(selectionProvider));
+            ref.read(selectionProvider.notifier).clear();
+          },
+        },
+        child: Focus(
+          autofocus: true,
+          child: RepaintBoundary(
+            child: isCompact
+                ? _MobileConvertLayout(
+                    onAddFiles: _addFromPicker,
+                    onOpenHistory: _showMobilePresetsSheet,
+                    onStart: () => ConvertPage.startConversion(context, ref),
+                  )
+                : _DesktopConvertLayout(
+                    leftScrollController: _leftScrollController,
+                    showLeftAddFab: _showLeftAddFab,
+                    onAddFiles: _addFromPicker,
+                    onSelectPreset: _onSelectPreset,
+                    onStart: () => ConvertPage.startConversion(context, ref),
+                  ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
-class _EmptyWorkspace extends ConsumerWidget {
+/// 桌面端宽屏双栏布局：左右比例约为 10:23 (约 1:2.3)
+class _DesktopConvertLayout extends StatelessWidget {
+  final ScrollController leftScrollController;
+  final bool showLeftAddFab;
   final VoidCallback onAddFiles;
-  final ValueChanged<FormatPreset> onPreset;
+  final ValueChanged<FormatPreset> onSelectPreset;
+  final VoidCallback onStart;
 
-  const _EmptyWorkspace({required this.onAddFiles, required this.onPreset});
+  const _DesktopConvertLayout({
+    required this.leftScrollController,
+    required this.showLeftAddFab,
+    required this.onAddFiles,
+    required this.onSelectPreset,
+    required this.onStart,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 1. 左侧面板：内部独立滚动，排布 Add Files、Recent 与 All Presets
+        Expanded(
+          flex: 1,
+          child: _DesktopLeftPanel(
+            scrollController: leftScrollController,
+            showAddFab: showLeftAddFab,
+            onAddFiles: onAddFiles,
+            onSelectPreset: onSelectPreset,
+          ),
+        ),
+
+        // 分割线
+        VerticalDivider(
+          width: 1,
+          thickness: 1,
+          color: scheme.borderSubtle,
+        ),
+
+        // 2. 右侧面板：常驻展示 Queue（任务队列）并在右下角常驻 Start 主按钮
+        Expanded(
+          flex: 2,
+          child: _DesktopRightPanel(
+            onAddFiles: onAddFiles,
+            onStart: onStart,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DesktopLeftPanel extends ConsumerWidget {
+  final ScrollController scrollController;
+  final bool showAddFab;
+  final VoidCallback onAddFiles;
+  final ValueChanged<FormatPreset> onSelectPreset;
+
+  const _DesktopLeftPanel({
+    required this.scrollController,
+    required this.showAddFab,
+    required this.onAddFiles,
+    required this.onSelectPreset,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
-    final scheme = Theme.of(context).colorScheme;
-    final pending = ref.watch(pendingPresetProvider);
-    final recentIds = ref.watch(recentPresetsProvider);
-    final isMobile = MediaQuery.sizeOf(context).width < 600;
 
-    final recent = [
-      for (final id in recentIds)
-        if (FormatPreset.byId(id) != null) FormatPreset.byId(id)!,
-    ];
-    final cards = recent.isEmpty
-        ? [
-            FormatPreset.byId('video_mp4')!,
-            FormatPreset.byId('audio_mp3')!,
-            FormatPreset.byId('video_webm')!,
-            FormatPreset.byId('audio_flac')!,
-          ]
-        : recent;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: TeigiSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const FfmpegStatusBanner(),
-
-          // 1. Hero Workbench: Wide interactive drop zone (大面积、大圆角、视觉聚焦明确的主工作台容器)
-          _HeroWorkbench(
-            isMobile: isMobile,
-            l10n: l10n,
-            onAddFiles: onAddFiles,
+    return Stack(
+      children: [
+        ListView(
+          controller: scrollController,
+          padding: const EdgeInsets.fromLTRB(
+            TeigiSpacing.md,
+            TeigiSpacing.md,
+            TeigiSpacing.sm,
+            TeigiSpacing.xxl + 32,
           ),
+          children: [
+            const FfmpegStatusBanner(),
+            _HeroWorkbench(
+              isMobile: false,
+              l10n: l10n,
+              onAddFiles: onAddFiles,
+            ),
+            const SizedBox(height: TeigiSpacing.xl),
+            PresetsBrowser(
+              scrollable: false,
+              onSelectPreset: onSelectPreset,
+            ),
+          ],
+        ),
+        Positioned(
+          bottom: 20,
+          right: 20,
+          child: AnimatedScale(
+            scale: showAddFab ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutBack,
+            child: AnimatedOpacity(
+              opacity: showAddFab ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 150),
+              child: FloatingActionButton.small(
+                heroTag: 'left_add_files_fab',
+                tooltip: l10n.addFiles,
+                onPressed: onAddFiles,
+                child: const Icon(Icons.add_rounded),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
-          SizedBox(height: isMobile ? 24 : 32),
+class _DesktopRightPanel extends ConsumerWidget {
+  final VoidCallback onAddFiles;
+  final VoidCallback onStart;
 
-          // 2. Section Header: Recent Presets
-          Row(
+  const _DesktopRightPanel({
+    required this.onAddFiles,
+    required this.onStart,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
+    final tasks = ref.watch(queueProvider);
+    final running = ref.watch(conversionRunningProvider);
+    final hasQueuedTasks = tasks.any((t) => t.status == TaskStatus.queued);
+
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            TeigiSpacing.md,
+            TeigiSpacing.lg,
+            TeigiSpacing.lg,
+            TeigiSpacing.lg,
+          ),
+          child: QueuePanel(
+            embedded: true,
+            onAddFiles: onAddFiles,
+            bottomPadding: 88,
+          ),
+        ),
+        Positioned(
+          bottom: 24,
+          right: 24,
+          child: FloatingActionButton.extended(
+            heroTag: 'desktop_start_conversion_fab',
+            elevation: 3,
+            onPressed: running
+                ? null
+                : (hasQueuedTasks ? onStart : null),
+            icon: Icon(
+              running ? Icons.hourglass_top_rounded : Icons.play_arrow_rounded,
+            ),
+            label: Text(
+              running ? l10n.converting : l10n.startConversion,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 移动端竖屏布局：主体区域直接展示 Queue，并在右下角放置横向排列的三按钮动作组
+class _MobileConvertLayout extends ConsumerWidget {
+  final VoidCallback onAddFiles;
+  final VoidCallback onOpenHistory;
+  final VoidCallback onStart;
+
+  const _MobileConvertLayout({
+    required this.onAddFiles,
+    required this.onOpenHistory,
+    required this.onStart,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
+    final tasks = ref.watch(queueProvider);
+    final running = ref.watch(conversionRunningProvider);
+    final hasQueuedTasks = tasks.any((t) => t.status == TaskStatus.queued);
+
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            TeigiSpacing.md,
+            TeigiSpacing.md,
+            TeigiSpacing.md,
+            0,
+          ),
+          child: QueuePanel(
+            embedded: true,
+            onAddFiles: onAddFiles,
+            bottomPadding: 88,
+          ),
+        ),
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.auto_awesome_rounded,
-                size: 18,
-                color: scheme.primary,
+              // 1. History (Recent) - Secondary
+              IconButton.filledTonal(
+                tooltip: l10n.recentPresets,
+                icon: const Icon(Icons.history_rounded),
+                onPressed: onOpenHistory,
               ),
               const SizedBox(width: 8),
-              Text(
-                l10n.recentPresets,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: scheme.onSurface,
-                    ),
+              // 2. Add Files - Secondary
+              IconButton.filledTonal(
+                tooltip: l10n.addFiles,
+                icon: const Icon(Icons.add_rounded),
+                onPressed: onAddFiles,
               ),
-              if (pending != null) ...[
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: scheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        pending.name,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: scheme.onPrimaryContainer,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      GestureDetector(
-                        onTap: () =>
-                            ref.read(pendingPresetProvider.notifier).state = null,
-                        child: Icon(
-                          Icons.close_rounded,
-                          size: 14,
-                          color: scheme.onPrimaryContainer,
-                        ),
-                      ),
-                    ],
-                  ),
+              const SizedBox(width: 8),
+              // 3. Start Conversion - Primary
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: const StadiumBorder(),
+                  elevation: 2,
                 ),
-              ],
+                onPressed: running
+                    ? null
+                    : (hasQueuedTasks ? onStart : null),
+                icon: Icon(
+                  running
+                      ? Icons.hourglass_top_rounded
+                      : Icons.play_arrow_rounded,
+                  size: 20,
+                ),
+                label: Text(
+                  running ? l10n.converting : l10n.startConversion,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
             ],
           ),
-
-          const SizedBox(height: 14),
-
-          // 3. Responsive Preset Grid (规整的网格卡片流，消除孤岛空洞)
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final w = constraints.maxWidth;
-              final int cols = w >= 860 ? 4 : (w >= 540 ? 3 : 2);
-              const double spacing = 12.0;
-              final double itemWidth = (w - (cols - 1) * spacing) / cols;
-
-              return Wrap(
-                spacing: spacing,
-                runSpacing: spacing,
-                children: [
-                  for (final preset in cards)
-                    SizedBox(
-                      width: itemWidth,
-                      child: _PresetGridCard(
-                        preset: preset,
-                        subtitle: _presetSubtitle(preset),
-                        selected: pending?.id == preset.id,
-                        onTap: () => onPreset(preset),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -546,8 +563,8 @@ class _HeroWorkbenchState extends State<_HeroWorkbench> {
               ),
             ),
             padding: EdgeInsets.symmetric(
-              horizontal: widget.isMobile ? 20 : 40,
-              vertical: widget.isMobile ? 28 : 40,
+              horizontal: widget.isMobile ? 14 : 16,
+              vertical: widget.isMobile ? 20 : 24,
             ),
             child: _HeroWorkbenchContent(
               isMobile: widget.isMobile,
@@ -580,11 +597,11 @@ class _HeroWorkbenchContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: isMobile ? 54 : 68,
-          height: isMobile ? 54 : 68,
+          width: isMobile ? 44 : 52,
+          height: isMobile ? 44 : 52,
           decoration: BoxDecoration(
             color: scheme.primary.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: scheme.primary.withValues(alpha: 0.25),
               width: 1.5,
@@ -592,51 +609,55 @@ class _HeroWorkbenchContent extends StatelessWidget {
           ),
           child: Icon(
             Icons.file_upload_outlined,
-            size: isMobile ? 28 : 36,
+            size: isMobile ? 22 : 28,
             color: scheme.primary,
           ),
         ),
-        SizedBox(height: isMobile ? 14 : 18),
+        SizedBox(height: isMobile ? 10 : 12),
         Text(
           l10n.convertSubtitle,
           textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                fontSize: isMobile ? 18 : 22,
+                fontSize: isMobile ? 15 : 17,
               ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           isMobile ? l10n.selectToStart : l10n.dropToStart,
           textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
-                fontSize: isMobile ? 13 : 14,
+                fontSize: 12,
               ),
         ),
-        SizedBox(height: isMobile ? 18 : 22),
+        SizedBox(height: isMobile ? 12 : 14),
         FilledButton.icon(
           style: FilledButton.styleFrom(
             padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 22 : 28,
-              vertical: isMobile ? 10 : 13,
+              horizontal: isMobile ? 18 : 22,
+              vertical: isMobile ? 8 : 10,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
             ),
           ),
           onPressed: onAddFiles,
-          icon: const Icon(Icons.add_rounded, size: 20),
+          icon: const Icon(Icons.add_rounded, size: 18),
           label: Text(
             l10n.addFiles,
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 5,
+            horizontal: 10,
+            vertical: 4,
           ),
           decoration: BoxDecoration(
             color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
@@ -648,496 +669,25 @@ class _HeroWorkbenchContent extends StatelessWidget {
             children: [
               Icon(
                 Icons.info_outline_rounded,
-                size: 13,
+                size: 12,
                 color: scheme.onSurfaceVariant,
               ),
-              const SizedBox(width: 6),
-              Text(
-                isMobile ? l10n.mobileImportHint : l10n.dropHint,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      fontSize: 12,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PresetGridCard extends StatefulWidget {
-  final FormatPreset preset;
-  final String subtitle;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _PresetGridCard({
-    required this.preset,
-    required this.subtitle,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  State<_PresetGridCard> createState() => _PresetGridCardState();
-}
-
-class _PresetGridCardState extends State<_PresetGridCard> {
-  bool _isHovered = false;
-
-  IconData _categoryIcon(MediaType category) => switch (category) {
-    MediaType.video => Icons.movie_outlined,
-    MediaType.audio => Icons.music_note_outlined,
-    MediaType.image => Icons.image_outlined,
-    _ => Icons.insert_drive_file_outlined,
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    Color bg;
-    if (widget.selected) {
-      bg = scheme.primary.withValues(alpha: 0.14);
-    } else if (_isHovered) {
-      bg = scheme.surfaceContainerHigh;
-    } else {
-      bg = scheme.surfaceContainerLow;
-    }
-
-    Color borderColor;
-    if (widget.selected) {
-      borderColor = scheme.primary;
-    } else if (_isHovered) {
-      borderColor = scheme.primary.withValues(alpha: 0.35);
-    } else {
-      borderColor = scheme.borderSubtle;
-    }
-
-    return RepaintBoundary(
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            curve: Curves.easeOutCubic,
-            height: 68,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: borderColor,
-                width: widget.selected ? 1.5 : 1.0,
-              ),
-            ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: widget.selected
-                      ? scheme.primary.withValues(alpha: 0.22)
-                      : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Center(
-                  child: Icon(
-                    _categoryIcon(widget.preset.category),
-                    size: 20,
-                    color: widget.selected
-                        ? scheme.primary
-                        : scheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      widget.preset.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: widget.selected
-                                ? scheme.primary
-                                : scheme.onSurface,
-                          ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                            fontSize: 11,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              if (widget.selected) ...[
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.check_circle_rounded,
-                  size: 18,
-                  color: scheme.primary,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-  }
-}
-
-class _FilesWorkspace extends ConsumerWidget {
-  final List<ConversionTask> tasks;
-  final bool running;
-  final Set<String> selected;
-  final String? configuringId;
-  final VoidCallback onAddFiles;
-  final ValueChanged<ConversionTask> onConfigure;
-  final VoidCallback onStart;
-  final void Function(ConversionTask task, bool ctrl, bool shift) onClick;
-  final void Function(ConversionTask task, Offset global) onContext;
-
-  const _FilesWorkspace({
-    required this.tasks,
-    required this.running,
-    required this.selected,
-    required this.configuringId,
-    required this.onAddFiles,
-    required this.onConfigure,
-    required this.onStart,
-    required this.onClick,
-    required this.onContext,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = ref.watch(l10nProvider);
-    final ready = tasks.where((t) => t.targetFormat?.isNotEmpty == true).length;
-    final missing = tasks.length - ready;
-    final size = TeigiBreakpoints.sizeOf(MediaQuery.sizeOf(context).width);
-    final scheme = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const FfmpegStatusBanner(),
-        if (selected.isEmpty)
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.convertTitle,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      l10n.readySummary(tasks.length, ready, missing),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: onAddFiles,
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: Text(l10n.addFiles),
-              ),
-            ],
-          )
-        else
-          _SelectionBar(selected: selected, size: size),
-        const SizedBox(height: TeigiSpacing.lg),
-        Expanded(
-          child: ListView.separated(
-            itemCount: tasks.length,
-            separatorBuilder: (_, _) => const SizedBox(height: TeigiSpacing.sm),
-            itemBuilder: (context, index) {
-              final task = tasks[index];
-              return TeigiFileCard(
-                task: task,
-                conversionLabel: task.targetFormat == null
-                    ? l10n.noTargetFormat
-                    : l10n.conversionPair(
-                        task.source.extension,
-                        task.targetFormat!,
-                      ),
-                metaLabel: _metaFor(task),
-                selected: selected.contains(task.id) || task.id == configuringId,
-                configureLabel: l10n.configure,
-                removeLabel: l10n.remove,
-                retryLabel: l10n.retry,
-                onConfigure: () => onConfigure(task),
-                onRemove: () =>
-                    ref.read(queueProvider.notifier).removeTask(task.id),
-                onTap: () {
-                  final keys = HardwareKeyboard.instance.logicalKeysPressed;
-                  onClick(
-                    task,
-                    keys.contains(LogicalKeyboardKey.controlLeft) ||
-                        keys.contains(LogicalKeyboardKey.controlRight),
-                    keys.contains(LogicalKeyboardKey.shiftLeft) ||
-                        keys.contains(LogicalKeyboardKey.shiftRight),
-                  );
-                },
-                onDoubleTap: () => onConfigure(task),
-                onSecondaryTapDown: (d) => onContext(task, d.globalPosition),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: TeigiSpacing.md),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: TeigiSpacing.md,
-            vertical: TeigiSpacing.sm,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
-            borderRadius: TeigiRadii.card,
-            border: Border.all(
-              color: Theme.of(context).colorScheme.borderSubtle,
-              width: 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.check_circle_outline_rounded,
-                size: 18,
-                color: ready == tasks.length
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: TeigiSpacing.xs),
-              Expanded(
+              const SizedBox(width: 4),
+              Flexible(
                 child: Text(
-                  l10n.readySummary(tasks.length, ready, missing),
+                  isMobile ? l10n.mobileImportHint : l10n.dropHint,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: scheme.onSurfaceVariant,
+                        fontSize: 11,
                       ),
                 ),
-              ),
-              const SizedBox(width: TeigiSpacing.sm),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: TeigiSpacing.lg,
-                    vertical: TeigiSpacing.sm,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: running ? null : onStart,
-                icon: Icon(
-                  running ? Icons.hourglass_top_rounded : Icons.play_arrow_rounded,
-                  size: 20,
-                ),
-                label: Text(running ? l10n.converting : l10n.startConversion),
               ),
             ],
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SelectionBar extends ConsumerWidget {
-  final Set<String> selected;
-  final TeigiWindowSize size;
-
-  const _SelectionBar({required this.selected, required this.size});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = ref.watch(l10nProvider);
-    final compact = size == TeigiWindowSize.compact;
-    final actions = <Widget>[
-      TextButton(
-        onPressed: () => ref.read(selectionProvider.notifier).clear(),
-        child: Text(l10n.deselect),
-      ),
-      TextButton(
-        onPressed: () {
-          final ids = ref
-              .read(queueProvider)
-              .where((t) => t.status == TaskStatus.queued)
-              .map((t) => t.id);
-          ref.read(selectionProvider.notifier).selectAll(ids);
-        },
-        child: Text(l10n.selectAll),
-      ),
-      TextButton(
-        onPressed: () => PresetsSheet.show(context, targetTaskIds: selected),
-        child: Text(l10n.applyPreset),
-      ),
-      TextButton(
-        onPressed: () async {
-          final fmt = await FormatPicker.show(
-            context,
-            current: null,
-            size: size,
-          );
-          if (fmt != null) {
-            ref.read(queueProvider.notifier).setTargetFormatFor(selected, fmt);
-          }
-        },
-        child: Text(l10n.targetFormat),
-      ),
-      TextButton(
-        onPressed: () => BatchConfigSheet.open(context, ids: selected),
-        child: Text(l10n.configure),
-      ),
-      TextButton(
-        onPressed: () {
-          ref.read(queueProvider.notifier).removeTasks(selected);
-          ref.read(selectionProvider.notifier).clear();
-        },
-        child: Text(l10n.remove),
-      ),
-    ];
-
-    if (compact) {
-      // 手机断点：标题一行、操作按钮换行，避免窄屏溢出。
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.selectedCount(selected.length),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: TeigiSpacing.xs),
-          Wrap(spacing: TeigiSpacing.xs, children: actions),
-        ],
-      );
-    }
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            l10n.selectedCount(selected.length),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-        ...actions,
-      ],
-    );
-  }
-}
-
-String _presetSubtitle(FormatPreset preset) {
-  if (preset.videoCodec != null) {
-    return _codecLabel(preset.videoCodec!);
-  }
-  if (preset.audioCodec != null) {
-    if (preset.extension == 'mp3') return '192 kbps';
-    return _codecLabel(preset.audioCodec!);
-  }
-  return preset.container.toUpperCase();
-}
-
-String _codecLabel(String codec) {
-  return switch (codec) {
-    'libx264' => 'H.264',
-    'libx265' => 'H.265',
-    'libvpx-vp9' => 'VP9',
-    'libmp3lame' => 'MP3',
-    'libopus' => 'Opus',
-    'libvorbis' => 'Vorbis',
-    'pcm_s16le' => 'PCM',
-    'libwebp' => 'WebP',
-    'mjpeg' => 'JPEG',
-    _ => codec,
-  };
-}
-
-String _metaFor(ConversionTask task) {
-  final parts = <String>[
-    ?FileIdentity.sizeLabel(task.source.path),
-    task.source.extension.toUpperCase(),
-  ];
-  return parts.join(' · ');
-}
-
-class _RunningIndicatorBanner extends ConsumerWidget {
-  final VoidCallback onOpenQueue;
-
-  const _RunningIndicatorBanner({required this.onOpenQueue});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = ref.watch(l10nProvider);
-    final scheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: scheme.primaryContainer.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.primary.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: scheme.primary,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              l10n.convertingBackground,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: scheme.onPrimaryContainer,
-                  ),
-            ),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-            ),
-            onPressed: onOpenQueue,
-            child: Text(l10n.viewQueue),
-          ),
-        ],
-      ),
     );
   }
 }
