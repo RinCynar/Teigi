@@ -19,31 +19,11 @@ class TeigiTheme {
     Color seed = seedLight,
     String? language,
   }) {
-    final baseScheme = colorScheme ??
+    final scheme = colorScheme ??
         ColorScheme.fromSeed(
           seedColor: seed,
           brightness: Brightness.light,
         );
-    final scheme = colorScheme != null
-        ? baseScheme
-        : baseScheme.copyWith(
-            primary: const Color(0xFF006A6B),
-            onPrimary: Colors.white,
-            primaryContainer: const Color(0xFF70F7EC),
-            onPrimaryContainer: const Color(0xFF002021),
-            secondary: const Color(0xFF4A6363),
-            secondaryContainer: const Color(0xFFCCE8E7),
-            onSecondaryContainer: const Color(0xFF051F20),
-            surface: const Color(0xFFF4FBFA),
-            onSurface: const Color(0xFF161D1D),
-            surfaceContainerLowest: const Color(0xFFFFFFFF),
-            surfaceContainerLow: const Color(0xFFEFF5F4),
-            surfaceContainer: const Color(0xFFE9EFEF),
-            surfaceContainerHigh: const Color(0xFFE3EAE9),
-            surfaceContainerHighest: const Color(0xFFDEE4E3),
-            outline: const Color(0xFF6F7979),
-            outlineVariant: const Color(0xFFBEC9C8),
-          );
     return _base(scheme, fontFamily: fontFamilyFor(language));
   }
 
@@ -52,31 +32,11 @@ class TeigiTheme {
     Color seed = seedDark,
     String? language,
   }) {
-    final baseScheme = colorScheme ??
+    final scheme = colorScheme ??
         ColorScheme.fromSeed(
           seedColor: seed,
           brightness: Brightness.dark,
         );
-    final scheme = colorScheme != null
-        ? baseScheme
-        : baseScheme.copyWith(
-            primary: const Color(0xFF39C5BB),
-            onPrimary: const Color(0xFF003738),
-            primaryContainer: const Color(0xFF004F50),
-            onPrimaryContainer: const Color(0xFF70F7EC),
-            secondary: const Color(0xFFB0CCCB),
-            secondaryContainer: const Color(0xFF324B4B),
-            onSecondaryContainer: const Color(0xFFCCE8E7),
-            surface: const Color(0xFF0E1514),
-            onSurface: const Color(0xFFDEE4E3),
-            surfaceContainerLowest: const Color(0xFF090F0F),
-            surfaceContainerLow: const Color(0xFF161D1D),
-            surfaceContainer: const Color(0xFF1A2121),
-            surfaceContainerHigh: const Color(0xFF252B2B),
-            surfaceContainerHighest: const Color(0xFF303636),
-            outline: const Color(0xFF889392),
-            outlineVariant: const Color(0xFF3F4948),
-          );
     return _base(scheme, fontFamily: fontFamilyFor(language));
   }
 
@@ -201,3 +161,4 @@ class TeigiTheme {
     );
   }
 }
+

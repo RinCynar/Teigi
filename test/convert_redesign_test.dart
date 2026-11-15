@@ -11,6 +11,9 @@ import 'package:teigi/features/presets/presets_browser.dart';
 import 'package:teigi/features/queue/queue_panel.dart';
 import 'package:teigi/providers/ffmpeg_provider.dart';
 import 'package:teigi/providers/settings_provider.dart';
+import 'package:teigi/shared/widgets/teigi_mark.dart';
+import 'package:teigi/theme/teigi_theme.dart';
+import 'package:teigi/theme/tokens.dart';
 
 class _FakeFfmpegNotifier extends FfmpegStatusNotifier {
   @override
@@ -104,6 +107,36 @@ void main() {
       // 验证滚动后包含添加文件工具提示与加号图标
       expect(find.byIcon(Icons.add_rounded), findsWidgets);
     });
+
+    testWidgets('Convert 左侧预设卡片网格随容器自适应铺满整行', (tester) async {
+      await pumpApp(
+        tester,
+        size: const Size(1280, 800),
+        initialPrefs: {
+          'recent_preset_ids': ['video_mp4', 'audio_mp3'],
+        },
+      );
+
+      // 验证存在 TeigiPresetsGrid 组件
+      final gridFinder = find.byType(TeigiPresetsGrid);
+      expect(gridFinder, findsWidgets);
+
+      // 获取第一个网格（最近使用）以及包含的预设卡片
+      final recentGridRect = tester.getRect(gridFinder.first);
+      final cardsFinder = find.descendant(
+        of: gridFinder.first,
+        matching: find.byType(TeigiPresetCard),
+      );
+      expect(cardsFinder, findsNWidgets(2));
+
+      final firstCardRect = tester.getRect(cardsFinder.at(0));
+      final secondCardRect = tester.getRect(cardsFinder.at(1));
+
+      // 验证两张卡片横向紧密铺满整行，左右边界严格对齐网格左右边界
+      expect(firstCardRect.left, closeTo(recentGridRect.left, 1.0));
+      expect(secondCardRect.right, closeTo(recentGridRect.right, 1.0));
+      expect(firstCardRect.width, closeTo(secondCardRect.width, 1.0));
+    });
   });
 
   group('移动端竖屏三键组与抽屉面板测试', () {
@@ -186,6 +219,46 @@ void main() {
         (m) => m.shape is StadiumBorder && m.elevation > 0,
       );
       expect(floatingCapsule, isTrue);
+    });
+  });
+
+  group('Material 3 主题色彩与系统动态取色规范测试', () {
+    test('默认回退主题色对齐应用图标 (#6750A4) 且剔除硬编码青绿', () {
+      expect(TeigiColors.seed, const Color(0xFF6750A4));
+
+      final lightTheme = TeigiTheme.light();
+      final darkTheme = TeigiTheme.dark();
+
+      // 验证无动态色时，不再包含硬编码青绿 0xFF006A6B 或 0xFF39C5BB
+      expect(lightTheme.colorScheme.primary, isNot(const Color(0xFF006A6B)));
+      expect(darkTheme.colorScheme.primary, isNot(const Color(0xFF39C5BB)));
+
+      // 验证从种子色 0xFF6750A4 派生的 M3 scheme 正常构建
+      expect(
+        lightTheme.colorScheme.primary,
+        ColorScheme.fromSeed(seedColor: const Color(0xFF6750A4), brightness: Brightness.light).primary,
+      );
+      expect(
+        darkTheme.colorScheme.primary,
+        ColorScheme.fromSeed(seedColor: const Color(0xFF6750A4), brightness: Brightness.dark).primary,
+      );
+    });
+
+    test('优先跟随系统动态取色 ColorScheme', () {
+      final customLightScheme = ColorScheme.fromSeed(
+        seedColor: const Color(0xFF00B0FF),
+        brightness: Brightness.light,
+      );
+      final customDarkScheme = ColorScheme.fromSeed(
+        seedColor: const Color(0xFF00B0FF),
+        brightness: Brightness.dark,
+      );
+
+      final lightTheme = TeigiTheme.light(colorScheme: customLightScheme);
+      final darkTheme = TeigiTheme.dark(colorScheme: customDarkScheme);
+
+      expect(lightTheme.colorScheme.primary, customLightScheme.primary);
+      expect(darkTheme.colorScheme.primary, customDarkScheme.primary);
     });
   });
 }

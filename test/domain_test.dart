@@ -214,10 +214,10 @@ void main() {
   });
 
   group('TeigiTheme & DynamicColor', () {
-    test('default brand seed is #39C5BB', () {
-      expect(TeigiColors.seed, const Color(0xFF39C5BB));
-      expect(TeigiTheme.seedLight, const Color(0xFF39C5BB));
-      expect(TeigiTheme.seedDark, const Color(0xFF39C5BB));
+    test('default brand seed is #6750A4 (aligned with app icon M3 palette)', () {
+      expect(TeigiColors.seed, const Color(0xFF6750A4));
+      expect(TeigiTheme.seedLight, const Color(0xFF6750A4));
+      expect(TeigiTheme.seedDark, const Color(0xFF6750A4));
     });
 
     test('builds theme with dynamic colorScheme and default seed fallback', () {
@@ -254,3 +254,4 @@ void main() {
     });
   });
 }
+

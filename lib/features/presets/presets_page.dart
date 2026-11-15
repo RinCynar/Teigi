@@ -116,9 +116,7 @@ class _PresetGroup extends ConsumerWidget {
               ),
         ),
         const SizedBox(height: TeigiSpacing.xs),
-        Wrap(
-          spacing: TeigiSpacing.xs,
-          runSpacing: TeigiSpacing.xs,
+        TeigiPresetsGrid(
           children: [
             for (final preset in presets)
               TeigiPresetCard(
@@ -135,3 +133,4 @@ class _PresetGroup extends ConsumerWidget {
     );
   }
 }
+

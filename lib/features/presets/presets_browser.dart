@@ -107,9 +107,7 @@ class PresetsBrowser extends ConsumerWidget {
             ),
           )
         else
-          Wrap(
-            spacing: TeigiSpacing.xs,
-            runSpacing: TeigiSpacing.xs,
+          TeigiPresetsGrid(
             children: [
               for (final preset in recentPresets)
                 TeigiPresetCard(
@@ -260,9 +258,7 @@ class _CategoryGroup extends StatelessWidget {
               ),
         ),
         const SizedBox(height: TeigiSpacing.xs),
-        Wrap(
-          spacing: TeigiSpacing.xs,
-          runSpacing: TeigiSpacing.xs,
+        TeigiPresetsGrid(
           children: [
             for (final preset in presets)
               TeigiPresetCard(
@@ -303,3 +299,4 @@ String _codecLabel(String codec) {
     _ => codec,
   };
 }
+

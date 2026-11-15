@@ -66,18 +66,16 @@ abstract final class TeigiMotion {
   static const Duration medium = Duration(milliseconds: 220);
 }
 
-/// Default brand seed: Miku teal fallback.
+/// Default brand seed: aligned with app icon's M3 tonal palette (#6750A4).
 abstract final class TeigiColors {
-  static const Color seed = Color(0xFF39C5BB);
+  static const Color seed = Color(0xFF6750A4);
 }
 
 /// Extension on [ColorScheme] for hierarchical surface containers and subtle borders
 /// calibrated directly from desktop reference client 0rhxPlayer-Desktop.
 extension TeigiColorSchemeExtension on ColorScheme {
   /// Subtle border color for cards and containers
-  Color get borderSubtle => brightness == Brightness.dark
-      ? const Color(0xFF222524)
-      : const Color(0xFFE0E6E5);
+  Color get borderSubtle => outlineVariant.withValues(alpha: brightness == Brightness.dark ? 0.35 : 0.45);
 
   /// Subtle glow / highlight for active, hovered, or selected borders
   Color get borderGlow => primary.withValues(alpha: 0.35);
@@ -85,3 +83,4 @@ extension TeigiColorSchemeExtension on ColorScheme {
   /// High-tier border for emphasis and active states
   Color get borderHighlight => outlineVariant.withValues(alpha: 0.65);
 }
+

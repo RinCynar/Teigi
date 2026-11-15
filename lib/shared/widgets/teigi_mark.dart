@@ -84,6 +84,7 @@ class TeigiPresetCard extends StatelessWidget {
         borderRadius: TeigiRadii.card,
         child: AnimatedContainer(
           duration: TeigiMotion.fast,
+          width: double.infinity,
           constraints: const BoxConstraints(minWidth: 116, minHeight: 68),
           decoration: BoxDecoration(
             color: selected
@@ -104,14 +105,18 @@ class TeigiPresetCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.max,
                 children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: selected ? scheme.primary : scheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
+                  Flexible(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: selected ? scheme.primary : scheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
                   ),
                   if (selected) ...[
                     const SizedBox(width: TeigiSpacing.xxs),
@@ -122,6 +127,8 @@ class TeigiPresetCard extends StatelessWidget {
               const SizedBox(height: TeigiSpacing.xxs),
               Text(
                 subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                       fontSize: 11,
@@ -134,3 +141,60 @@ class TeigiPresetCard extends StatelessWidget {
     );
   }
 }
+
+/// A responsive preset card grid that adaptively computes column count and item widths
+/// so cards always strictly fill 100% of the available horizontal width with no trailing gap.
+class TeigiPresetsGrid extends StatelessWidget {
+  final List<Widget> children;
+  final double minItemWidth;
+  final double spacing;
+  final double runSpacing;
+  final int minColumns;
+  final int maxColumns;
+
+  const TeigiPresetsGrid({
+    super.key,
+    required this.children,
+    this.minItemWidth = 140.0,
+    this.spacing = TeigiSpacing.xs,
+    this.runSpacing = TeigiSpacing.xs,
+    this.minColumns = 2,
+    this.maxColumns = 6,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.isEmpty) return const SizedBox.shrink();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!constraints.hasBoundedWidth || constraints.maxWidth <= 0) {
+          return Wrap(
+            spacing: spacing,
+            runSpacing: runSpacing,
+            children: children,
+          );
+        }
+
+        final w = constraints.maxWidth;
+        final effectiveMinCols = (w < 250) ? 1 : minColumns;
+        final rawCols = ((w + spacing) / (minItemWidth + spacing)).floor();
+        final cols = rawCols.clamp(effectiveMinCols, maxColumns);
+        final itemWidth = (w - (cols - 1) * spacing) / cols;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: runSpacing,
+          children: [
+            for (final child in children)
+              SizedBox(
+                width: itemWidth,
+                child: child,
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
